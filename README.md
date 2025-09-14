@@ -38,6 +38,8 @@ Adversarial Robustness Toolbox (ART).
 ### Dashboard
 - Streamlit
 - Streamlit Authenticator
+- **Note**: Streamlit has been used just to demo the NIDS pipeline, but in future works, an improved UI
+can be built for the system.
 
 ### Development & Operations
 - Git
@@ -109,6 +111,7 @@ Adversarial Robustness Toolbox (ART).
 ├── docs/                      # Project documentation and guides
 ├── models/                    # IGNORED BY GIT - Serialized trained models
 ├── notebooks/                 # Jupyter notebooks for EDA and prototyping
+├── pages/                     # Directory for all Streamlit page modules
 ├── scripts/                   # Utility scripts (e.g., data download)
 ├── src/                       # Main source code package
 │   ├── data/                  # Code for data loading and preprocessing
