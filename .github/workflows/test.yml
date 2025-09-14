@@ -1,0 +1,42 @@
+name: Python Code Quality and Tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # Install the package in editable mode so tests can import `src`
+        pip install -e .
+
+    - name: Run Code Linter (Flake8)
+      run: |
+        pip install flake8
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore=E722,W503,E203
+
+    - name: Run Code Formatter Check (Black)
+      run: |
+        pip install black
+        # Format check without changing files. Will fail if formatting is incorrect.
+        black --check src/ tests/ app.py
+
+    - name: Run Unit Tests
+      run: |
+        pip install pytest
+        pytest -v tests/ # Runs all tests in the `tests/` directory
