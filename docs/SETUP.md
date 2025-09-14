@@ -16,9 +16,12 @@ For optimal performance on Windows, it is strongly recommended to use WSL2.
 
 **Key Configuration:**
 1.  **Install WSL2:** Follow the [official Microsoft guide](https://learn.microsoft.com/en-us/windows/wsl/install).
-2.  **Clone and work inside WSL2:** Do not work on files in the `/mnt/c/` mount. Clone the repository inside your WSL2 home directory (e.g., `~/projects/your-repo-name`).
-    *   **Important:** Ensure Python 3.9+ is installed *within* your WSL2 distribution (e.g., Ubuntu). You can check with `python3 --version`.
-3.  **Resource Management (Optional):** To prevent WSL2 from consuming all your RAM, create a `.wslconfig` file in your Windows user directory (`C:\Users\<YourUsername>`):
+2.  **Clone and work inside WSL2:** Do not work on files in the `/mnt/c/` mount. Clone the repository inside your WSL2 
+3. home directory (e.g., `~/projects/robust-nids`).
+    *   **Important:** Ensure Python 3.9+ is installed *within* your WSL2 distribution (e.g., Ubuntu). You can check 
+with `python3 --version`.
+3.  **Resource Management (Optional):** To prevent WSL2 from consuming all your RAM, create a `.wslconfig` file in your 
+Windows user directory (`C:\Users\<YourUsername>`):
     ```ini
     [wsl2]
     memory=12GB
