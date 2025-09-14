@@ -37,6 +37,7 @@ Adversarial Robustness Toolbox (ART).
 
 ### Dashboard
 - Streamlit
+- Streamlit Authenticator
 
 ### Development & Operations
 - Git
