@@ -59,16 +59,17 @@ It is crucial to use an isolated Python environment to manage dependencies.
 
 ## 3. Data Setup (TII-SSRC-23 Dataset)
 
-The 30 GB TII-SSRC-23 dataset is not stored in Git.
+The TII-SSRC-23 dataset is not stored in Git.
 
-**Option 1: Manual Download**
+**Option 1: Manual Download (Recommended)**
 
-1.  Download the dataset from the official source.
+1.  Download only the CSV dataset (`csv/data.csv`) from the official source on Kaggle (about 5 GB).
 2.  Place the raw data files in the `data/raw/` directory.
 
-**Option 2: Download via Script (Recommended)**
+**Option 2: Download via Script**
 
-A helper script is provided to download the data from a predefined source.
+A helper script is provided to download the data from a predefined source. Use this if you'd like to 
+download the entire dataset, including PCAP files. (Warning: the ZIP file will be very big, approx. 30 GB)
 - **Note:**: This requires a [Kaggle API token.](https://www.kaggle.com/code/webdevbadger/comprehensive-kaggle-workspace-with-vs-code-wsl)
 ```bash
 # Run the download script
