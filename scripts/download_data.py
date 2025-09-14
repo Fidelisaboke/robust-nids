@@ -14,8 +14,8 @@ Usage:
     python scripts/download_data.py
 """
 
-import os
 import sys
+import time
 from pathlib import Path
 
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -58,13 +58,29 @@ def main():
     print(f"Files will be saved to: {TARGET_DIR.absolute()}")
     print("-" * 50)
 
+    start_time = time.time()
+
     try:
-        # Download the dataset
+        # Download the dataset with verbose output
+        print("Initializing download...")
         api.dataset_download_files(
             dataset=DATASET_NAME, path=TARGET_DIR, unzip=True, quiet=False, force=False
         )
+
+        # Calculate download time
+        end_time = time.time()
+        download_time = end_time - start_time
+        hours, remainder = divmod(download_time, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
         print("SUCCESS: Download and extraction completed successfully.")
+        print(f"Download time: {int(hours)}h {int(minutes)}m {int(seconds)}s")
         print(f"Please check the contents of: {TARGET_DIR.absolute()}")
+
+    except KeyboardInterrupt:
+        print("\nDownload was interrupted by user (Ctrl+C).")
+        print("Partial files may have been downloaded. Please run the script again to resume.")
+        sys.exit(1)
 
     except Exception as e:
         print(f"ERROR: An error occurred during download: {e}")
