@@ -39,7 +39,7 @@ Adversarial Robustness Toolbox (ART).
 - Streamlit
 - Streamlit Authenticator
 - **Note**: Streamlit has been used just to demo the NIDS pipeline, but in future works, an improved UI
-can be built for the system.
+will be built for the system.
 
 ### Development & Operations
 - Git
@@ -52,11 +52,14 @@ can be built for the system.
 ## Getting Started
 
 ### Prerequisites
-
+- Ubuntu 20.04+ or Ubuntu-WSL2 (Preferred OSs)
 - Python 3.12+
 - Git
+- PostgreSQL
+- Bash shell environment
 
 ### Quick Install
+- For detailed instructions, see [`docs/SETUP.md`](docs/SETUP.md).
 
 1.  **Clone the repo:**
     ```bash
@@ -76,8 +79,19 @@ can be built for the system.
     pip install --upgrade pip
     pip install -r requirements.txt
     ```
+    
+4. **Create your environment file:**
+    ```bash
+    cp .env.example .env
+    ```
+5. Edit the `.env` file with your credentials.
 
-4.  **Set up the dataset:** Follow the detailed instructions in [`docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
+6. **Set up the PostgreSQL database:**
+    ```bash
+   ./scripts/setup_db.sh
+    ```
+    
+7. **Set up the dataset:** Follow the detailed instructions in [`docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
 
 ## Basic Usage
 
@@ -112,7 +126,7 @@ can be built for the system.
 ├── models/                    # IGNORED BY GIT - Serialized trained models
 ├── notebooks/                 # Jupyter notebooks for EDA and prototyping
 ├── pages/                     # Directory for all Streamlit page modules
-├── scripts/                   # Utility scripts (e.g., data download)
+├── scripts/                   # Utility scripts (e.g., data download, database setup)
 ├── src/                       # Main source code package
 │   ├── data/                  # Code for data loading and preprocessing
 │   ├── features/              # Code for feature engineering & adversarial generation
