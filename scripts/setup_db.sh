@@ -22,7 +22,10 @@ load_env() {
     log_info "Loading environment configuration"
 
     if [ -f .env ]; then
-        export "$(grep -v '^#' .env | xargs)"
+        # Safe way to load .env file - automatically exports all variables
+        set -a  # Automatically export all variables
+        . .env   # Source the .env file
+        set +a  # Turn off auto-export
         log_success "Environment file loaded"
     else
         log_warning ".env file not found, using default values"
@@ -35,6 +38,7 @@ load_env() {
     DB_USER=${DB_USER:-$DEFAULT_USER}
     DB_PASSWORD=${DB_PASSWORD:-$DEFAULT_PASSWORD}
     ADMIN_USER=${ADMIN_USER:-"postgres"}
+    ADMIN_PASSWORD=${ADMIN_PASSWORD:-""}
 
     log_info "Configuration:"
     log_info "  Host: $DB_HOST"
@@ -61,6 +65,24 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Check if Python and required packages are available
+check_python_dependencies() {
+    log_info "Checking Python dependencies"
+
+    if ! command -v python2 &> /dev/null && ! command -v python3 &> /dev/null; then
+        log_error "Python is not installed"
+        exit 1
+    fi
+
+    # Check if SQLAlchemy is installed
+    if ! python3 -c "import sqlalchemy" 2>/dev/null; then
+        log_error "SQLAlchemy is not installed. Run: pip install sqlalchemy"
+        exit 1
+    fi
+
+    log_success "Python dependencies are available"
+}
+
 # Check if PostgreSQL client tools are available
 check_dependencies() {
     log_info "Checking dependencies"
@@ -70,6 +92,7 @@ check_dependencies() {
         exit 1
     fi
 
+    check_python_dependencies
     log_success "All dependencies are available"
 }
 
@@ -181,6 +204,31 @@ test_db_connection() {
     fi
 }
 
+# Run database seeding
+run_seeding() {
+    log_info "Starting database seeding process"
+
+    # Check if seeding script exists
+    if [ ! -f "scripts/seed_database.py" ]; then
+        log_warning "Seeding script not found at scripts/seed_database.py"
+        log_info "Skipping database seeding"
+        return 0
+    fi
+
+    # Export database connection string for the seeding script
+    export DB_CONNECTION_STRING="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME"
+    export ADMIN_DB_CONNECTION_STRING="postgresql://$ADMIN_USER:$ADMIN_PASSWORD@$DB_HOST:$DB_PORT/postgres"
+
+    # Run the seeding script
+    if python3 scripts/seed_database.py; then
+        log_success "Database seeding completed successfully"
+        return 0
+    else
+        log_error "Database seeding failed"
+        return 1
+    fi
+}
+
 # Main execution
 main() {
     echo -e "${BLUE}========================================${NC}"
@@ -205,10 +253,16 @@ main() {
     setup_schema
     test_db_connection
 
-    # Print success message
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "${GREEN}  Database setup completed successfully!  ${NC}"
-    echo -e "${GREEN}========================================${NC}"
+    # Run database seeding
+    if run_seeding; then
+        echo -e "${GREEN}========================================${NC}"
+        echo -e "${GREEN}  Database setup completed successfully!  ${NC}"
+        echo -e "${GREEN}========================================${NC}"
+    else
+        echo -e "${YELLOW}========================================${NC}"
+        echo -e "${YELLOW}  Database setup completed with warnings  ${NC}"
+        echo -e "${YELLOW}========================================${NC}"
+    fi
 
     # Print next steps
     echo -e "${YELLOW}Next steps:${NC}"
@@ -222,7 +276,7 @@ main() {
     echo "2. Run your Streamlit application:"
     echo "   streamlit run app.py"
     echo ""
-    echo "3. Consider changing the default password in production"
+    echo "3. Consider changing the default passwords in production"
 }
 
 # Run main function
