@@ -1,6 +1,7 @@
 """
 Main Streamlit Application - NIDS Overview Dashboard
 """
+
 import streamlit as st
 
 from utils.auth import init_auth, login_form
@@ -19,12 +20,15 @@ init_auth()
 # If not authenticated, show login form
 if not st.session_state["authenticated"]:
     # Hide sidebar completely when not authenticated
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         .css-1d391kg {display: none}
         [data-testid="stSidebar"] {display: none}
         </style>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
     st.title("Please log in to access the NIDS Security Dashboard")
     login_form()
     st.stop()
@@ -40,14 +44,20 @@ else:
             ),
         ],
         "Security Operations": [
-            st.Page("views/alerts.py", title="Security Alerts", icon=":material/warning:"),
             st.Page(
-                "views/analytics.py", title="Threat Analytics", icon=":material/analytics:"
+                "views/alerts.py", title="Security Alerts", icon=":material/warning:"
+            ),
+            st.Page(
+                "views/analytics.py",
+                title="Threat Analytics",
+                icon=":material/analytics:",
             ),
         ],
         "Data & Models": [
             st.Page(
-                "views/data_explorer.py", title="Data Explorer", icon=":material/dataset:"
+                "views/data_explorer.py",
+                title="Data Explorer",
+                icon=":material/dataset:",
             ),
             st.Page(
                 "views/model_management.py",
@@ -75,7 +85,9 @@ else:
         if st.button("Log out"):
             st.session_state["authenticated"] = False
             st.session_state["user_info"] = {}
-            st.markdown('<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True)
+            st.markdown(
+                '<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True
+            )
             st.rerun()
 
     navigation.run()
