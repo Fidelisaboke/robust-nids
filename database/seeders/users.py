@@ -5,6 +5,7 @@ import bcrypt
 
 from database.models import User, Role
 from .base import BaseSeeder
+from utils.roles import SystemRoles
 
 
 class UserSeeder(BaseSeeder):
@@ -30,25 +31,25 @@ class UserSeeder(BaseSeeder):
                 {
                     "email": "admin@nids.local",
                     "password": "Admin123!",  # Change in production!
-                    "role_names": ["administrator"],
+                    "role_names": [SystemRoles.ADMIN.value],
                     "name": "System Administrator"
                 },
                 {
                     "email": "manager@nids.local",
                     "password": "Manager123!",
-                    "role_names": ["manager"],
+                    "role_names": [SystemRoles.MANAGER.value],
                     "name": "Security Manager"
                 },
                 {
                     "email": "analyst@nids.local",
                     "password": "Analyst123!",
-                    "role_names": ["analyst"],
+                    "role_names": [SystemRoles.MANAGER.value],
                     "name": "Security Analyst"
                 },
                 {
                     "email": "viewer@nids.local",
                     "password": "Viewer123!",
-                    "role_names": ["viewer"],
+                    "role_names": [SystemRoles.VIEWER.value],
                     "name": "Security Viewer"
                 }
             ]

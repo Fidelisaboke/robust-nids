@@ -47,8 +47,9 @@ class AuthService:
                 user.failed_login_attempts = 0
                 user.locked_until = None
                 user.last_login = datetime.now()
+                roles = [role.name for role in user.roles]
+                return {"user_id": user.id, "roles": roles, "email": user.email}, None
 
-                return {"user_id": user.id, "role": user.role, "email": user.email}, None
             else:
                 user.failed_login_attempts += 1
 
@@ -67,13 +68,3 @@ class AuthService:
     def get_all_users():
         with db.get_session() as session:
             return session.query(User).order_by(User.created_at.desc()).all()
-
-    @staticmethod
-    def update_user_role(user_id: int, new_role: str) -> bool:
-        with db.get_session() as session:
-            user = session.query(User).filter(User.id == user_id).first()
-            if user:
-                user.role = new_role
-                return True
-
-            return False

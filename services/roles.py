@@ -12,7 +12,7 @@ class RoleService:
         """Ensure all system roles are created in database."""
         with db.get_session() as session:
             for role_enum in SystemRoles:
-                role = session.query(Role).filter(Role.name == role_enum.name).first()
+                role = session.query(Role).filter(Role.name == role_enum.value).first()
                 if not role:
                     new_role = Role(name=role_enum.value)
                     session.add(new_role)
