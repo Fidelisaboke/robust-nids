@@ -12,12 +12,7 @@ class SeederManager:
         """Run all seeders in proper order"""
         print("🌱 Starting database seeding...")
 
-        seeders = [
-            PermissionSeeder,
-            RoleSeeder,
-            RolePermissionSeeder,
-            UserSeeder
-        ]
+        seeders = [PermissionSeeder, RoleSeeder, RolePermissionSeeder, UserSeeder]
 
         for seeder in seeders:
             try:

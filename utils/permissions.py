@@ -3,6 +3,7 @@ from enum import Enum
 
 class SystemPermissions(Enum):
     """System-wide permissions that can be assigned to roles"""
+
     # Dashboard permissions
     VIEW_DASHBOARD = "view_dashboard"
     VIEW_LIVE_MONITOR = "view_live_monitor"

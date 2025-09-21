@@ -3,7 +3,16 @@ SQLAlchemy models for the application.
 Each model represents a database table.
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Table, func, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    Table,
+    func,
+    ForeignKey,
+)
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -36,11 +45,13 @@ class Role(Base):
     users = relationship("User", secondary="user_roles", back_populates="roles")
     permissions = relationship("Permission", secondary="role_permissions", back_populates="roles")
 
+
 # Association table for many-to-many between users and roles
 user_roles = Table(
-    "user_roles", Base.metadata,
+    "user_roles",
+    Base.metadata,
     Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
-    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True)
+    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
 )
 
 
@@ -53,9 +64,11 @@ class Permission(Base):
 
     roles = relationship("Role", secondary="role_permissions", back_populates="permissions")
 
+
 # Association table for role-permission many-to-many
 role_permissions = Table(
-    "role_permissions", Base.metadata,
+    "role_permissions",
+    Base.metadata,
     Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
-    Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True)
+    Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
 )

@@ -11,7 +11,7 @@ class RolePermissionSeeder(BaseSeeder):
     BASE_PERMISSIONS = {
         SystemPermissions.VIEW_DASHBOARD,
         SystemPermissions.VIEW_LIVE_MONITOR,
-        SystemPermissions.VIEW_ALERTS
+        SystemPermissions.VIEW_ALERTS,
     }
 
     # Additional permissions for each role
@@ -22,14 +22,14 @@ class RolePermissionSeeder(BaseSeeder):
             SystemPermissions.EXPORT_DATA,
             SystemPermissions.VIEW_DATA_EXPLORER,
             SystemPermissions.ACCESS_RAW_DATA,
-            SystemPermissions.VIEW_MODELS
+            SystemPermissions.VIEW_MODELS,
         },
         SystemRoles.MANAGER: {
             SystemPermissions.TRAIN_MODELS,
             SystemPermissions.VIEW_SETTINGS,
-            SystemPermissions.VIEW_LOGS
+            SystemPermissions.VIEW_LOGS,
         },
-        SystemRoles.ADMIN: set(SystemPermissions)
+        SystemRoles.ADMIN: set(SystemPermissions),
     }
 
     @classmethod
@@ -52,9 +52,8 @@ class RolePermissionSeeder(BaseSeeder):
                 if role_name == "viewer":
                     role_permission_sets[role_name] = cls.BASE_PERMISSIONS
                 else:
-                    role_permission_sets[role_name] = (
-                            cls.BASE_PERMISSIONS |
-                            cls.ROLE_EXTRA_PERMISSIONS.get(role_name, set())
+                    role_permission_sets[role_name] = cls.BASE_PERMISSIONS | cls.ROLE_EXTRA_PERMISSIONS.get(
+                        role_name, set()
                     )
 
             # Administrator gets everything

@@ -30,10 +30,7 @@ class AuthService:
     @staticmethod
     def verify_login(email: str, password: str):
         with db.get_session() as session:
-            user = session.query(User).filter(
-                User.email == email,
-                User.is_active == True
-            ).first()
+            user = session.query(User).filter(User.email == email, User.is_active).first()
 
             if not user:
                 return None, "Invalid credentials."
@@ -55,7 +52,10 @@ class AuthService:
 
                 if user.failed_login_attempts >= 5:
                     user.locked_until = datetime.now() + timedelta(minutes=10)
-                    return None, "Account locked due to too many failed attempts. Please try again in 10 minutes."
+                    account_locked_msg = (
+                        "Account locked due to too many failed attempts. " "Please try again in 10 minutes.",
+                    )
+                    return (None, account_locked_msg)
 
                 return None, "Invalid credentials."
 

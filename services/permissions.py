@@ -16,7 +16,7 @@ class PermissionService:
                 if not permission:
                     new_perm = Permission(
                         name=perm_enum.value,
-                        description=f"System permission: {perm_enum.value}"
+                        description=f"System permission: {perm_enum.value}",
                     )
                     session.add(new_perm)
             session.commit()
@@ -43,6 +43,7 @@ class PermissionService:
         """Check if a user has a specific permission through their roles"""
         with db.get_session() as session:
             from database.models import User
+
             user = session.query(User).filter(User.id == user_id).first()
             if not user:
                 return False
@@ -59,6 +60,7 @@ class PermissionService:
         """Get all permissions for a user"""
         with db.get_session() as session:
             from database.models import User
+
             user = session.query(User).filter(User.id == user_id).first()
             if not user:
                 return set()

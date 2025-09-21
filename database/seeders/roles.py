@@ -17,9 +17,7 @@ class RoleSeeder(BaseSeeder):
             roles_to_create = []
             for role_enum in SystemRoles:
                 if role_enum.value not in existing_roles:
-                    roles_to_create.append(
-                        Role(name=role_enum.value)
-                    )
+                    roles_to_create.append(Role(name=role_enum.value))
 
             if roles_to_create:
                 session.add_all(roles_to_create)

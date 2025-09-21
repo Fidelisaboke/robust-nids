@@ -3,15 +3,15 @@
 Database seeder script for NIDS Application.
 """
 
-import sys
 import os
+import sys
 
-# Add project root to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from database.seeders import SeederManager
 from database.db import db
 from database.models import Base
+from database.seeders import SeederManager
+
+# Add project root to Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def drop_all_tables():
@@ -47,6 +47,7 @@ def main():
     except Exception as e:
         print(f"❌ Seeding failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

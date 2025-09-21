@@ -20,7 +20,7 @@ class PermissionSeeder(BaseSeeder):
                     permissions_to_create.append(
                         Permission(
                             name=perm_enum.value,
-                            description=f"System permission: {perm_enum.name}"
+                            description=f"System permission: {perm_enum.name}",
                         )
                     )
 

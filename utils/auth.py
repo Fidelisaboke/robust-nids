@@ -18,7 +18,8 @@ def login_form():
     auth_service = AuthService()
 
     # Security notice styling
-    st.markdown("""
+    st.markdown(
+        """
         <div style="
             background: linear-gradient(135deg, #1f4e79 0%, #2d5aa0 100%);
             padding: 20px;
@@ -31,11 +32,14 @@ def login_form():
                 🔒 AUTHORIZED ACCESS ONLY
             </h3>
             <p style="color: #e0e6ed; margin: 0; font-size: 14px; line-height: 1.4;">
-                You are accessing a secure Network Intrusion Detection System (NIDS). 
-                This system is restricted to authorized personnel only. All activities are monitored and logged.
+                You are accessing a secure Network Intrusion Detection System (NIDS).
+                This system is restricted to authorized personnel only.
+                All activities are monitored and logged.
             </p>
         </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("### 🔐 System Login")
 
@@ -43,24 +47,20 @@ def login_form():
         email = st.text_input(
             "Email Address",
             placeholder="Enter your email address",
-            help="Use your authorized system email address."
+            help="Use your authorized system email address.",
         )
         password = st.text_input(
             "Password",
             type="password",
             placeholder="Enter your password",
-            help="Enter your secure system password."
+            help="Enter your secure system password.",
         )
 
         # Some spacing
         st.write("")
 
         # Full-width login button
-        submitted = st.form_submit_button(
-            "🔓 Access System",
-            use_container_width=True,
-            type="primary"
-        )
+        submitted = st.form_submit_button("🔓 Access System", use_container_width=True, type="primary")
 
         if submitted:
             if not email or not password:
@@ -76,7 +76,8 @@ def login_form():
                     st.error(f"🚫 {error}")
 
     # Footer with security reminders
-    st.markdown("""
+    st.markdown(
+        """
         <div style="
             margin-top: 30px;
             padding: 15px;
@@ -92,4 +93,6 @@ def login_form():
                 • This session will timeout after inactivity
             </small>
         </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )

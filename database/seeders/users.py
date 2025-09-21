@@ -32,26 +32,26 @@ class UserSeeder(BaseSeeder):
                     "email": "admin@nids.local",
                     "password": "Admin123!",  # Change in production!
                     "role_names": [SystemRoles.ADMIN.value],
-                    "name": "System Administrator"
+                    "name": "System Administrator",
                 },
                 {
                     "email": "manager@nids.local",
                     "password": "Manager123!",
                     "role_names": [SystemRoles.MANAGER.value],
-                    "name": "Security Manager"
+                    "name": "Security Manager",
                 },
                 {
                     "email": "analyst@nids.local",
                     "password": "Analyst123!",
                     "role_names": [SystemRoles.MANAGER.value],
-                    "name": "Security Analyst"
+                    "name": "Security Analyst",
                 },
                 {
                     "email": "viewer@nids.local",
                     "password": "Viewer123!",
                     "role_names": [SystemRoles.VIEWER.value],
-                    "name": "Security Viewer"
-                }
+                    "name": "Security Viewer",
+                },
             ]
 
             users_created = 0
@@ -70,7 +70,7 @@ class UserSeeder(BaseSeeder):
                     password_hash=password_hash,
                     mfa_secret="",  # MFA can be set up later
                     is_active=True,
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
                 )
 
                 # Assign roles

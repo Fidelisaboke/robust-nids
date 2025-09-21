@@ -23,15 +23,8 @@ DATABASE_URL = (
 
 class Database:
     def __init__(self):
-        self.engine = create_engine(
-            DATABASE_URL,
-            pool_size=5,
-            max_overflow=10,
-            echo=True
-        )
-        self.SessionLocal = scoped_session(
-            sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
-        )
+        self.engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10, echo=True)
+        self.SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=self.engine))
 
         # Create tables
         Base.metadata.create_all(bind=self.engine)

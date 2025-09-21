@@ -44,9 +44,7 @@ else:
             ),
         ],
         "Security Operations": [
-            st.Page(
-                "views/alerts.py", title="Security Alerts", icon=":material/warning:"
-            ),
+            st.Page("views/alerts.py", title="Security Alerts", icon=":material/warning:"),
             st.Page(
                 "views/analytics.py",
                 title="Threat Analytics",
@@ -85,9 +83,7 @@ else:
         if st.button("Log out"):
             st.session_state["authenticated"] = False
             st.session_state["user_info"] = {}
-            st.markdown(
-                '<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True
-            )
+            st.markdown('<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True)
             st.rerun()
 
     navigation.run()

@@ -17,11 +17,11 @@ def permission_required(required_permission):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if not st.session_state.get('authenticated'):
+            if not st.session_state.get("authenticated"):
                 st.error("Please log in to access this page")
                 st.stop()
 
-            user_id = st.session_state.user_info.get('user_id')
+            user_id = st.session_state.user_info.get("user_id")
             if not has_permission(user_id, required_permission):
                 st.error("You don't have permission to access this page")
                 st.stop()
