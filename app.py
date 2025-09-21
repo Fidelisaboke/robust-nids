@@ -4,7 +4,7 @@ Main Streamlit Application - NIDS Overview Dashboard
 
 import streamlit as st
 
-from utils.auth import init_auth, login_form
+from utils.auth import SessionManager, login_form
 
 # Main app settings
 st.set_page_config(
@@ -14,11 +14,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Initialise authentication state
-init_auth()
+session_manager = SessionManager()
 
 # If not authenticated, show login form
-if not st.session_state["authenticated"]:
+if not session_manager.is_authenticated:
     # Hide sidebar completely when not authenticated
     st.markdown(
         """
@@ -30,7 +29,7 @@ if not st.session_state["authenticated"]:
         unsafe_allow_html=True,
     )
     st.title("Please log in to access the NIDS Security Dashboard")
-    login_form()
+    login_form(session_manager)
     st.stop()
 else:
     # Only define pages and navigation when authenticated
@@ -75,15 +74,12 @@ else:
         st.header("NIDS Dashboard")
 
         # Current user information
-        user_info = st.session_state["user_info"]
-        roles = ", ".join(user_info["roles"])
-        st.caption(f"Logged in as **{user_info.get('email')}** ({roles})")
+        user = st.session_state["user"]
+        roles = ", ".join(user["roles"])
+        st.caption(f"Logged in as **{user.get('email')}** ({roles})")
 
         # Logout button
         if st.button("Log out"):
-            st.session_state["authenticated"] = False
-            st.session_state["user_info"] = {}
-            st.markdown('<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True)
-            st.rerun()
+            session_manager.logout_user()
 
     navigation.run()

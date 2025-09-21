@@ -29,7 +29,7 @@ class AuthService:
             return new_user.id
 
     @staticmethod
-    def verify_login(email: str, password: str):
+    def authenticate(email: str, password: str):
         with db.get_session() as session:
             user = session.query(User).filter(User.email == email, User.is_active).first()
 
@@ -46,7 +46,7 @@ class AuthService:
                 user.locked_until = None
                 user.last_login = datetime.now()
                 roles = [role.name for role in user.roles]
-                return {"user_id": user.id, "roles": roles, "email": user.email}, None
+                return {"id": user.id, "roles": roles, "email": user.email}, None
 
             else:
                 if user.role != SystemRoles.ADMIN.value:
@@ -54,7 +54,7 @@ class AuthService:
 
                 if user.failed_login_attempts >= 5:
                     user.locked_until = datetime.now() + timedelta(minutes=10)
-                    return None, "Account locked due to too many failed attempts. " "Please try again in 10 minutes."
+                    return None, "Account locked due to too many failed attempts. Please try again in 10 minutes."
 
                 return None, "Invalid credentials."
 

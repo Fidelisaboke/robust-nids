@@ -2,21 +2,62 @@
 Login page and auth helpers for the Streamlit NIDS dashboard.
 """
 
+from datetime import datetime
+
 import streamlit as st
 
 from services.auth import AuthService
 
 
-def init_auth():
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-    if "user_info" not in st.session_state:
-        st.session_state.user_info = {}
+class SessionManager:
+    """Class for handling auth sessions in the Streamlit dashboard."""
+
+    # Default non-authenticated user properties
+    _default_user_dict = {
+        "id": None,
+        "email": None,
+        "roles": [],
+        "login_time": None,
+    }
+
+    def __init__(self):
+        self.auth_service = AuthService()
+        self._init_auth()
+
+    @property
+    def is_authenticated(self):
+        user = st.session_state["user"]
+        if not user["id"] or not user["login_time"]:
+            return False
+
+        return True
+
+    def _init_auth(self):
+        if "user" not in st.session_state:
+            st.session_state.user = self._default_user_dict.copy()
+
+    def login_user(self, email, password):
+        user, error = self.auth_service.authenticate(email, password)
+        if user:
+            now_ts = datetime.now().timestamp()
+            st.session_state["user"] = {
+                "id": user["id"],
+                "email": user["email"],
+                "roles": user["roles"],
+                "login_time": now_ts,
+            }
+            return {"success": True, "message": "Authentication successful. Redirecting..."}
+        else:
+            return {"success": False, "message": f"Authentication failed: {error}"}
+
+    def logout_user(self, reason="Logged out"):
+        st.session_state["user"] = self._default_user_dict.copy()
+        st.warning(reason)
+        st.markdown('<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True)
+        st.rerun()
 
 
-def login_form():
-    auth_service = AuthService()
-
+def login_form(session_manger: SessionManager):
     # Security notice styling
     st.markdown(
         """
@@ -66,14 +107,12 @@ def login_form():
             if not email or not password:
                 st.error("⚠️ Both email and password are required")
             else:
-                user_info, error = auth_service.verify_login(email, password)
-                if user_info:
-                    st.session_state["authenticated"] = True
-                    st.session_state["user_info"] = user_info
-                    st.success("✅ Authentication successful. Redirecting...")
+                result = session_manger.login_user(email, password)
+                if result["success"]:
+                    st.success(f"✅ {result['message']}")
                     st.rerun()
                 else:
-                    st.error(f"🚫 {error}")
+                    st.error(f"🚫 {result['message']}")
 
     # Footer with security reminders
     st.markdown(
