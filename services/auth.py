@@ -5,6 +5,7 @@ import pyotp
 
 from database.db import db
 from database.models import User
+from utils.roles import SystemRoles
 
 
 class AuthService:
@@ -48,14 +49,12 @@ class AuthService:
                 return {"user_id": user.id, "roles": roles, "email": user.email}, None
 
             else:
-                user.failed_login_attempts += 1
+                if user.role != SystemRoles.ADMIN.value:
+                    user.failed_login_attempts += 1
 
                 if user.failed_login_attempts >= 5:
                     user.locked_until = datetime.now() + timedelta(minutes=10)
-                    account_locked_msg = (
-                        "Account locked due to too many failed attempts. " "Please try again in 10 minutes.",
-                    )
-                    return (None, account_locked_msg)
+                    return None, "Account locked due to too many failed attempts. " "Please try again in 10 minutes."
 
                 return None, "Invalid credentials."
 
