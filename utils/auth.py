@@ -10,7 +10,14 @@ from services.auth import AuthService
 
 
 class SessionManager:
-    """Class for handling auth sessions in the Streamlit dashboard."""
+    """Handles auth sessions with cookie persistence."""
+
+    # Session timeouts in seconds
+    IDLE_TIMEOUT = 130
+    ABSOLUTE_TIMEOUT = 8 * 3600
+
+    # Seconds before expiry to show popup
+    GRACE_THRESHOLD = 120
 
     # Default non-authenticated user properties
     _default_user_dict = {
@@ -18,6 +25,7 @@ class SessionManager:
         "email": None,
         "roles": [],
         "login_time": None,
+        "last_activity": None,
     }
 
     def __init__(self):
@@ -28,6 +36,20 @@ class SessionManager:
     def is_authenticated(self):
         user = st.session_state["user"]
         if not user["id"] or not user["login_time"]:
+            return False
+
+        now = datetime.now()
+        login_time = datetime.fromtimestamp(user["login_time"])
+        last_activity = datetime.fromtimestamp(user["last_activity"])
+
+        # Absolute timeout
+        if (now - login_time).total_seconds() > self.ABSOLUTE_TIMEOUT:
+            self.logout_user("Session expired (absolute timeout)")
+            return False
+
+        # Idle timeout
+        if (now - last_activity).total_seconds() > self.IDLE_TIMEOUT:
+            self.logout_user("Session expired (idle timeout)")
             return False
 
         return True
@@ -45,6 +67,7 @@ class SessionManager:
                 "email": user["email"],
                 "roles": user["roles"],
                 "login_time": now_ts,
+                "last_activity": now_ts,
             }
             return {"success": True, "message": "Authentication successful. Redirecting..."}
         else:
@@ -55,6 +78,37 @@ class SessionManager:
         st.warning(reason)
         st.markdown('<meta http-equiv="refresh" content="0;url=/">', unsafe_allow_html=True)
         st.rerun()
+
+    def refresh_session(self):
+        """Update last activity timestamp if authenticated."""
+        if self.is_authenticated:
+            st.session_state["user"]["last_activity"] = datetime.now().timestamp()
+
+    def time_remaining(self):
+        """Return time left (seconds) before session expiry."""
+        user = st.session_state["user"]
+        if not user["id"]:
+            return 0
+
+        now = datetime.now()
+        login_time = datetime.fromtimestamp(user["login_time"])
+        last_activity = datetime.fromtimestamp(user["last_activity"])
+
+        idle_remaining = self.IDLE_TIMEOUT - (now - last_activity).total_seconds()
+        abs_remaining = self.ABSOLUTE_TIMEOUT - (now - login_time).total_seconds()
+
+        return int(min(idle_remaining, abs_remaining))
+
+    def needs_grace_prompt(self):
+        """Return True if session is close to expiring."""
+        return self.time_remaining() <= self.GRACE_THRESHOLD
+
+    def extend_session(self):
+        """Extend session by refreshing last_activity timestamp."""
+        if self.is_authenticated:
+            st.session_state["user"]["last_activity"] = datetime.now().timestamp()
+            return True
+        return False
 
 
 def login_form(session_manger: SessionManager):

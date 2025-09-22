@@ -3,6 +3,7 @@ Main Streamlit Application - NIDS Overview Dashboard
 """
 
 import streamlit as st
+import time
 
 from utils.auth import SessionManager, login_form
 
@@ -67,6 +68,9 @@ else:
         ],
     }
 
+    # Refresh session
+    session_manager.refresh_session()
+
     # Navigation with top-level menu
     navigation = st.navigation(pages, position="sidebar", expanded=True)
 
@@ -77,6 +81,18 @@ else:
         user = st.session_state["user"]
         roles = ", ".join(user["roles"])
         st.caption(f"Logged in as **{user.get('email')}** ({roles})")
+
+        # Grace period popup
+        if session_manager.needs_grace_prompt():
+            st.warning("⚠️ Your session will expire soon!")
+            if st.button("Extend Session", type="primary"):
+                if session_manager.extend_session():
+                    st.success("✅ Session extended")
+                    st.rerun()
+
+            # Refresh periodically to ensure grace period popup appears
+            time.sleep(10)
+            st.rerun()
 
         # Logout button
         if st.button("Log out"):

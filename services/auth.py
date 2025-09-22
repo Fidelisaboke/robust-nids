@@ -49,7 +49,7 @@ class AuthService:
                 return {"id": user.id, "roles": roles, "email": user.email}, None
 
             else:
-                if user.role != SystemRoles.ADMIN.value:
+                if SystemRoles.ADMIN.value not in [role.name for role in user.roles]:
                     user.failed_login_attempts += 1
 
                 if user.failed_login_attempts >= 5:
