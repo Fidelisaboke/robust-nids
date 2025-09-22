@@ -3,15 +3,11 @@
 Database seeder script for NIDS Application.
 """
 
-import os
 import sys
 
 from database.db import db
 from database.models import Base
 from database.seeders import SeederManager
-
-# Add project root to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def drop_all_tables():

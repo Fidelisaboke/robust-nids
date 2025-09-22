@@ -9,11 +9,13 @@ from sqlalchemy import (
     String,
     Boolean,
     DateTime,
+    Text,
     Table,
     func,
     ForeignKey,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.dialects.postgresql import ARRAY
 
 
 class Base(DeclarativeBase):
@@ -27,6 +29,8 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     mfa_secret = Column(String(255), nullable=True)
+    mfa_enabled = Column(Boolean, nullable=False, default=False)
+    mfa_backup_codes = Column(ARRAY(Text), nullable=True)
     is_active = Column(Boolean, default=True)
     last_login = Column(DateTime)
     failed_login_attempts = Column(Integer, default=0)

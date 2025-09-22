@@ -1,14 +1,34 @@
+import base64
+import io
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
+from typing import Tuple, Optional, Dict
+from sqlalchemy.orm import joinedload
 
 import bcrypt
 import pyotp
+import qrcode
 
 from database.db import db
 from database.models import User
 from utils.roles import SystemRoles
 
 
-class AuthService:
+class IAuthService(ABC):
+    """Authentication service interface."""
+
+    @abstractmethod
+    def authenticate(self, email: str, password: str) -> Tuple[Optional[User], Optional[str]]:
+        pass
+
+    @abstractmethod
+    def verify_mfa(self, user: User, code: str) -> bool:
+        pass
+
+
+class AuthService(IAuthService):
+    """Auth service class. Implements from Auth Service interface."""
+
     @staticmethod
     def create_user(email: str, password: str) -> int:
         with db.get_session() as session:
@@ -28,10 +48,12 @@ class AuthService:
             session.flush()
             return new_user.id
 
-    @staticmethod
-    def authenticate(email: str, password: str):
+    def authenticate(self, email: str, password: str) -> Tuple[Optional[Dict], Optional[str]]:
         with db.get_session() as session:
-            user = session.query(User).filter(User.email == email, User.is_active).first()
+            # Load the user with eager loading of roles
+            user = (
+                session.query(User).options(joinedload(User.roles)).filter(User.email == email, User.is_active).first()
+            )
 
             if not user:
                 return None, "Invalid credentials."
@@ -45,9 +67,11 @@ class AuthService:
                 user.failed_login_attempts = 0
                 user.locked_until = None
                 user.last_login = datetime.now()
+
+                # Extract data before session closes
+                user_data = {"id": user.id, "email": user.email, "roles": [role.name for role in user.roles]}
                 session.commit()
-                roles = [role.name for role in user.roles]
-                return {"id": user.id, "roles": roles, "email": user.email}, None
+                return user_data, None
 
             else:
                 if SystemRoles.ADMIN.value not in [role.name for role in user.roles]:
@@ -61,9 +85,31 @@ class AuthService:
                 return None, "Invalid credentials."
 
     @staticmethod
-    def get_user_by_id(user_id: int) -> User | None:
+    def generate_mfa_setup(user: User):
+        """Generate MFA setup after enabling MFA."""
+        if not user.mfa_secret:
+            user.mfa_secret = pyotp.random_base32()
+
+        totp = pyotp.TOTP(user.mfa_secret)
+        uri = totp.provisioning_uri(name=user.email, issuer_name="NIDS Dashboard")
+
+        # Generate QR code as base64 embedding in Streamlit
+        qr = qrcode.make(uri)
+        buf = io.BytesIO()
+        qr.save(buf, format="PNG")
+        qr_b64 = base64.b64encode(buf.getvalue()).decode()
+        return qr_b64
+
+    def verify_mfa(self, user: User, token: str) -> bool:
+        if not user.mfa_enabled:
+            return True
+        totp = pyotp.TOTP(user.mfa_secret)
+        return totp.verify(token)
+
+    @staticmethod
+    def get_user_by_id(user_id: int) -> Optional[User]:
         with db.get_session() as session:
-            return session.query(User).filter(User.id == user_id).first()
+            return session.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
 
     @staticmethod
     def get_all_users():

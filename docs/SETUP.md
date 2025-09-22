@@ -27,11 +27,11 @@ For optimal performance on Windows, it is strongly recommended to use WSL2.
 
 **Key Configuration:**
 1.  **Install WSL2:** Follow the [official Microsoft guide](https://learn.microsoft.com/en-us/windows/wsl/install).
-2.  **Clone and work inside WSL2:** Do not work on files in the `/mnt/c/` mount. Clone the repository inside your WSL2 
+2.  **Clone and work inside WSL2:** Do not work on files in the `/mnt/c/` mount. Clone the repository inside your WSL2
 3. home directory (e.g., `~/projects/robust-nids`).
-    *   **Important:** Ensure Python 3.9+ is installed *within* your WSL2 distribution (e.g., Ubuntu). You can check 
+    *   **Important:** Ensure Python 3.9+ is installed *within* your WSL2 distribution (e.g., Ubuntu). You can check
 with `python3 --version`.
-3.  **Resource Management (Optional):** To prevent WSL2 from consuming all your RAM, create a `.wslconfig` file in your 
+4. **Resource Management (Optional):** To prevent WSL2 from consuming all your RAM, create a `.wslconfig` file in your
 Windows user directory (`C:\Users\<YourUsername>`):
     ```ini
     [wsl2]
@@ -60,14 +60,19 @@ It is crucial to use an isolated Python environment to manage dependencies.
 3.  **Upgrade pip and install core dependencies:**
     ```bash
     pip install --upgrade pip
-    pip install -r requirements.txt
+
+    # Install required dependencies
+    pip install -e .
+
+    # Alternatively, to install optional dev tools
+    pip install -e .[dev]
     ```
 
 4.  **Verify the installation:** Run a quick test to ensure the core scientific libraries can be imported without errors.
     ```bash
     python -c "import pandas; import sklearn; print('All core libraries imported successfully!')"
     ```
-    
+
 ## 3. Environment Variables
 - To set up your environment, you'll need to set some secret credentials.
 - This can be done by creating the environment file (`.env`):
@@ -168,7 +173,7 @@ The TII-SSRC-23 dataset is not stored in Git.
 
 **Option 2: Download via Script**
 
-A helper script is provided to download the data from a predefined source. Use this if you'd like to 
+A helper script is provided to download the data from a predefined source. Use this if you'd like to
 download the entire dataset, including PCAP files. (Warning: the ZIP file will be very big, approx. 30 GB)
 - **Note:**: This requires a [Kaggle API token.](https://www.kaggle.com/code/webdevbadger/comprehensive-kaggle-workspace-with-vs-code-wsl)
 ```bash
