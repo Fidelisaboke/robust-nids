@@ -30,12 +30,10 @@ class Database:
         Base.metadata.create_all(bind=self.engine)
 
     @contextmanager
-    def get_session(self, autocommit=True):
+    def get_session(self):
         session = self.SessionLocal()
         try:
             yield session
-            if autocommit:
-                session.commit()
         except Exception:
             session.rollback()
             raise

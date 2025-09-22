@@ -45,6 +45,7 @@ class AuthService:
                 user.failed_login_attempts = 0
                 user.locked_until = None
                 user.last_login = datetime.now()
+                session.commit()
                 roles = [role.name for role in user.roles]
                 return {"id": user.id, "roles": roles, "email": user.email}, None
 
@@ -56,6 +57,7 @@ class AuthService:
                     user.locked_until = datetime.now() + timedelta(minutes=10)
                     return None, "Account locked due to too many failed attempts. Please try again in 10 minutes."
 
+                session.commit()
                 return None, "Invalid credentials."
 
     @staticmethod
