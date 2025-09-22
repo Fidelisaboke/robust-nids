@@ -69,19 +69,19 @@ def show():
 
     with action_cols[0]:
         if st.button("🌐 **Live Monitor**", use_container_width=True, help="View real-time network traffic"):
-            st.switch_page("pages/live_monitor.py")
+            st.switch_page("views/live_monitor.py")
 
     with action_cols[1]:
         if st.button("📊 **View Analytics**", use_container_width=True, help="Detailed performance reports"):
-            st.switch_page("pages/analytics.py")
+            st.switch_page("views/analytics.py")
 
     with action_cols[2]:
         if st.button("⚠️ **Manage Alerts**", use_container_width=True, help="Review security incidents"):
-            st.switch_page("pages/alerts.py")
+            st.switch_page("views/alerts.py")
 
     with action_cols[3]:
         if st.button("🔍 **Explore Data**", use_container_width=True, help="Analyze network patterns"):
-            st.switch_page("pages/data_explorer.py")
+            st.switch_page("views/data_explorer.py")
 
     st.markdown("---")
 
@@ -218,7 +218,7 @@ def show():
                     """, unsafe_allow_html=True)
                 with col_b:
                     if st.button("Investigate", key=f"btn_{idx}", use_container_width=True):
-                        st.switch_page("pages/alerts.py")
+                        st.switch_page("views/alerts.py")
 
     with col2:
         st.subheader("⚙️ System Overview")
