@@ -1,6 +1,6 @@
 from database.db import db
 from database.models import Role, User
-from utils.roles import SystemRoles
+from utils.constants import SystemRoles
 
 
 class RoleService:

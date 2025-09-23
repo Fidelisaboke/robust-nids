@@ -1,3 +1,5 @@
+from typing import Any
+
 import streamlit as st
 
 from core.config import AuthConfig, SessionKeys
@@ -15,9 +17,9 @@ class MFAManager:
         return user.mfa_enabled
 
     @staticmethod
-    def store_pending_auth(user: User):
+    def store_pending_auth(user_data: dict[str, Any]):
         """Store pending authentication state for MFA."""
-        st.session_state[SessionKeys.PENDING_USER] = user
+        st.session_state[SessionKeys.PENDING_USER] = user_data
         st.session_state[SessionKeys.AWAITING_MFA] = True
         st.session_state[SessionKeys.MFA_ATTEMPTS] = 0
 

@@ -61,7 +61,6 @@ def show_mfa_page(session_manager: SessionManager, mfa_manager: MFAManager):
         st.rerun()
 
     # Back to log in option
-    st.write("---")
     if st.button("← Back to Login", type="secondary"):
         session_manager.clear_pending_auth()
         st.rerun()
@@ -74,11 +73,9 @@ def _verify_mfa_code(session_manager: SessionManager, mfa_manager: MFAManager, c
         st.error("Session expired. Please login again.")
         return
 
-    auth_service = mfa_manager.auth_service
-    user = auth_service.get_user_by_id(user_data["id"])
     try:
-        if mfa_manager.auth_service.verify_mfa(user, code):
-            session_manager.login_user(user)
+        if session_manager.verify_mfa(code):
+            session_manager.login_user(user_data)
             session_manager.clear_pending_auth()
             st.success("✅ Authentication successful")
             st.rerun()
