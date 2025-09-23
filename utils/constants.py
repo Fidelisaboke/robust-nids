@@ -8,3 +8,9 @@ class SystemRoles(Enum):
     ANALYST = "analyst"
     MANAGER = "manager"
     ADMIN = "admin"
+
+
+class MFAMethod(Enum):
+    """Enum for MFA methods."""
+
+    TOTP = "totp"
