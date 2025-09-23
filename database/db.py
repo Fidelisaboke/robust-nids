@@ -17,7 +17,12 @@ load_dotenv()
 
 class Database:
     def __init__(self, config: DatabaseConfig = DatabaseConfig()) -> None:
-        self.engine = create_engine(config.URL, pool_size=5, max_overflow=10, echo=AppConfig.DEBUG)
+        self.engine = create_engine(
+            f"postgresql+psycopg://{config.USER}:{config.PASSWORD}@{config.HOST}:{config.PORT}/{config.NAME}",
+            pool_size=5,
+            max_overflow=10,
+            echo=AppConfig.DEBUG,
+        )
         self.SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=self.engine))
 
     @contextmanager
