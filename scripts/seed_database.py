@@ -5,26 +5,11 @@ Database seeder script for NIDS Application.
 
 import sys
 
-from database.db import db
-from database.models import Base
 from database.seeders import SeederManager
+from migrate import drop_all_tables, create_all_tables
 
 
-def drop_all_tables():
-    """Safely drop all tables using SQLAlchemy"""
-    print("🗑️  Dropping all tables...")
-    Base.metadata.drop_all(bind=db.engine)
-    print("✅ All tables dropped successfully!")
-
-
-def create_all_tables():
-    """Create all tables using SQLAlchemy"""
-    print("🏗️  Creating all tables...")
-    Base.metadata.create_all(bind=db.engine)
-    print("✅ All tables created successfully!")
-
-
-def main():
+def seed():
     try:
         print("🚀 Starting NIDS Database Seeder")
         print("=" * 50)
@@ -49,4 +34,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(seed())
