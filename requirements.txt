@@ -52,7 +52,6 @@ mypy_extensions==1.1.0
 namex==0.1.0
 narwhals==2.5.0
 networkx==3.5
--e git+ssh://git@github.com/Fidelisaboke/robust-nids.git@9abc1bed55de824dc6441793fe20834ebdedd4a3#egg=nids
 nodeenv==1.9.1
 numpy==2.3.2
 nvidia-nccl-cu12==2.27.7
