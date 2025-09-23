@@ -1,6 +1,6 @@
 from database.models import Role, Permission
 from utils.permissions import SystemPermissions
-from utils.roles import SystemRoles
+from utils.constants import SystemRoles
 from .base import BaseSeeder
 
 

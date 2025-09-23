@@ -4,15 +4,15 @@
 [![Python Code Quality and Tests](https://github.com/Fidelisaboke/robust-nids/actions/workflows/test.yml/badge.svg)](https://github.com/Fidelisaboke/robust-nids/actions/workflows/test.yml)
 
 ## Project Overview
-A machine learning-based Network Intrusion Detection System designed to be resilient against adversarial evasion attacks. 
+A machine learning-based Network Intrusion Detection System designed to be resilient against adversarial evasion attacks.
 Features a dashboard for analysts to monitor traffic, review alerts, and provide feedback for continuous improvement.
 
 **Key Features:**
-*   **Adversarial Training:** Models are hardened against evasion attempts using state-of-the-art attacks from the 
+*   **Adversarial Training:** Models are hardened against evasion attempts using state-of-the-art attacks from the
 Adversarial Robustness Toolbox (ART).
-*   **Dual Detection Strategy:** Combines a powerful XGBoost classifier for known attacks with an Autoencoder for 
+*   **Dual Detection Strategy:** Combines a powerful XGBoost classifier for known attacks with an Autoencoder for
 * detecting novel anomalies.
-*   **Analyst-in-the-Loop:** Includes a feedback mechanism for cybersecurity operators to label false 
+*   **Analyst-in-the-Loop:** Includes a feedback mechanism for cybersecurity operators to label false
 * positives/negatives, enabling iterative model refinement.
 *   **Explainable AI:** Integrates LIME to provide explanations for model predictions, building trust and understanding.
 *   **Live Monitoring Dashboard:** A Streamlit-based dashboard for real-time traffic analysis and alert visualization.
@@ -22,7 +22,7 @@ Adversarial Robustness Toolbox (ART).
 1.  [Tech Stack](#tech-stack)
 2.  [Getting Started](#getting-started)
     *   [Prerequisites](#prerequisites)
-    *   [Setup Instructions](#setup-instructions)
+    *   [Quick Install](#quick-install)
 3.  [Basic Usage](#basic-usage)
 4.  [Project Structure](#project-structure)
 5.  [License](#license)
@@ -77,9 +77,14 @@ will be built for the system.
 3.  **Install dependencies:**
     ```bash
     pip install --upgrade pip
-    pip install -r requirements.txt
+
+    # Install required dependencies
+    pip install -e .
+
+    # Alternatively, to install optional dev tools
+    pip install -e .[dev]
     ```
-    
+
 4. **Create your environment file:**
     ```bash
     cp .env.example .env
@@ -90,7 +95,7 @@ will be built for the system.
     ```bash
    ./scripts/setup_db.sh
     ```
-    
+
 7. **Set up the dataset:** Follow the detailed instructions in [`docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
 
 ## Basic Usage
