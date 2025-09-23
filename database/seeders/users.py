@@ -3,9 +3,10 @@ from datetime import datetime
 
 import bcrypt
 
+from core.config import DEFAULT_USER_PREFERENCES
 from database.models import User, Role
 from .base import BaseSeeder
-from utils.roles import SystemRoles
+from utils.constants import SystemRoles
 
 
 class UserSeeder(BaseSeeder):
@@ -30,27 +31,47 @@ class UserSeeder(BaseSeeder):
             initial_users = [
                 {
                     "email": "admin@nids.local",
+                    "username": "admin",
                     "password": "Admin123!",  # Change in production!
+                    "first_name": "Jane",
+                    "last_name": "Doe",
                     "role_names": [SystemRoles.ADMIN.value],
-                    "name": "System Administrator",
+                    "department": "IT Security",
+                    "job_title": "Security Administrator",
+                    "timezone": "UTC",
                 },
                 {
                     "email": "manager@nids.local",
+                    "username": "manager",
                     "password": "Manager123!",
+                    "first_name": "Leo",
+                    "last_name": "Mario",
                     "role_names": [SystemRoles.MANAGER.value],
-                    "name": "Security Manager",
+                    "department": "IT Security",
+                    "job_title": "Security Manager",
+                    "timezone": "US/Eastern",
                 },
                 {
                     "email": "analyst@nids.local",
+                    "username": "analyst",
                     "password": "Analyst123!",
-                    "role_names": [SystemRoles.MANAGER.value],
-                    "name": "Security Analyst",
+                    "first_name": "Alice",
+                    "last_name": "Burns",
+                    "role_names": [SystemRoles.ANALYST.value],
+                    "department": "SOC",
+                    "job_title": "Security Analyst",
+                    "timezone": "US/Eastern",
                 },
                 {
                     "email": "viewer@nids.local",
+                    "username": "viewer",
                     "password": "Viewer123!",
+                    "first_name": "John",
+                    "last_name": "Doe",
                     "role_names": [SystemRoles.VIEWER.value],
-                    "name": "Security Viewer",
+                    "department": "IT Security",
+                    "job_title": "Security Viewer",
+                    "timezone": "Africa/Nairobi",
                 },
             ]
 
@@ -64,20 +85,30 @@ class UserSeeder(BaseSeeder):
                 # Hash password
                 password_hash = bcrypt.hashpw(user_data["password"].encode(), bcrypt.gensalt()).decode()
 
-                # Create user
+                # Get default preferences
+                default_prefs = DEFAULT_USER_PREFERENCES
+
+                # Create user with enhanced profile
                 user = User(
                     email=user_data["email"],
+                    username=user_data["username"],
+                    first_name=user_data["first_name"],
+                    last_name=user_data["last_name"],
+                    department=user_data["department"],
+                    job_title=user_data["job_title"],
+                    timezone=user_data["timezone"],
                     password_hash=password_hash,
-                    mfa_secret="",  # MFA can be set up later
+                    preferences=default_prefs,
+                    profile_completed=True,
                     is_active=True,
                     created_at=datetime.now(),
                 )
 
                 # Assign roles
                 for role_name in user_data["role_names"]:
-                    role = role_dict.get(role_name)
-                    if role:
-                        user.roles.append(role)
+                    role_obj = role_dict.get(role_name)
+                    if role_obj:
+                        user.roles.append(role_obj)
 
                 session.add(user)
                 users_created += 1
