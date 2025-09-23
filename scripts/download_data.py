@@ -44,17 +44,13 @@ def main():
         print("\nTroubleshooting checklist:")
         print("1. You have a Kaggle account and are logged in.")
         print("2. You have created an API token (kaggle.json).")
-        print(
-            "3. The kaggle.json file is placed in ~/.kaggle/ (Linux/WSL/Mac) or C:\\Users\\<username>\\.kaggle\\ (Windows)."
-        )
+        print("3. kaggle.json file is placed in ~/.kaggle/ (Linux/Mac) or C:\\Users\\<username>\\.kaggle\\ (Windows).")
         print("4. You have accepted the dataset rules on the Kaggle website.")
         print(f"   Visit: {DATASET_URL}")
         sys.exit(1)
 
     print(f"Preparing to download dataset: '{DATASET_NAME}'")
-    print(
-        "NOTE: This dataset is approximately 30 GB. The download may take a significant amount of time."
-    )
+    print("NOTE: This dataset is approximately 30 GB. The download may take a significant amount of time.")
     print(f"Files will be saved to: {TARGET_DIR.absolute()}")
     print("-" * 50)
 
@@ -63,9 +59,7 @@ def main():
     try:
         # Download the dataset with verbose output
         print("Initializing download...")
-        api.dataset_download_files(
-            dataset=DATASET_NAME, path=TARGET_DIR, unzip=True, quiet=False, force=False
-        )
+        api.dataset_download_files(dataset=DATASET_NAME, path=TARGET_DIR, unzip=True, quiet=False, force=False)
 
         # Calculate download time
         end_time = time.time()
