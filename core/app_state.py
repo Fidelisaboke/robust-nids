@@ -33,11 +33,6 @@ class AppState(metaclass=SingletonMeta):
             if key not in st.session_state:
                 st.session_state[key] = val
 
-    def initialize(self):
-        self._init_defaults()
-        if self.user is None:
-            self.user = {}
-
     @property
     def awaiting_mfa(self) -> bool:
         return bool(st.session_state.get(SessionKeys.AWAITING_MFA, False))
@@ -85,19 +80,19 @@ class AppState(metaclass=SingletonMeta):
 
     @property
     def show_backup_code_login(self) -> bool:
-        return bool(st.session_state.get(SessionKeys.SHOW_MFA_SETUP, False))
+        return bool(st.session_state.get(SessionKeys.SHOW_BACKUP_CODE_LOGIN, False))
 
     @show_backup_code_login.setter
     def show_backup_code_login(self, value: bool):
-        st.session_state[SessionKeys.SHOW_MFA_SETUP] = bool(value)
+        st.session_state[SessionKeys.SHOW_BACKUP_CODE_LOGIN] = bool(value)
 
     @property
     def show_backup_code_warning(self) -> bool:
-        return bool(st.session_state.get(SessionKeys.SHOW_MFA_SETUP, False))
+        return bool(st.session_state.get(SessionKeys.SHOW_BACKUP_CODE_WARNING, False))
 
     @show_backup_code_warning.setter
     def show_backup_code_warning(self, value: bool):
-        st.session_state[SessionKeys.SHOW_MFA_SETUP] = bool(value)
+        st.session_state[SessionKeys.SHOW_BACKUP_CODE_WARNING] = bool(value)
 
     @property
     def show_new_backup_codes(self) -> bool:

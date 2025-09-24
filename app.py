@@ -14,7 +14,6 @@ from ui.components.mfa_page import show_mfa_page
 
 # Initialise Streamlit app state
 app_state = AppState()
-app_state.initialize()
 
 # Main app settings
 st.set_page_config(
@@ -154,8 +153,6 @@ with st.sidebar:
 navigation.run()
 
 # Auto-refresh session activity every 30 seconds for long-running pages
-if time.time() - app_state.user["last_activity"] > 30:
+last_activity = app_state.user.get("last_activity")
+if last_activity and (time.time() - last_activity > 30):
     session_manager.refresh_session()
-    user = session_manager.get_user_info()
-    user["last_activity"] = time.time()
-    session_manager.app_state.user = user

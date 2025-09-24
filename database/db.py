@@ -11,11 +11,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from core.config import AppConfig, DatabaseConfig
+from core.singleton import SingletonMeta
 
 load_dotenv()
 
 
-class Database:
+class Database(metaclass=SingletonMeta):
     def __init__(self, config: DatabaseConfig = DatabaseConfig()) -> None:
         self.engine = create_engine(
             f"postgresql+psycopg://{config.USER}:{config.PASSWORD}@{config.HOST}:{config.PORT}/{config.NAME}",
