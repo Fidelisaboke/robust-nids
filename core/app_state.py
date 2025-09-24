@@ -137,5 +137,7 @@ class AppState(metaclass=SingletonMeta):
 
     def reset_all(self):
         for key in list(st.session_state.keys()):
+            if key is None:
+                continue
             del st.session_state[key]
         self._init_defaults()

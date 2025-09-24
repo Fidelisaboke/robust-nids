@@ -79,7 +79,6 @@ def _verify_mfa_code(session_manager: SessionManager, mfa_manager: MFAManager, c
             st.success("✅ Authentication successful")
             st.rerun()
         else:
-            mfa_manager.increment_attempts()
             remaining = mfa_manager.get_remaining_attempts()
             st.error(f"❌ Invalid code. {remaining} attempts remaining.")
 
