@@ -4,7 +4,7 @@ User Profile Page - Personal settings and preferences
 
 import streamlit as st
 
-from core.session import SessionManager
+from core.session_manager import SessionManager
 from ui.components.user_profile import show_mfa_settings
 
 session_manager = SessionManager()

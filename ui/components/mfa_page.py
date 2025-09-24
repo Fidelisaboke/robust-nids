@@ -1,7 +1,7 @@
 import streamlit as st
 
-from core.mfa import MFAManager
-from core.session import SessionManager
+from core.mfa_manager import MFAManager
+from core.session_manager import SessionManager
 
 # HTML template for MFA header
 MFA_HEADER_HTML = """
@@ -71,12 +71,11 @@ def _verify_mfa_code(session_manager: SessionManager, mfa_manager: MFAManager, c
     user_data = session_manager.get_pending_user()
     if not user_data:
         st.error("Session expired. Please login again.")
-        return
+        session_manager.clear_pending_auth()
+        st.rerun()
 
     try:
         if session_manager.verify_mfa(code):
-            session_manager.login_user(user_data)
-            session_manager.clear_pending_auth()
             st.success("✅ Authentication successful")
             st.rerun()
         else:

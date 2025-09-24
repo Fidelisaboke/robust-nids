@@ -6,10 +6,15 @@ import time
 
 import streamlit as st
 
-from core.mfa import MFAManager
-from core.session import SessionManager
-from ui.components.login import show_login_page, show_backup_code_warning
-from ui.components.mfa import show_mfa_page
+from core.app_state import AppState
+from core.mfa_manager import MFAManager
+from core.session_manager import SessionManager
+from ui.components.login_page import show_login_page, show_backup_code_warning
+from ui.components.mfa_page import show_mfa_page
+
+# Initialise Streamlit app state
+app_state = AppState()
+app_state.initialize()
 
 # Main app settings
 st.set_page_config(
@@ -19,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Initialize session and MFA managers
+# Initialise session, and MFA managers
 session_manager = SessionManager()
 mfa_manager = MFAManager(session_manager.config)
 
@@ -48,7 +53,7 @@ if not session_manager.is_session_valid:
     st.stop()
 
 # Show backup code warning (if used backup code for MFA)
-if st.session_state.get("show_backup_code_warning"):
+if app_state.show_backup_code_warning:
     show_backup_code_warning(session_manager)
     st.stop()
 
@@ -148,11 +153,9 @@ with st.sidebar:
 # Run the navigation
 navigation.run()
 
-# Add session keep-alive for long-running operations
-if "last_activity_check" not in st.session_state:
-    st.session_state.last_activity_check = time.time()
-
 # Auto-refresh session activity every 30 seconds for long-running pages
-if time.time() - st.session_state.last_activity_check > 30:
+if time.time() - app_state.user["last_activity"] > 30:
     session_manager.refresh_session()
-    st.session_state.last_activity_check = time.time()
+    user = session_manager.get_user_info()
+    user["last_activity"] = time.time()
+    session_manager.app_state.user = user

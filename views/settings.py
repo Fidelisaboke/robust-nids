@@ -8,7 +8,7 @@ import pandas as pd
 from datetime import datetime
 
 from services.auth import AuthService
-from core.session import SessionManager
+from core.session_manager import SessionManager
 
 session_manager = SessionManager()
 

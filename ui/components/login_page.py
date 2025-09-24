@@ -1,8 +1,11 @@
 import streamlit as st
 
-from core.mfa import MFAManager
-from core.session import SessionManager
+from core.app_state import AppState
+from core.mfa_manager import MFAManager
+from core.session_manager import SessionManager
 from services.auth import AuthService
+
+app_state = AppState()
 
 
 def show_login_page(session_manager: SessionManager, mfa_manager: MFAManager):
@@ -58,11 +61,11 @@ def show_login_page(session_manager: SessionManager, mfa_manager: MFAManager):
     with st.expander("🔑 Lost Access to Your Authenticator?"):
         st.write("If you don't have access to your authenticator app, you can use a backup code.")
         if st.button("Use Backup Code Instead", key="use_backup_code"):
-            st.session_state.show_backup_code_login = True
+            app_state.show_backup_code_login = True
             st.rerun()
 
     # Show backup code login if requested
-    if st.session_state.get("show_backup_code_login"):
+    if app_state.show_backup_code_login:
         show_backup_code_login(session_manager)
         return
 
@@ -112,8 +115,7 @@ def _handle_login_attempt(session_manager: SessionManager, mfa_manager: MFAManag
         else:
             session_manager.login_user(user_data)
             st.success("✅ Login successful")
-
-        st.rerun()
+            st.rerun()
 
     except Exception as e:
         st.error(f"🚫 Authentication error: {str(e)}")
@@ -135,7 +137,7 @@ def show_backup_code_login(session_manager: SessionManager):
                 st.rerun()
 
     if st.button("← Back to Regular Login"):
-        st.session_state.show_backup_code_login = False
+        app_state.show_backup_code_login = False
         st.rerun()
 
 
@@ -157,7 +159,7 @@ def authenticate_with_backup_code(email: str, backup_code: str, session_manager:
 
         # Show important warning if backup code was used
         if user_data.get("used_backup_code"):
-            st.session_state.show_backup_code_warning = True
+            app_state.show_backup_code_warning = True
 
         return True
 
@@ -190,29 +192,29 @@ def show_backup_code_warning(session_manager: SessionManager):
         if st.button("🔄 Generate New Backup Codes", type="primary", use_container_width=True):
             result = AuthService.generate_new_backup_codes(session_manager.get_user_id())
             if result["success"]:
-                st.session_state.backup_codes = result["backup_codes"]
-                st.session_state.show_new_backup_codes = True
+                app_state.backup_codes = result["backup_codes"]
+                app_state.show_new_backup_codes = True
                 st.rerun()
 
     with col2:
         if st.button("Configure New MFA Device", use_container_width=True):
-            st.session_state.show_mfa_setup = True
-            st.session_state.mfa_setup_complete = False
+            app_state.show_mfa_setup = True
+            app_state.mfa_setup_complete = False
             st.rerun()
 
     # Show new backup codes if generated
-    if st.session_state.get("show_new_backup_codes"):
+    if app_state.show_new_backup_codes:
         show_new_backup_codes()
 
     st.markdown("---")
     if st.button("⚠️ Acknowledge and Continue", type="secondary"):
-        del st.session_state.show_backup_code_warning
+        app_state.show_backup_code_warning = False
         st.rerun()
 
 
 def show_new_backup_codes():
     """Display new backup codes one-time with secure copy options"""
-    backup_codes = st.session_state.get("backup_codes", [])
+    backup_codes = app_state.backup_codes
 
     with st.container(border=True):
         st.warning(
@@ -244,9 +246,9 @@ def show_new_backup_codes():
             # One-time view confirmation
             if st.button("✅ I Have Saved My Codes", type="primary", use_container_width=True):
                 # Clear backup codes from session
-                del st.session_state["backup_codes"]
-                del st.session_state["show_new_backup_codes"]
-                del st.session_state["show_backup_code_warning"]
+                app_state.backup_codes = None
+                app_state.show_new_backup_codes = False
+                app_state.show_backup_code_warning = False
                 st.rerun()
 
         # Security reminders

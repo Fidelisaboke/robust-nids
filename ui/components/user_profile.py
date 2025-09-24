@@ -6,7 +6,7 @@ import qrcode
 import streamlit as st
 
 from core.config import SessionKeys
-from core.session import SessionManager
+from core.session_manager import SessionManager
 from services.auth import AuthService
 
 session_manager = SessionManager()
