@@ -5,68 +5,67 @@ import pyotp
 import qrcode
 import streamlit as st
 
-from core.config import SessionKeys
-from core.session_manager import SessionManager
-from services.auth import AuthService
-
-session_manager = SessionManager()
+from core.instances import auth_service, session_manager, app_state
 
 
 def show_mfa_settings():
     """MFA configuration component"""
     st.markdown("#### Multi-Factor Authentication")
 
-    # Initialize session state variables
-    if SessionKeys.MFA_ENABLED not in st.session_state:
-        # Get current MFA status from database
-        user_id = session_manager.get_user_id()
-        if user_id:
-            user = AuthService.get_user_by_id(user_id)
-            st.session_state.mfa_enabled = user.mfa_enabled if user else False
-        else:
-            st.session_state.mfa_enabled = False
+    # Obtain the User ID
+    user_id = session_manager.get_user_id()
 
-    if SessionKeys.MFA_SETUP_COMPLETE not in st.session_state:
-        st.session_state.mfa_setup_complete = False
+    # Determine initial mfa_enabled from database if not stored
+    if app_state.user.get("mfa_enabled") is None:
+        if user_id:
+            user = auth_service.get_user_by_id(user_id)
+            app_state.user = {**app_state.user, "mfa_enabled": bool(user.mfa_enabled)}
+        else:
+            app_state.user = {**app_state.user, "mfa_enabled": False}
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
         mfa_enabled = st.checkbox(
             "Enable Multi-Factor Authentication",
-            value=st.session_state.mfa_enabled,
+            value=app_state.user.get("mfa_enabled", False),
             help="Add an extra layer of security to your account",
         )
 
-        if mfa_enabled != st.session_state.mfa_enabled:
-            st.session_state.mfa_enabled = mfa_enabled
+        if mfa_enabled != app_state.user.get("mfa_enabled", False):
+            # Update user dict immutably
+            user = dict(app_state.user)
+            user["mfa_enabled"] = mfa_enabled
+            app_state.user = user
+
             if mfa_enabled:
-                st.session_state.show_mfa_setup = True
-                st.rerun()
+                app_state.show_mfa_setup = True
             else:
-                # Show TOTP verification before disabling MFA
-                st.session_state.verify_disable_mfa = True
-                st.rerun()
-
-    with col2:
-        if st.session_state.mfa_enabled and not st.session_state.get("mfa_setup_complete", False):
-            if st.button("Configure MFA"):
-                st.session_state.show_mfa_setup = True
-                st.rerun()
-
-    # Show current MFA status
-    if st.session_state.get("mfa_setup_complete", False):
-        st.success("✅ MFA is configured and active")
-        if st.button("Reconfigure MFA"):
-            st.session_state.mfa_setup_complete = False
-            st.session_state.show_mfa_setup = True
+                app_state.verify_disable_mfa = True
             st.rerun()
 
-    if st.session_state.get("show_mfa_setup", False):
+    with col2:
+        if app_state.user.get("mfa_enabled", False) and not app_state.user.get("mfa_setup_complete", False):
+            if st.button("Configure MFA"):
+                app_state.show_mfa_setup = True
+                st.rerun()
+
+    # Show status if setup complete
+    if app_state.user.get("mfa_setup_complete", False):
+        st.success("✅ MFA is configured and active")
+        if st.button("Reconfigure MFA"):
+            user = dict(app_state.user)
+            user["mfa_setup_complete"] = False
+            app_state.user = user
+            app_state.show_mfa_setup = True
+            st.rerun()
+
+    # Show setup wizard if requested
+    if app_state.show_mfa_setup:
         show_mfa_setup_wizard()
 
-    # Show TOTP verification for disabling MFA
-    if st.session_state.get("verify_disable_mfa", False):
+    # Show disable verification if requested
+    if app_state.verify_disable_mfa:
         show_disable_mfa_verification()
 
 
@@ -98,20 +97,18 @@ def setup_totp_authentication():
             return
 
         # Get user from database
-        user = AuthService.get_user_by_id(user_id)
+        user = auth_service.get_user_by_id(user_id)
         if not user:
             st.error("User not found")
             return
 
-        # Generate or retrieve MFA secret
-        if "temp_mfa_secret" not in st.session_state or st.session_state.temp_mfa_secret is None:
+        if app_state.temp_mfa_secret is None:
             if user.mfa_secret:
-                st.session_state.temp_mfa_secret = user.mfa_secret
+                app_state.temp_mfa_secret = user.mfa_secret
             else:
-                # Generate new secret
-                st.session_state.temp_mfa_secret = pyotp.random_base32()
+                app_state.temp_mfa_secret = pyotp.random_base32()
 
-        mfa_secret = st.session_state.temp_mfa_secret
+        mfa_secret = app_state.temp_mfa_secret
 
         # Generate TOTP URI and QR code
         totp = pyotp.TOTP(mfa_secret)
@@ -119,7 +116,7 @@ def setup_totp_authentication():
         totp_uri = totp.provisioning_uri(name=user.email, issuer_name=issuer_name)
 
         # Show backup codes if TOTP setup was completed
-        if st.session_state.get("show_backup_codes"):
+        if app_state.show_backup_codes:
             show_backup_codes()
             return
 
@@ -159,7 +156,7 @@ def setup_totp_authentication():
 
             with col2:
                 if st.button("Cancel Setup"):
-                    st.session_state.show_mfa_setup = False
+                    app_state.show_mfa_setup = False
                     st.rerun()
 
     except Exception as e:
@@ -176,14 +173,14 @@ def verify_totp_setup(secret: str, code: str, user_id: int):
         totp = pyotp.TOTP(secret)
         if totp.verify(code):
             # Enable MFA in database
-            result = AuthService.enable_mfa(secret, user_id, "totp")
+            result = auth_service.enable_mfa(secret, user_id, "totp")
             if result["success"]:
                 # Store backup codes in session for one-time display
-                st.session_state["backup_codes"] = result["backup_codes"]
-                st.session_state["show_backup_codes"] = True
+                app_state.backup_codes = result["backup_codes"]
+                app_state.show_backup_codes = True
                 st.rerun()
             else:
-                st.error(f"Failed to enable MFA: {result["message"]}")
+                st.error(f"Failed to enable MFA: {result['message']}")
         else:
             st.error("Invalid verification code. Please try again.")
     except Exception as e:
@@ -192,10 +189,10 @@ def verify_totp_setup(secret: str, code: str, user_id: int):
 
 def show_backup_codes():
     """Display backup codes one-time with secure copy options"""
-    if not st.session_state.get("show_backup_codes"):
+    if not app_state.show_backup_codes:
         return
 
-    backup_codes = st.session_state.get("backup_codes", [])
+    backup_codes = app_state.backup_codes or []
 
     st.success("🎉 MFA Setup Complete!")
 
@@ -244,11 +241,13 @@ def show_backup_codes():
             # One-time view confirmation
             if st.button("✅ I Have Saved My Codes", type="primary", use_container_width=True):
                 # Clear backup codes from session
-                del st.session_state["backup_codes"]
-                del st.session_state["show_backup_codes"]
-                st.session_state.show_mfa_setup = False
-                st.session_state.mfa_setup_complete = True
-                st.session_state.mfa_enabled = True
+                app_state.backup_codes = None
+                app_state.show_backup_codes = False
+                app_state.show_mfa_setup = False
+                user = dict(app_state.user)
+                user["mfa_setup_complete"] = True
+                user["mfa_enabled"] = True
+                app_state.user = user
                 st.rerun()
 
         # Security reminders
@@ -281,32 +280,25 @@ def show_disable_mfa_verification():
     with col1:
         totp_code = st.text_input("Enter TOTP Code:", placeholder="6-digit code", max_chars=6, key="disable_mfa_totp")
 
-        verify_col1, verify_col2 = st.columns(2)
-
-        with verify_col1:
-            if st.button("✅ Confirm Disable", type="primary", use_container_width=True):
-                if verify_disable_mfa(totp_code):
-                    st.success("MFA has been disabled")
-                    st.session_state.mfa_setup_complete = False
-                    st.session_state.verify_disable_mfa = False
-                    st.rerun()
-
-        with verify_col2:
-            if st.button("❌ Cancel", use_container_width=True):
-                # Revert the checkbox state
-                st.session_state.mfa_enabled = True
-                st.session_state.verify_disable_mfa = False
+        if st.button("✅ Confirm Disable", type="primary", use_container_width=True):
+            if verify_disable_mfa(totp_code):
+                st.success("MFA has been disabled")
+                app_state.show_mfa_setup = False
+                app_state.verify_disable_mfa = False
+                user = dict(app_state.user)
+                user["mfa_enabled"] = False
+                user["mfa_setup_complete"] = False
+                app_state.user = user
                 st.rerun()
 
     with col2:
-        st.info(
-            """
-        **Why this verification is required:**
-        - Prevents unauthorized MFA disabling
-        - Ensures you have access to your authenticator app
-        - Protects your account security
-        """
-        )
+        if st.button("❌ Cancel", use_container_width=True):
+            # Revert the checkbox state
+            user = dict(app_state.user)
+            user["mfa_enabled"] = True
+            app_state.user = user
+            app_state.verify_disable_mfa = False
+            st.rerun()
 
 
 def verify_disable_mfa(totp_code: str) -> bool:
@@ -322,7 +314,7 @@ def verify_disable_mfa(totp_code: str) -> bool:
             return False
 
         # Get user's MFA secret
-        user = AuthService.get_user_by_id(user_id)
+        user = auth_service.get_user_by_id(user_id)
         if not user or not user.mfa_secret:
             st.error("MFA not configured for this user")
             return False
@@ -331,7 +323,11 @@ def verify_disable_mfa(totp_code: str) -> bool:
         totp = pyotp.TOTP(user.mfa_secret)
         if totp.verify(totp_code):
             # TOTP verified, now disable MFA
-            if disable_mfa():
+            if auth_service.disable_mfa(user_id):
+                # Clear MFA state via AppState
+                app_state.temp_mfa_secret = None
+                app_state.backup_codes = None
+                app_state.show_backup_codes = False
                 return True
             else:
                 st.error("Failed to disable MFA")
@@ -342,23 +338,6 @@ def verify_disable_mfa(totp_code: str) -> bool:
 
     except Exception as e:
         st.error(f"Verification error: {str(e)}")
-        return False
-
-
-def disable_mfa() -> bool:
-    """Disable MFA for current user after verification."""
-    try:
-        user_id = session_manager.get_user_id()
-        if user_id and AuthService.disable_mfa(user_id):
-            # Clear session state
-            session_keys_to_clear = ["temp_mfa_secret", "backup_codes", "show_backup_codes"]
-            for key in session_keys_to_clear:
-                if key in st.session_state:
-                    del st.session_state[key]
-            return True
-        return False
-    except Exception as e:
-        st.error(f"Error disabling MFA: {str(e)}")
         return False
 
 

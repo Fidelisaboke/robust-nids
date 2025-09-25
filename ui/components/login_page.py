@@ -1,14 +1,9 @@
 import streamlit as st
 
-from core.app_state import AppState
-from core.mfa_manager import MFAManager
-from core.session_manager import SessionManager
-from services.auth import AuthService
-
-app_state = AppState()
+from core.instances import app_state, auth_service, session_manager, mfa_manager
 
 
-def show_login_page(session_manager: SessionManager, mfa_manager: MFAManager):
+def show_login_page():
     """Display the complete login page with security notices and form."""
     # Security header
     st.markdown(
@@ -55,7 +50,7 @@ def show_login_page(session_manager: SessionManager, mfa_manager: MFAManager):
 
         # Login button
         if st.form_submit_button("🔓 Access System", use_container_width=True, type="primary"):
-            _handle_login_attempt(session_manager, mfa_manager, email, password)
+            _handle_login_attempt(email, password)
 
     st.markdown("---")
     with st.expander("🔑 Lost Access to Your Authenticator?"):
@@ -66,7 +61,7 @@ def show_login_page(session_manager: SessionManager, mfa_manager: MFAManager):
 
     # Show backup code login if requested
     if app_state.show_backup_code_login:
-        show_backup_code_login(session_manager)
+        show_backup_code_login()
         return
 
     # Security footer
@@ -92,7 +87,7 @@ def show_login_page(session_manager: SessionManager, mfa_manager: MFAManager):
     )
 
 
-def _handle_login_attempt(session_manager: SessionManager, mfa_manager: MFAManager, email: str, password: str):
+def _handle_login_attempt(email: str, password: str):
     """Process login attempt and handle authentication flow."""
     # Basic validation
     if not email or not password:
@@ -100,10 +95,7 @@ def _handle_login_attempt(session_manager: SessionManager, mfa_manager: MFAManag
         return
 
     try:
-        # Authentication attempt
-        auth_service = session_manager.auth_service
         user_data, error = auth_service.authenticate(email, password)
-
         if error:
             st.error(f"🚫 {error}")
             return
@@ -121,7 +113,7 @@ def _handle_login_attempt(session_manager: SessionManager, mfa_manager: MFAManag
         st.error(f"🚫 Authentication error: {str(e)}")
 
 
-def show_backup_code_login(session_manager: SessionManager):
+def show_backup_code_login():
     """Backup code login flow"""
     st.subheader("🔑 Login with Backup Code")
 
@@ -132,7 +124,7 @@ def show_backup_code_login(session_manager: SessionManager):
         )
 
         if st.form_submit_button("Login with Backup Code", type="primary"):
-            if authenticate_with_backup_code(email, backup_code, session_manager):
+            if authenticate_with_backup_code(email, backup_code):
                 st.success("Login successful!")
                 st.rerun()
 
@@ -141,20 +133,18 @@ def show_backup_code_login(session_manager: SessionManager):
         st.rerun()
 
 
-def authenticate_with_backup_code(email: str, backup_code: str, session_manager: SessionManager) -> bool:
+def authenticate_with_backup_code(email: str, backup_code: str) -> bool:
     """Handle backup code authentication"""
     if not email or not backup_code:
         st.error("Please enter both email and backup code")
         return False
 
     try:
-        user_data, error = AuthService.authenticate_with_backup_code(email, backup_code)
+        user_data, error = auth_service.authenticate_with_backup_code(email, backup_code)
 
         if error:
             st.error(f"🚫 {error}")
             return False
-
-        # Login user
         session_manager.login_user(user_data)
 
         # Show important warning if backup code was used
@@ -168,7 +158,7 @@ def authenticate_with_backup_code(email: str, backup_code: str, session_manager:
         return False
 
 
-def show_backup_code_warning(session_manager: SessionManager):
+def show_backup_code_warning():
     """Warning shown after logging in with backup code"""
     st.warning("🚨 IMPORTANT SECURITY NOTICE")
     st.title("Backup Code Used")
@@ -190,7 +180,7 @@ def show_backup_code_warning(session_manager: SessionManager):
 
     with col1:
         if st.button("🔄 Generate New Backup Codes", type="primary", use_container_width=True):
-            result = AuthService.generate_new_backup_codes(session_manager.get_user_id())
+            result = auth_service.generate_new_backup_codes(session_manager.get_user_id())
             if result["success"]:
                 app_state.backup_codes = result["backup_codes"]
                 app_state.show_new_backup_codes = True

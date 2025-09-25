@@ -95,6 +95,14 @@ class AppState(metaclass=SingletonMeta):
         st.session_state[SessionKeys.SHOW_BACKUP_CODE_WARNING] = bool(value)
 
     @property
+    def show_mfa_setup(self) -> bool:
+        return bool(st.session_state.get(SessionKeys.SHOW_MFA_SETUP, False))
+
+    @show_mfa_setup.setter
+    def show_mfa_setup(self, value: bool):
+        st.session_state[SessionKeys.SHOW_MFA_SETUP] = bool(value)
+
+    @property
     def show_new_backup_codes(self) -> bool:
         return bool(st.session_state.get(SessionKeys.SHOW_NEW_BACKUP_CODES, False))
 
@@ -112,6 +120,13 @@ class AppState(metaclass=SingletonMeta):
 
     @property
     def user(self) -> dict:
+        """
+        User property stored in the app state.
+
+        Note: When updating this dict, copy it using
+        `dict(self.app_state.user)`, perform the update,
+        then set the user back to the `self.app_state.user`.
+        """
         return st.session_state.get(SessionKeys.USER) or {}
 
     @user.setter

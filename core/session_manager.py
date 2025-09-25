@@ -3,10 +3,10 @@ from typing import Dict, Any, Optional
 
 import streamlit as st
 
-from core.app_state import AppState
+
 from core.config import AuthConfig
 from core.singleton import SingletonMeta
-from services.auth import AuthService
+from core.instances import app_state, auth_service
 
 
 class SessionManager(metaclass=SingletonMeta):
@@ -14,8 +14,8 @@ class SessionManager(metaclass=SingletonMeta):
 
     def __init__(self, config: AuthConfig = AuthConfig()):
         self.config = config
-        self.auth_service = AuthService()
-        self.app_state = AppState()
+        self.auth_service = auth_service
+        self.app_state = app_state
 
     @staticmethod
     def _get_default_user() -> dict:
@@ -39,6 +39,7 @@ class SessionManager(metaclass=SingletonMeta):
             "preferences": {},
             # MFA Status
             "mfa_enabled": False,
+            "mfa_setup_complete": False,
             "mfa_method": None,
             "profile_complete": False,
         }
@@ -94,7 +95,7 @@ class SessionManager(metaclass=SingletonMeta):
         """Comprehensive session validation."""
         user = dict(self.app_state.user)
 
-        if not user["id"] or not user["login_time"]:
+        if not user.get("id") or not user.get("login_time"):
             return False
 
         return not self._is_session_expired(user)

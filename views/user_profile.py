@@ -4,11 +4,8 @@ User Profile Page - Personal settings and preferences
 
 import streamlit as st
 
-from core.session_manager import SessionManager
+from core.instances import session_manager, auth_service
 from ui.components.user_profile import show_mfa_settings
-
-session_manager = SessionManager()
-auth_service = session_manager.auth_service
 
 
 def show():
@@ -243,9 +240,7 @@ def get_timezone_index(current_tz):
 def update_user_profile(user_id: int, update_data: dict) -> bool:
     """Update user profile in database"""
     try:
-        from services.auth import AuthService
-
-        return AuthService.update_user_profile(user_id, update_data)
+        return auth_service.update_user_profile(user_id, update_data)
     except Exception as e:
         st.error(f"Error updating profile: {str(e)}")
         return False
