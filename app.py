@@ -8,7 +8,6 @@ import streamlit as st
 
 from core.instances import app_state, session_manager
 from ui.components.login_page import show_backup_code_warning, show_login_page
-from ui.components.mfa_page import show_mfa_page
 
 st.set_page_config(
     page_title="NIDS Security Dashboard",
@@ -32,13 +31,8 @@ footer {visibility: hidden}
 if not session_manager.is_session_valid:
     st.markdown(HIDE_SIDEBAR_CSS, unsafe_allow_html=True)
 
-    # Check for pending MFA verification
-    if session_manager.is_awaiting_mfa():
-        st.title("Two-Factor Authentication Required")
-        show_mfa_page()
-    else:
-        st.title("Please log in to access the NIDS Security Dashboard")
-        show_login_page()
+    st.title("Please log in to access the NIDS Security Dashboard")
+    show_login_page()
 
     st.stop()
 

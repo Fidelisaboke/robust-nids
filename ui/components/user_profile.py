@@ -5,63 +5,91 @@ import pyotp
 import qrcode
 import streamlit as st
 
-from core.instances import session_manager, auth_service, app_state
+from core.instances import app_state, auth_service, session_manager
+from ui.components.totp_dialog import show_totp_dialog
 
 
 def show_mfa_settings():
     """MFA configuration component"""
     st.markdown("#### Multi-Factor Authentication")
 
-    # Obtain the User ID
     user_id = session_manager.get_user_id()
+    if not user_id:
+        st.error("User not authenticated")
+        return
 
-    # Determine initial mfa_enabled from database if not stored
-    if app_state.user.get("mfa_enabled") is None:
-        if user_id:
-            user = auth_service.get_user_by_id(user_id)
-            app_state.user = {**app_state.user, "mfa_enabled": bool(user.mfa_enabled)}
-        else:
-            app_state.user = {**app_state.user, "mfa_enabled": False}
+    # Single source of truth from database
+    db_user = auth_service.get_user_by_id(user_id)
+    if not db_user:
+        st.error("User not found")
+        return
+
+    db_mfa_enabled = bool(db_user.mfa_enabled)
+    db_mfa_setup_complete = getattr(db_user, "mfa_setup_complete", db_mfa_enabled)
+
+    # Update app_state to match database
+    user = dict(app_state.user)
+    user.update({"mfa_enabled": db_mfa_enabled, "mfa_setup_complete": db_mfa_setup_complete})
+    app_state.user = user
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
+        # Display checkbox that reflects current state
         mfa_enabled = st.checkbox(
             "Enable Multi-Factor Authentication",
-            value=app_state.user.get("mfa_enabled", False),
+            value=db_mfa_enabled,
             help="Add an extra layer of security to your account",
         )
 
-        if mfa_enabled != app_state.user.get("mfa_enabled", False):
-            # Update user dict immutably
-            user = dict(app_state.user)
-            user["mfa_enabled"] = mfa_enabled
-            app_state.user = user
+        # Use a session state to track if toggle action has been handled
+        if "mfa_toggle_handled" not in st.session_state:
+            st.session_state.mfa_toggle_handled = False
+
+        # Only handle the toggle if the values differ and it hasn't been handled it yet
+        if mfa_enabled != db_mfa_enabled and not st.session_state.mfa_toggle_handled:
+            st.session_state.mfa_toggle_handled = True
 
             if mfa_enabled:
-                app_state.show_mfa_setup = True
+                # Starting MFA setup
+                if not db_mfa_setup_complete:
+                    app_state.show_mfa_setup = True
+                    app_state.verify_disable_mfa = False
+                else:
+                    # MFA was already setup, just enable it in database
+                    auth_service.enable_mfa(db_user.mfa_secret, user_id, "totp")
             else:
-                app_state.verify_disable_mfa = True
+                # Disabling MFA
+                app_state.show_mfa_setup = False
+                if db_mfa_setup_complete:
+                    app_state.verify_disable_mfa = True
+                else:
+                    # Immediately disable if never properly setup
+                    auth_service.disable_mfa(user_id)
+
             st.rerun()
+        elif mfa_enabled == db_mfa_enabled:
+            # Reset the handled flag when states are in sync
+            st.session_state.mfa_toggle_handled = False
 
     with col2:
-        if app_state.user.get("mfa_enabled", False) and not app_state.user.get("mfa_setup_complete", False):
+        if db_mfa_enabled and db_mfa_setup_complete:
             if st.button("Configure MFA"):
                 app_state.show_mfa_setup = True
                 st.rerun()
 
     # Show status if setup complete
-    if app_state.user.get("mfa_setup_complete", False):
+    if db_mfa_enabled and db_mfa_setup_complete:
         st.success("✅ MFA is configured and active")
         if st.button("Reconfigure MFA"):
-            user = dict(app_state.user)
-            user["mfa_setup_complete"] = False
-            app_state.user = user
+            # Disable MFA first when reconfiguring
+            auth_service.disable_mfa(user_id)
             app_state.show_mfa_setup = True
+            app_state.temp_mfa_secret = None
             st.rerun()
 
     # Show setup wizard if requested
-    if app_state.show_mfa_setup:
+    if app_state.show_mfa_setup and (db_mfa_enabled or mfa_enabled):
         show_mfa_setup_wizard()
 
     # Show disable verification if requested
@@ -239,14 +267,16 @@ def show_backup_codes():
 
         with col2:
             # One-time view confirmation
-            if st.button("✅ I Have Saved My Codes", type="primary", use_container_width=True):
+            if st.button(
+                "✅ I Have Saved My Codes", type="primary", use_container_width=True, key="backup_codes_saved_btn"
+            ):
                 # Clear backup codes from session
                 app_state.backup_codes = None
                 app_state.show_backup_codes = False
                 app_state.show_mfa_setup = False
                 user = dict(app_state.user)
                 user["mfa_setup_complete"] = True
-                user["mfa_enabled"] = True
+                user["mfa_enabled"] = True  # Set enabled only after setup complete
                 app_state.user = user
                 st.rerun()
 
@@ -275,30 +305,45 @@ def show_disable_mfa_verification():
     """
     )
 
-    col1, col2 = st.columns([1, 2])
+    def verify_func(code):
+        user_id = session_manager.get_user_id()
+        user = auth_service.get_user_by_id(user_id)
+        if not user or not user.mfa_secret:
+            return False
+        totp = pyotp.TOTP(user.mfa_secret)
+        return totp.verify(code)
 
-    with col1:
-        totp_code = st.text_input("Enter TOTP Code:", placeholder="6-digit code", max_chars=6, key="disable_mfa_totp")
-
-        if st.button("✅ Confirm Disable", type="primary", use_container_width=True):
-            if verify_disable_mfa(totp_code):
-                st.success("MFA has been disabled")
-                app_state.show_mfa_setup = False
-                app_state.verify_disable_mfa = False
-                user = dict(app_state.user)
-                user["mfa_enabled"] = False
-                user["mfa_setup_complete"] = False
-                app_state.user = user
-                st.rerun()
-
-    with col2:
-        if st.button("❌ Cancel", use_container_width=True):
-            # Revert the checkbox state
-            user = dict(app_state.user)
-            user["mfa_enabled"] = True
-            app_state.user = user
+    def on_success(code):
+        user_id = session_manager.get_user_id()
+        if auth_service.disable_mfa(user_id):
+            app_state.temp_mfa_secret = None
+            app_state.backup_codes = None
+            app_state.show_backup_codes = False
+            app_state.show_mfa_setup = False
             app_state.verify_disable_mfa = False
+            user = dict(app_state.user)
+            user["mfa_enabled"] = False
+            user["mfa_setup_complete"] = False
+            app_state.user = user
+            st.success("MFA has been disabled")
             st.rerun()
+        else:
+            st.error("Failed to disable MFA")
+
+    def on_cancel():
+        user = dict(app_state.user)
+        user["mfa_enabled"] = True
+        app_state.user = user
+        app_state.verify_disable_mfa = False
+        st.rerun()
+
+    show_totp_dialog(
+        prompt="Enter TOTP Code:",
+        verify_func=verify_func,
+        on_success=on_success,
+        on_cancel=on_cancel,
+        key_prefix="disable_totp",
+    )
 
 
 def verify_disable_mfa(totp_code: str) -> bool:

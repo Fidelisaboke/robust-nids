@@ -215,7 +215,8 @@ class AuthService(metaclass=SingletonMeta):
             logger.info(f"User {user_id} forcibly logged out from {count} sessions.")
             return count
 
-    def get_default_preferences(self) -> Dict:
+    @staticmethod
+    def get_default_preferences() -> Dict:
         """Return default user preferences."""
         return DEFAULT_USER_PREFERENCES
 
@@ -269,7 +270,8 @@ class AuthService(metaclass=SingletonMeta):
             logger.info(f"Preferences updated for user {user_id}.")
             return True
 
-    def generate_mfa_setup(self, user: User) -> dict:
+    @staticmethod
+    def generate_mfa_setup(user: User) -> dict:
         """Generate MFA setup after enabling MFA."""
         if not user.mfa_secret:
             user.mfa_secret = pyotp.random_base32()

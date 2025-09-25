@@ -1,10 +1,7 @@
 import streamlit as st
 
-from core.instances import app_state, auth_service, session_manager
-from core.mfa_manager import MFAManager
-
-# Instantiate mfa_manager using session_manager.config
-mfa_manager = MFAManager(session_manager.config)
+from core.instances import app_state, auth_service, mfa_manager, session_manager
+from ui.components.totp_dialog import show_totp_dialog
 
 
 def show_login_page():
@@ -59,7 +56,7 @@ def show_login_page():
     st.markdown("---")
     with st.expander("🔑 Lost Access to Your Authenticator?"):
         st.write("If you don't have access to your authenticator app, you can use a backup code.")
-        if st.button("Use Backup Code Instead", key="use_backup_code"):
+        if st.button("Use Backup Code Instead", key="use_backup_code_btn"):
             app_state.show_backup_code_login = True
             st.rerun()
 
@@ -105,10 +102,20 @@ def _handle_login_attempt(email: str, password: str):
             return
 
         user_data = result["user"]
-        # Handle MFA verification
         user = auth_service.get_user_by_id(user_data["id"])
         if mfa_manager.should_prompt_mfa(user):
             mfa_manager.store_pending_auth(user_data)
+
+            def verify_func(code):
+                return session_manager.verify_mfa(code)
+
+            show_totp_dialog(
+                prompt="Enter your TOTP code to complete login",
+                verify_func=verify_func,
+                on_success=lambda code: st.success("✅ Login successful") or st.rerun(),
+                on_cancel=lambda: st.warning("Login cancelled") or st.rerun(),
+                key_prefix="login_totp",
+            )
         else:
             session_manager.login_user(user_data)
             st.success("✅ Login successful")
@@ -123,12 +130,15 @@ def show_backup_code_login():
     st.subheader("🔑 Login with Backup Code")
 
     with st.form("backup_code_login"):
-        email = st.text_input("Email Address", placeholder="your@email.com")
+        email = st.text_input("Email Address", placeholder="your@email.com", key="backup_email_input")
         backup_code = st.text_input(
-            "Backup Code", placeholder="8-character backup code", help="Enter one of your backup codes (case-sensitive)"
+            "Backup Code",
+            placeholder="8-character backup code",
+            help="Enter one of your backup codes (case-sensitive)",
+            key="backup_code_input",
         )
 
-        if st.form_submit_button("Login with Backup Code", type="primary"):
+        if st.form_submit_button("Login with Backup Code", type="primary", key="backup_login_btn"):
             if authenticate_with_backup_code(email, backup_code):
                 st.success("Login successful!")
                 st.rerun()
@@ -194,7 +204,6 @@ def show_backup_code_warning():
     with col2:
         if st.button("Configure New MFA Device", use_container_width=True):
             app_state.show_mfa_setup = True
-            app_state.mfa_setup_complete = False
             st.rerun()
 
     # Show new backup codes if generated
@@ -202,7 +211,7 @@ def show_backup_code_warning():
         show_new_backup_codes()
 
     st.markdown("---")
-    if st.button("⚠️ Acknowledge and Continue", type="secondary"):
+    if st.button("⚠️ Acknowledge and Continue", type="secondary", key="acknowledge_backup_btn"):
         app_state.show_backup_code_warning = False
         st.rerun()
 
@@ -235,6 +244,7 @@ def show_new_backup_codes():
                 file_name="nids_backup_codes.txt",
                 mime="text/plain",
                 help="Download encrypted backup codes for secure storage",
+                key="download_backup_codes_btn",
             )
 
         with col2:
