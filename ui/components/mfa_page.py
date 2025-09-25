@@ -1,7 +1,6 @@
 import streamlit as st
 
-from core.mfa_manager import MFAManager
-from core.session_manager import SessionManager
+from core.instances import mfa_manager, session_manager
 
 # HTML template for MFA header
 MFA_HEADER_HTML = """
@@ -19,7 +18,7 @@ MFA_HEADER_HTML = """
 """
 
 
-def show_mfa_page(session_manager: SessionManager, mfa_manager: MFAManager):
+def show_mfa_page():
     """Display the MFA verification page."""
     # MFA header
     st.markdown(MFA_HEADER_HTML, unsafe_allow_html=True)
@@ -55,7 +54,7 @@ def show_mfa_page(session_manager: SessionManager, mfa_manager: MFAManager):
 
     # Handle form submissions
     if verify_clicked and code:
-        _verify_mfa_code(session_manager, mfa_manager, code)
+        _verify_mfa_code(code)
     elif cancel_clicked:
         session_manager.clear_pending_auth()
         st.rerun()
@@ -66,7 +65,7 @@ def show_mfa_page(session_manager: SessionManager, mfa_manager: MFAManager):
         st.rerun()
 
 
-def _verify_mfa_code(session_manager: SessionManager, mfa_manager: MFAManager, code: str):
+def _verify_mfa_code(code: str):
     """Verify the MFA code and handle the result."""
     user_data = session_manager.get_pending_user()
     if not user_data:

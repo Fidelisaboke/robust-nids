@@ -1,6 +1,10 @@
 import streamlit as st
 
-from core.instances import app_state, auth_service, session_manager, mfa_manager
+from core.instances import app_state, auth_service, session_manager
+from core.mfa_manager import MFAManager
+
+# Instantiate mfa_manager using session_manager.config
+mfa_manager = MFAManager(session_manager.config)
 
 
 def show_login_page():
@@ -95,11 +99,12 @@ def _handle_login_attempt(email: str, password: str):
         return
 
     try:
-        user_data, error = auth_service.authenticate(email, password)
-        if error:
-            st.error(f"🚫 {error}")
+        result = auth_service.authenticate(email, password)
+        if result["error"]:
+            st.error(f"🚫 {result['error']}")
             return
 
+        user_data = result["user"]
         # Handle MFA verification
         user = auth_service.get_user_by_id(user_data["id"])
         if mfa_manager.should_prompt_mfa(user):

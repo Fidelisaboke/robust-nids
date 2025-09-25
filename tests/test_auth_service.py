@@ -109,9 +109,9 @@ def test_authenticate_invalid(auth_service, dummy_db_factory):
     session = dummy_db_factory()
     auth_service.db_session_factory = lambda: session
     session.users["first"] = None
-    user, msg = auth_service.authenticate("bad@example.com", "badpass")
-    assert user is None
-    assert msg == "Invalid credentials."
+    result = auth_service.authenticate("bad@example.com", "badpass")
+    assert result["user"] is None
+    assert result["error"] == "Invalid credentials."
 
 
 def test_enable_disable_mfa(auth_service, dummy_db_factory):

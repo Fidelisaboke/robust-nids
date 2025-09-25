@@ -4,7 +4,7 @@ User Profile Page - Personal settings and preferences
 
 import streamlit as st
 
-from core.instances import session_manager, auth_service
+from core.instances import auth_service, session_manager
 from ui.components.user_profile import show_mfa_settings
 
 
@@ -187,12 +187,19 @@ def show_session_management(user):
     sessions = get_user_sessions(user["id"])
 
     for session in sessions:
+        # Ensure start_time is set for display
+        if "start_time" not in session:
+            # Try to use login_time or another timestamp if available
+            if "login_time" in session:
+                session["start_time"] = session["login_time"]
+            else:
+                session["start_time"] = "N/A"
         with st.container():
             col1, col2, col3, col4 = st.columns([3, 2, 1, 1])
             with col1:
-                current_indicator = "🟢 Current" if session["is_current"] else "⚪"
-                st.write(f"{current_indicator} {session['device_info']}")
-                st.caption(f"IP: {session['ip_address']} • Started: {session['start_time']}")
+                current_indicator = "🟢 Current" if session.get("is_current", False) else "⚪"
+                st.write(f"{current_indicator} {session.get('device_info', 'N/A')}")
+                st.caption(f"IP: {session.get('ip_address', 'N/A')} • Started: {session.get('start_time', 'N/A')}")
             with col2:
                 st.write(f"Last active: {session['last_activity']}")
             with col3:

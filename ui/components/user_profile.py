@@ -5,7 +5,7 @@ import pyotp
 import qrcode
 import streamlit as st
 
-from core.instances import auth_service, session_manager, app_state
+from core.instances import session_manager, auth_service, app_state
 
 
 def show_mfa_settings():

@@ -6,16 +6,10 @@ import time
 
 import streamlit as st
 
-from core.app_state import AppState
-from core.mfa_manager import MFAManager
-from core.session_manager import SessionManager
-from ui.components.login_page import show_login_page, show_backup_code_warning
+from core.instances import app_state, session_manager
+from ui.components.login_page import show_backup_code_warning, show_login_page
 from ui.components.mfa_page import show_mfa_page
 
-# Initialise Streamlit app state
-app_state = AppState()
-
-# Main app settings
 st.set_page_config(
     page_title="NIDS Security Dashboard",
     page_icon=":material/security:",
@@ -23,9 +17,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Initialise session, and MFA managers
-session_manager = SessionManager()
-mfa_manager = MFAManager(session_manager.config)
 
 # Hide sidebar CSS for unauthenticated states
 HIDE_SIDEBAR_CSS = """
@@ -44,16 +35,16 @@ if not session_manager.is_session_valid:
     # Check for pending MFA verification
     if session_manager.is_awaiting_mfa():
         st.title("Two-Factor Authentication Required")
-        show_mfa_page(session_manager, mfa_manager)
+        show_mfa_page()
     else:
         st.title("Please log in to access the NIDS Security Dashboard")
-        show_login_page(session_manager, mfa_manager)
+        show_login_page()
 
     st.stop()
 
 # Show backup code warning (if used backup code for MFA)
 if app_state.show_backup_code_warning:
-    show_backup_code_warning(session_manager)
+    show_backup_code_warning()
     st.stop()
 
 # Enhanced pages configuration with proper user profile integration

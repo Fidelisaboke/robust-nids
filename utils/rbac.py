@@ -2,11 +2,9 @@ from functools import wraps
 
 import streamlit as st
 
-from core.session_manager import SessionManager
+from core.instances import session_manager
 from services.permissions import permission_service
 from utils.permissions import SystemPermissions
-
-session_manager = SessionManager()
 
 
 def has_permission(user_id, permission_name):

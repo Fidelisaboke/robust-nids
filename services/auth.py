@@ -2,7 +2,7 @@ import base64
 import io
 import logging
 from datetime import datetime, timedelta
-from typing import Tuple, Optional, Dict, List, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import bcrypt
 import pyotp
@@ -12,7 +12,7 @@ from sqlalchemy.orm import joinedload
 from core.config import DEFAULT_USER_PREFERENCES
 from core.singleton import SingletonMeta
 from database.models import User, UserSession
-from utils.constants import SystemRoles, MFAMethod
+from utils.constants import MFAMethod, SystemRoles
 
 logger = logging.getLogger("auth")
 logger.setLevel(logging.INFO)
@@ -70,20 +70,32 @@ class AuthService(metaclass=SingletonMeta):
             logger.info(f"User created: {email} ({new_user.id})")
             return new_user.id
 
-    def authenticate(self, email: str, password: str) -> Tuple[Optional[Dict], Optional[str]]:
-        """Authenticate user by email and password."""
+    def authenticate(
+        self,
+        email: str,
+        password: str,
+        device_info: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> dict:
+        """
+        Authenticate user by email and password, create session on success.
+        Returns a dict: {"user": user_data or None, "error": error_message or None, "session_id": session_id or None}
+        """
+        import uuid
+
         if not email or not password:
-            return None, "Email and password required."
+            return {"user": None, "error": "Email and password required.", "session_id": None}
         with self.db_session_factory() as session:
             user = (
                 session.query(User).options(joinedload(User.roles)).filter(User.email == email, User.is_active).first()
             )
             if not user:
                 logger.warning(f"Failed login attempt for {email}: user not found or inactive.")
-                return None, "Invalid credentials."
+                return {"user": None, "error": "Invalid credentials.", "session_id": None}
             if user.locked_until and user.locked_until > datetime.now():
                 logger.warning(f"Login attempt for locked account {email}.")
-                return None, "Account is locked."
+                return {"user": None, "error": "Account is locked.", "session_id": None}
             if bcrypt.checkpw(password.encode(), user.password_hash.encode()):
                 user.failed_login_attempts = 0
                 user.locked_until = None
@@ -104,9 +116,23 @@ class AuthService(metaclass=SingletonMeta):
                     "mfa_method": user.mfa_method,
                     "profile_completed": user.profile_completed,
                 }
+                # Create session
+                session_id = str(uuid.uuid4())
+                new_session = UserSession(
+                    id=session_id,
+                    user_id=user.id,
+                    device_info=device_info or "Unknown",
+                    ip_address=ip_address or "Unknown",
+                    user_agent=user_agent or "Unknown",
+                    login_time=datetime.now(),
+                    last_activity=datetime.now(),
+                    expires_at=datetime.now() + timedelta(hours=1),
+                    is_active=True,
+                )
+                session.add(new_session)
                 session.commit()
-                logger.info(f"Successful login for {email}.")
-                return user_data, None
+                logger.info(f"Successful login for {email}. Session {session_id} created.")
+                return {"user": user_data, "error": None, "session_id": session_id}
             else:
                 if SystemRoles.ADMIN.value not in [role.name for role in user.roles]:
                     user.failed_login_attempts += 1
@@ -114,10 +140,80 @@ class AuthService(metaclass=SingletonMeta):
                     user.locked_until = datetime.now() + timedelta(minutes=10)
                     session.commit()
                     logger.warning(f"Account locked due to failed attempts: {email}")
-                    return None, "Account locked due to too many failed attempts. Please try again in 10 minutes."
+                    return {
+                        "user": None,
+                        "error": "Account locked due to too many failed attempts. Please try again in 10 minutes.",
+                        "session_id": None,
+                    }
                 session.commit()
                 logger.warning(f"Failed login for {email}: invalid password.")
-                return None, "Invalid credentials."
+                return {"user": None, "error": "Invalid credentials.", "session_id": None}
+
+    def logout_user(self, user_id: int, session_id: str) -> bool:
+        """
+        Log out a user by marking the session inactive and updating last_activity/logout_time.
+        """
+        if not user_id or not session_id:
+            raise ValueError("user_id and session_id are required.")
+        with self.db_session_factory() as session:
+            user_session = (
+                session.query(UserSession)
+                .filter(UserSession.id == session_id, UserSession.user_id == user_id, UserSession.is_active)
+                .first()
+            )
+            if not user_session:
+                logger.warning(f"Logout failed: session {session_id} for user {user_id} not found or already inactive.")
+                return False
+            user_session.is_active = False
+            user_session.last_activity = datetime.now()
+            user_session.expires_at = datetime.now()
+            session.commit()
+            logger.info(f"User {user_id} logged out from session {session_id}.")
+            return True
+
+    def refresh_session(self, session_id: str, extend_seconds: int = 3600) -> bool:
+        """
+        Update last_activity and extend expires_at if session is still valid.
+        """
+        if not session_id:
+            raise ValueError("session_id is required.")
+        with self.db_session_factory() as session:
+            user_session = (
+                session.query(UserSession).filter(UserSession.id == session_id, UserSession.is_active).first()
+            )
+            if not user_session:
+                logger.warning(f"Session refresh failed: session {session_id} not found or inactive.")
+                return False
+            now = datetime.now()
+            if user_session.expires_at < now:
+                user_session.is_active = False
+                session.commit()
+                logger.info(f"Session {session_id} expired and marked inactive during refresh.")
+                return False
+            user_session.last_activity = now
+            user_session.expires_at = now + timedelta(seconds=extend_seconds)
+            session.commit()
+            logger.info(f"Session {session_id} refreshed and expiry extended.")
+            return True
+
+    def invalidate_all_sessions(self, user_id: int) -> int:
+        """
+        Log out user from all devices (set all sessions inactive).
+        Returns number of sessions invalidated.
+        """
+        if not user_id:
+            raise ValueError("user_id is required.")
+        with self.db_session_factory() as session:
+            sessions = session.query(UserSession).filter(UserSession.user_id == user_id, UserSession.is_active).all()
+            count = 0
+            for s in sessions:
+                s.is_active = False
+                s.expires_at = datetime.now()
+                s.last_activity = datetime.now()
+                count += 1
+            session.commit()
+            logger.info(f"User {user_id} forcibly logged out from {count} sessions.")
+            return count
 
     def get_default_preferences(self) -> Dict:
         """Return default user preferences."""
@@ -300,28 +396,39 @@ class AuthService(metaclass=SingletonMeta):
             logger.info(f"User session created for user {user_id} (session {session_id}).")
             return True
 
-    def get_user_sessions(self, user_id: int) -> List[Dict]:
-        """Get all active sessions for a user."""
+    def get_user_sessions(self, user_id: int, current_session_id: Optional[str] = None) -> List[Dict]:
+        """
+        Get all active sessions for a user, flagging current session if provided.
+        Expired sessions are marked inactive and not returned.
+        """
         if not user_id:
             raise ValueError("user_id is required.")
         with self.db_session_factory() as session:
+            now = datetime.now()
             sessions = (
                 session.query(UserSession)
                 .filter(UserSession.user_id == user_id, UserSession.is_active)
                 .order_by(UserSession.last_activity.desc())
                 .all()
             )
-            return [
-                {
-                    "id": s.id,
-                    "device_info": s.device_info,
-                    "ip_address": s.ip_address,
-                    "login_time": s.login_time,
-                    "last_activity": s.last_activity,
-                    "is_current": False,
-                }
-                for s in sessions
-            ]
+            result = []
+            for s in sessions:
+                if s.expires_at < now:
+                    s.is_active = False
+                    session.commit()
+                    logger.info(f"Session {s.id} expired and marked inactive during fetch.")
+                    continue
+                result.append(
+                    {
+                        "id": s.id,
+                        "device_info": s.device_info,
+                        "ip_address": s.ip_address,
+                        "login_time": s.login_time,
+                        "last_activity": s.last_activity,
+                        "is_current": (current_session_id == s.id) if current_session_id else False,
+                    }
+                )
+            return result
 
     def get_user_by_id(self, user_id: int) -> Optional[User]:
         """Get user by ID."""

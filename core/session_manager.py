@@ -1,21 +1,28 @@
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import streamlit as st
 
-
 from core.config import AuthConfig
 from core.singleton import SingletonMeta
-from core.instances import app_state, auth_service
 
 
 class SessionManager(metaclass=SingletonMeta):
     """Handles auth sessions in the app."""
 
-    def __init__(self, config: AuthConfig = AuthConfig()):
+    def __init__(self, config: AuthConfig = AuthConfig(), app_state=None, auth_service=None):
         self.config = config
-        self.auth_service = auth_service
-        self.app_state = app_state
+
+        # Use provided instances or fall back to global singletons
+        if app_state is not None and auth_service is not None:
+            self.app_state = app_state
+            self.auth_service = auth_service
+        else:
+            from core.instances import app_state as global_app_state
+            from core.instances import auth_service as global_auth_service
+
+            self.app_state = global_app_state
+            self.auth_service = global_auth_service
 
     @staticmethod
     def _get_default_user() -> dict:
