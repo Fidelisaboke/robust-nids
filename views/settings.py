@@ -4,13 +4,8 @@ Settings Page - System configuration and preferences
 
 import streamlit as st
 import pandas as pd
-
 from datetime import datetime
-
-from services.auth import AuthService
-from core.session import SessionManager
-
-session_manager = SessionManager()
+from core.instances import auth_service, session_manager
 
 
 def show():
@@ -698,7 +693,7 @@ def show_user_management():
         st.subheader("Multi-Factor Authentication Compliance Report")
 
         # MFA Compliance status
-        users = AuthService.get_all_users()
+        users = auth_service.get_all_users()
         compliant = sum(1 for u in users if u.mfa_enabled)
         total = len(users)
 
@@ -710,7 +705,7 @@ def show_user_management():
             st.subheader("Non-Compliant Users")
             for user in non_compliant:
                 roles = [role.name for role in user.roles]
-                st.write(f"**{user.email}** - {", ".join(roles)}")
+                st.write("**{}** - {}".format(user.email, ", ".join(roles)))
 
 
 def show_system_maintenance():

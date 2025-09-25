@@ -2,6 +2,7 @@ from functools import wraps
 
 import streamlit as st
 
+from core.instances import session_manager
 from services.permissions import permission_service
 from utils.permissions import SystemPermissions
 
@@ -17,12 +18,12 @@ def permission_required(required_permission):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if not st.session_state.get("authenticated"):
+            if not session_manager.is_session_valid:
                 st.error("Please log in to access this page")
                 st.stop()
 
-            user_id = st.session_state.user_info.get("user_id")
-            if not has_permission(user_id, required_permission):
+            user_id = session_manager.get_user_id()
+            if user_id is None or not has_permission(user_id, required_permission):
                 st.error("You don't have permission to access this page")
                 st.stop()
 

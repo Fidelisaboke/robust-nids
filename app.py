@@ -6,12 +6,9 @@ import time
 
 import streamlit as st
 
-from core.mfa import MFAManager
-from core.session import SessionManager
-from ui.components.login import show_login_page, show_backup_code_warning
-from ui.components.mfa import show_mfa_page
+from core.instances import app_state, session_manager
+from ui.components.login_page import show_backup_code_warning, show_login_page
 
-# Main app settings
 st.set_page_config(
     page_title="NIDS Security Dashboard",
     page_icon=":material/security:",
@@ -19,9 +16,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Initialize session and MFA managers
-session_manager = SessionManager()
-mfa_manager = MFAManager(session_manager.config)
 
 # Hide sidebar CSS for unauthenticated states
 HIDE_SIDEBAR_CSS = """
@@ -37,19 +31,14 @@ footer {visibility: hidden}
 if not session_manager.is_session_valid:
     st.markdown(HIDE_SIDEBAR_CSS, unsafe_allow_html=True)
 
-    # Check for pending MFA verification
-    if session_manager.is_awaiting_mfa():
-        st.title("Two-Factor Authentication Required")
-        show_mfa_page(session_manager, mfa_manager)
-    else:
-        st.title("Please log in to access the NIDS Security Dashboard")
-        show_login_page(session_manager, mfa_manager)
+    st.title("Please log in to access the NIDS Security Dashboard")
+    show_login_page()
 
     st.stop()
 
 # Show backup code warning (if used backup code for MFA)
-if st.session_state.get("show_backup_code_warning"):
-    show_backup_code_warning(session_manager)
+if app_state.show_backup_code_warning:
+    show_backup_code_warning()
     st.stop()
 
 # Enhanced pages configuration with proper user profile integration
@@ -148,11 +137,7 @@ with st.sidebar:
 # Run the navigation
 navigation.run()
 
-# Add session keep-alive for long-running operations
-if "last_activity_check" not in st.session_state:
-    st.session_state.last_activity_check = time.time()
-
 # Auto-refresh session activity every 30 seconds for long-running pages
-if time.time() - st.session_state.last_activity_check > 30:
+last_activity = app_state.user.get("last_activity")
+if last_activity and (time.time() - last_activity > 30):
     session_manager.refresh_session()
-    st.session_state.last_activity_check = time.time()
