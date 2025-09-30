@@ -1,14 +1,30 @@
+# 🔀 Pull Request
+
 ## Description
-<!-- Describe in a few sentences what this PR does. -->
+<!-- Briefly describe the changes in this PR -->
+-
 
 ## Related Issue
-<!-- Reference the issue number, e.g., “Related to #7” or "Closes #7" -->
+<!-- Link the issue this PR closes -->
+Closes #ISSUE_NUMBER
 
-## Summary of Changes
-- <!-- List the key changes made in this PR -->
+## Type of Change
+- [ ] 🐛 Bug fix
+- [ ] ✨ New feature
+- [ ] 🔧 Enhancement
+- [ ] 📖 Documentation update
 
-## Acceptance Criteria
-- [ ] <!-- Criteria 1 -->
-- [ ] <!-- Criteria 2 -->
-- [ ] <!-- Criteria 3 -->
-- [ ] <!-- etc. -->
+## How Has This Been Tested?
+<!-- Describe testing steps -->
+- [ ] Unit tests
+- [ ] Manual testing
+- [ ] Other:
+
+## Screenshots (if applicable)
+<!-- Add UI screenshots or terminal output -->
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Documentation updated
+- [ ] Tests added or updated
+- [ ] No new warnings/errors

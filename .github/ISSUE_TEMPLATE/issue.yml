@@ -1,0 +1,49 @@
+name: 📝 General Issue
+description: Use this template to report bugs, request features, or suggest improvements
+title: "[ISSUE]: "
+labels: [needs-triage]
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Issue Type
+      description: What type of issue is this?
+      options:
+        - Bug 🐛
+        - Feature Request ✨
+        - Enhancement 🔧
+        - Documentation 📖
+    validations:
+      required: true
+
+  - type: input
+    id: context
+    attributes:
+      label: Context
+      description: Short description of the issue
+      placeholder: "E.g., Model inference fails on certain inputs"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce / Implementation Details
+      description: For bugs, explain how to reproduce. For features, describe what needs to be implemented.
+      placeholder: |
+        1. Run inference with input X
+        2. Observe error Y
+        OR
+        - Add API endpoint for XYZ
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen if this issue is resolved?
+      placeholder: "Model returns correct classification with low latency"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any screenshots, logs, or references
+      placeholder: "Attach screenshots, error logs, papers, or links here"
