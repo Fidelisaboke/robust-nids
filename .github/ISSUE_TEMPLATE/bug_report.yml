@@ -30,6 +30,8 @@ body:
       label: Expected Behavior
       description: What should have happened instead?
       placeholder: "Model should return class label with confidence score"
+    validations:
+      required: true
 
   - type: textarea
     id: actual
@@ -37,6 +39,8 @@ body:
       label: Actual Behavior
       description: What actually happened?
       placeholder: "500 Internal Server Error"
+    validations:
+      required: true
 
   - type: textarea
     id: logs

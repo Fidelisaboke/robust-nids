@@ -1,8 +1,5 @@
-# 🔀 Pull Request
-
 ## Description
 <!-- Briefly describe the changes in this PR -->
--
 
 ## Related Issue
 <!-- Link the issue this PR closes -->
