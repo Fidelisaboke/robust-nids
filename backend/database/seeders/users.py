@@ -1,12 +1,11 @@
-# database/seeders/users.py
 from datetime import datetime
 
 import bcrypt
 
-from core.config import DEFAULT_USER_PREFERENCES
-from database.models import User, Role
+from backend.core.config import settings
+from backend.database.models import User, Role
 from .base import BaseSeeder
-from utils.constants import SystemRoles
+from backend.utils.enums import SystemRoles
 
 
 class UserSeeder(BaseSeeder):
@@ -14,7 +13,7 @@ class UserSeeder(BaseSeeder):
 
     @classmethod
     def run(cls):
-        from database.db import db
+        from backend.database.db import db
 
         with db.get_session() as session:
             # Check if users already exist
@@ -90,7 +89,7 @@ class UserSeeder(BaseSeeder):
                 ).decode()
 
                 # Get default preferences
-                default_prefs = DEFAULT_USER_PREFERENCES
+                default_prefs = settings.DEFAULT_USER_PREFERENCES
 
                 # Create user with enhanced profile
                 user = User(

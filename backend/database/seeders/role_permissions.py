@@ -1,6 +1,6 @@
-from database.models import Role, Permission
-from utils.permissions import SystemPermissions
-from utils.constants import SystemRoles
+from backend.database.models import Role, Permission
+from backend.utils.enums import SystemPermissions
+from backend.utils.enums import SystemRoles
 from .base import BaseSeeder
 
 
@@ -34,7 +34,7 @@ class RolePermissionSeeder(BaseSeeder):
 
     @classmethod
     def run(cls):
-        from database.db import db
+        from backend.database.db import db
 
         with db.get_session() as session:
             # Load all roles and permissions

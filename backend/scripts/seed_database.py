@@ -5,7 +5,7 @@ Database seeder script for NIDS Application.
 
 import sys
 
-from backend.app.database.seeders.manager import SeederManager
+from backend.database.seeders.manager import SeederManager
 
 
 def seed():

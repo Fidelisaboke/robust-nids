@@ -1,5 +1,5 @@
-from database.models import Role
-from services.roles import SystemRoles
+from backend.database.models import Role
+from backend.utils.enums import SystemRoles
 from .base import BaseSeeder
 
 
@@ -8,7 +8,7 @@ class RoleSeeder(BaseSeeder):
 
     @classmethod
     def run(cls):
-        from database.db import db
+        from backend.database.db import db
 
         with db.get_session() as session:
             # Get existing roles to avoid duplicates

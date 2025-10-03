@@ -1,5 +1,5 @@
-from database.models import Permission
-from utils.permissions import SystemPermissions
+from backend.database.models import Permission
+from backend.utils.enums import SystemPermissions
 from .base import BaseSeeder
 
 
@@ -8,7 +8,7 @@ class PermissionSeeder(BaseSeeder):
 
     @classmethod
     def run(cls):
-        from database.db import db
+        from backend.database.db import db
 
         with db.get_session() as session:
             existing_permissions = {p.name for p in session.query(Permission).all()}
