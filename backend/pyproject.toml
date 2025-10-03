@@ -61,13 +61,12 @@ test = [
 
 [tool.setuptools]
 packages = [
-    "backend.app",
-    "backend.core",
-    "backend.database",
-    "backend.ml",
-    "backend.services",
-    "backend.utils",
-    "backend.views"
+    "api",
+    "core",
+    "database",
+    "ml",
+    "services",
+    "utils",
 ]
 
 [tool.ruff]
