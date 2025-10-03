@@ -19,7 +19,6 @@ class UserOut(BaseModel):
     preferences: dict
     profile_completed: bool
     last_profile_update: Optional[str] = None
-    created_at: Optional[str] = None
     email_verified: bool
     phone_verified: bool
     role: Optional[List[RoleOut]] = None

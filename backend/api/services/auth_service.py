@@ -16,12 +16,24 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/token')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against its hashed version."""
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    try:
+        # Convert plain password to bytes
+        password_bytes = plain_password.encode('utf-8')
+
+        # Handle hashed password that might be bytes or str
+        if isinstance(hashed_password, str):
+            hashed_bytes = hashed_password.encode('utf-8')
+        else:
+            hashed_bytes = hashed_password
+
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except (TypeError, ValueError):
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Hash a plain password."""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
 
 
 def authenticate_user(email: str, password: str):

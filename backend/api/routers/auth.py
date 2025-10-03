@@ -15,7 +15,6 @@ from api.services.auth_service import (
     create_refresh_token,
     decode_token,
     get_current_active_user,
-    is_token_expired,
 )
 from database.db import db
 from database.models import User
@@ -117,7 +116,8 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
         raise refresh_token_exception
 
     # Check token expiration
-    if is_token_expired(request.refresh_token):
+    exp = payload.get('exp')
+    if exp is None or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Refresh token has expired',
