@@ -74,8 +74,8 @@ jobs:
 
       - name: Run tests with coverage
         env:
-          PYTHONPATH: ${{ github.workspace }}/backend/app
-        run: pytest -v --cov=app --cov-report=xml backend/app/tests/
+          PYTHONPATH: ${{ github.workspace }}/backend/
+        run: pytest -v --cov-report=xml backend/tests/
 
       - name: Display coverage in GitHub summary
         if: success()
