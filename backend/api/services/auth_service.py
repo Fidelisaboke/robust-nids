@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta, timezone
-import jwt
 from typing import Optional
-import bcrypt
 
+import bcrypt
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from core.config import settings
-from database.models import User
 from database.db import db
-
+from database.models import User
 
 # OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/token')

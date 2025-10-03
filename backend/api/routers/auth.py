@@ -2,9 +2,12 @@
 Authentication and Authorization API Endpoints.
 """
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from api.schemas.auth import LoginRequest, TokenResponse, RefreshRequest
+
+from api.schemas.auth import LoginRequest, RefreshRequest, TokenResponse
 from api.schemas.users import UserOut
 from api.services.auth_service import (
     authenticate_user,
@@ -14,9 +17,8 @@ from api.services.auth_service import (
     get_current_active_user,
     is_token_expired,
 )
-from database.models import User
 from database.db import db
-from datetime import datetime, timezone
+from database.models import User
 
 router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 

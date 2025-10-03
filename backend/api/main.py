@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from .routers import auth
 
 app = FastAPI(title='Robust NIDS API', version='1.0.0')

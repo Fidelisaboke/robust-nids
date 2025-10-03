@@ -1,6 +1,6 @@
 from backend.database.models import Permission
-from backend.utils.enums import SystemPermissions
 from backend.database.seeders import BaseSeeder
+from backend.utils.enums import SystemPermissions
 
 
 class PermissionSeeder(BaseSeeder):

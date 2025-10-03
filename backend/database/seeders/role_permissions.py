@@ -1,6 +1,6 @@
-from backend.database.models import Role, Permission
-from backend.utils.enums import SystemPermissions
-from backend.utils.enums import SystemRoles
+from backend.database.models import Permission, Role
+from backend.utils.enums import SystemPermissions, SystemRoles
+
 from .base import BaseSeeder
 
 

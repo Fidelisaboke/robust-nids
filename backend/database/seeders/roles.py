@@ -1,5 +1,6 @@
 from backend.database.models import Role
 from backend.utils.enums import SystemRoles
+
 from .base import BaseSeeder
 
 

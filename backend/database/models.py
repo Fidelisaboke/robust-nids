@@ -4,16 +4,16 @@ Each model represents a database table.
 """
 
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
-    Boolean,
-    DateTime,
-    Text,
     Table,
-    JSON,
+    Text,
     func,
-    ForeignKey,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, relationship

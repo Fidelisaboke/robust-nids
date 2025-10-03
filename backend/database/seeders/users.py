@@ -1,10 +1,11 @@
 from datetime import datetime
 
 from backend.core.config import settings
-from backend.database.models import User, Role
-from .base import BaseSeeder
-from backend.utils.enums import SystemRoles
+from backend.database.models import Role, User
 from backend.services.auth_service import get_password_hash
+from backend.utils.enums import SystemRoles
+
+from .base import BaseSeeder
 
 
 class UserSeeder(BaseSeeder):

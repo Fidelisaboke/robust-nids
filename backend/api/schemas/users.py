@@ -1,7 +1,9 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import Optional, List
-from .roles import RoleOut
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+from .roles import RoleOut
 
 
 class UserOut(BaseModel):
