@@ -37,7 +37,7 @@ jobs:
       - name: Run Ruff lint & format checks
         run: |
           # Lint and fail on errors
-          ruff check backend --exit-zero=false
+          ruff check backend
 
   backend-test:
     name: Backend Tests
