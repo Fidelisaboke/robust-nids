@@ -21,12 +21,15 @@ DEFAULT_PASSWORD="change_this_in_production"
 load_env() {
     log_info "Loading environment configuration"
 
-    if [ -f .env ]; then
+    # Path to .env file (currently backend/.env)
+    ENV_FILE=$(dirname "$0")/../.env
+
+    if [ -f "$ENV_FILE" ]; then
         # Safe way to load .env file - automatically exports all variables
         set -a  # Automatically export all variables
-        . .env   # Source the .env file
+        . "$ENV_FILE"   # Source the .env file
         set +a  # Turn off auto-export
-        log_success "Environment file loaded"
+        log_success "Environment file loaded from $ENV_FILE"
     else
         log_warning ".env file not found, using default values"
     fi
@@ -37,15 +40,15 @@ load_env() {
     DB_NAME=${DB_NAME:-$DEFAULT_DATABASE}
     DB_USER=${DB_USER:-$DEFAULT_USER}
     DB_PASSWORD=${DB_PASSWORD:-$DEFAULT_PASSWORD}
-    ADMIN_USER=${ADMIN_USER:-"postgres"}
-    ADMIN_PASSWORD=${ADMIN_PASSWORD:-""}
+    DB_ADMIN_USER=${DB_ADMIN_USER:-"postgres"}
+    DB_ADMIN_PASSWORD=${DB_ADMIN_PASSWORD:-""}
 
     log_info "Configuration:"
     log_info "  Host: $DB_HOST"
     log_info "  Port: $DB_PORT"
     log_info "  Database: $DB_NAME"
     log_info "  User: $DB_USER"
-    log_info "  Admin: $ADMIN_USER"
+    log_info "  Admin: $DB_ADMIN_USER"
 }
 
 # Logging functions
@@ -100,14 +103,14 @@ check_dependencies() {
 test_postgres_connection() {
     log_info "Testing PostgreSQL server connection"
 
-    if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -c "SELECT 1" postgres &> /dev/null; then
+    if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -c "SELECT 1" postgres &> /dev/null; then
         log_success "Connected to PostgreSQL server"
         return 0
     else
         log_error "Failed to connect to PostgreSQL server"
         log_info "Please ensure:"
         log_info "1. PostgreSQL is running on $DB_HOST:$DB_PORT"
-        log_info "2. User '$ADMIN_USER' has access with the provided password"
+        log_info "2. User '$DB_ADMIN_USER' has access with the provided password"
         log_info "3. Your pg_hba.conf allows password authentication"
         return 1
     fi
@@ -117,9 +120,9 @@ test_postgres_connection() {
 drop_database() {
     log_info "Checking if database '$DB_NAME' exists"
 
-    if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+    if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
         log_warning "Database '$DB_NAME' exists, dropping it"
-        if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -c "DROP DATABASE $DB_NAME" postgres; then
+        if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -c "DROP DATABASE $DB_NAME" postgres; then
             log_success "Database dropped successfully"
         else
             log_error "Failed to drop database"
@@ -134,9 +137,9 @@ drop_database() {
 create_user() {
     log_info "Checking if user '$DB_USER' exists"
 
-    if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" postgres | grep -q 1; then
+    if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" postgres | grep -q 1; then
         log_info "User '$DB_USER' exists, updating password"
-        if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -c "ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD'" postgres; then
+        if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -c "ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD'" postgres; then
             log_success "User password updated"
         else
             log_error "Failed to update user password"
@@ -144,7 +147,7 @@ create_user() {
         fi
     else
         log_info "Creating user '$DB_USER'"
-        if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD'" postgres; then
+        if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD'" postgres; then
             log_success "User created successfully"
         else
             log_error "Failed to create user"
@@ -157,7 +160,7 @@ create_user() {
 create_database() {
     log_info "Creating database '$DB_NAME'"
 
-    if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -c "CREATE DATABASE $DB_NAME WITH OWNER $DB_USER" postgres; then
+    if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -c "CREATE DATABASE $DB_NAME WITH OWNER $DB_USER" postgres; then
         log_success "Database created successfully"
     else
         log_error "Failed to create database"
@@ -170,7 +173,7 @@ setup_schema() {
     log_info "Setting up database schema and permissions"
 
     # Connect to the new database and set up schema
-    if PGPASSWORD=$ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -d "$DB_NAME" << EOF
+    if PGPASSWORD=$DB_ADMIN_PASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -d "$DB_NAME" << EOF
         -- Revoke default public privileges
         REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
@@ -217,7 +220,7 @@ run_seeding() {
 
     # Export database connection string for the seeding script
     export DB_CONNECTION_STRING="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME"
-    export ADMIN_DB_CONNECTION_STRING="postgresql://$ADMIN_USER:$ADMIN_PASSWORD@$DB_HOST:$DB_PORT/postgres"
+    export ADMIN_DB_CONNECTION_STRING="postgresql://$DB_ADMIN_USER:$DB_ADMIN_PASSWORD@$DB_HOST:$DB_PORT/postgres"
 
     # Run the seeding script
     if python3 scripts/seed_database.py; then

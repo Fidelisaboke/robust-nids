@@ -5,19 +5,13 @@ Database seeder script for NIDS Application.
 
 import sys
 
-from database.seeders import SeederManager
-from migrate import drop_all_tables, create_all_tables
+from backend.app.database.seeders.manager import SeederManager
 
 
 def seed():
     try:
         print("🚀 Starting NIDS Database Seeder")
         print("=" * 50)
-
-        # Optional: Fresh mode (drop and recreate tables)
-        if len(sys.argv) > 1 and sys.argv[1] == "--fresh":
-            drop_all_tables()
-            create_all_tables()
 
         # Run all seeders
         SeederManager.run_all()

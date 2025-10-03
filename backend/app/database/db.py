@@ -5,27 +5,21 @@ for database session management.
 """
 
 from contextlib import contextmanager
-
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-
-from core.config import AppConfig, DatabaseConfig
-from core.singleton import SingletonMeta
-
-load_dotenv()
+from sqlalchemy.orm import sessionmaker
+from app.core.config import settings
 
 
-class Database(metaclass=SingletonMeta):
-    def __init__(self, config: DatabaseConfig = DatabaseConfig()) -> None:
+class Database:
+    def __init__(self) -> None:
         self.engine = create_engine(
-            f"postgresql+psycopg://{config.USER}:{config.PASSWORD}@{config.HOST}:{config.PORT}/{config.NAME}",
+            settings.DATABASE_URL,
             pool_size=5,
             max_overflow=10,
-            echo=AppConfig.DEBUG,
+            echo=settings.DEBUG,
         )
-        self.SessionLocal = scoped_session(
-            sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine
         )
 
     @contextmanager
