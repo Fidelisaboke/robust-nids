@@ -1,8 +1,12 @@
 from fastapi import FastAPI
+from .routers import auth
 
-app = FastAPI(title="Robust NIDS", version="1.0.0")
+app = FastAPI(title='Robust NIDS API', version='1.0.0')
+
+# Include API routers
+app.include_router(auth.router)
 
 
-@app.get("/health")
+@app.get('/')
 def health_check():
-    return {"status": "ok"}
+    return {'message': 'API is running smoothly!'}

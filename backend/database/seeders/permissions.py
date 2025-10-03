@@ -1,6 +1,6 @@
 from backend.database.models import Permission
 from backend.utils.enums import SystemPermissions
-from .base import BaseSeeder
+from backend.database.seeders import BaseSeeder
 
 
 class PermissionSeeder(BaseSeeder):
@@ -21,7 +21,7 @@ class PermissionSeeder(BaseSeeder):
                     permissions_to_create.append(
                         Permission(
                             name=perm_enum.value,
-                            description=f"System permission: {perm_enum.name}",
+                            description=f'System permission: {perm_enum.name}',
                             category=category,
                         )
                     )
@@ -29,20 +29,20 @@ class PermissionSeeder(BaseSeeder):
             if permissions_to_create:
                 session.add_all(permissions_to_create)
                 session.commit()
-                cls.log_seeding("Permission", len(permissions_to_create))
+                cls.log_seeding('Permission', len(permissions_to_create))
             else:
-                print("⏩ Permissions already seeded, skipping...")
+                print('⏩ Permissions already seeded, skipping...')
 
     @classmethod
     def _get_permission_category(cls, permission_name):
         """Categorize permissions for better organization"""
-        if permission_name.startswith("VIEW_"):
-            return "view"
-        elif "ALERT" in permission_name:
-            return "alerts"
-        elif "MODEL" in permission_name:
-            return "models"
-        elif "MANAGE" in permission_name or "SYSTEM" in permission_name:
-            return "administration"
+        if permission_name.startswith('VIEW_'):
+            return 'view'
+        elif 'ALERT' in permission_name:
+            return 'alerts'
+        elif 'MODEL' in permission_name:
+            return 'models'
+        elif 'MANAGE' in permission_name or 'SYSTEM' in permission_name:
+            return 'administration'
         else:
-            return "general"
+            return 'general'

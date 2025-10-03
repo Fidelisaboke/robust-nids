@@ -10,7 +10,7 @@ class SeederManager:
     @staticmethod
     def run_all():
         """Run all seeders in proper order"""
-        print("🌱 Starting database seeding...")
+        print('🌱 Starting database seeding...')
 
         seeders = [PermissionSeeder, RoleSeeder, RolePermissionSeeder, UserSeeder]
 
@@ -18,7 +18,7 @@ class SeederManager:
             try:
                 seeder.run()
             except Exception as e:
-                print(f"❌ Error running {seeder.__name__}: {e}")
+                print(f'❌ Error running {seeder.__name__}: {e}')
                 raise
 
-        print("🎉 Database seeding completed successfully!")
+        print('🎉 Database seeding completed successfully!')

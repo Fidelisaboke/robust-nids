@@ -7,7 +7,7 @@ for database session management.
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from backend.core.config import settings
+from core.config import settings
 
 
 class Database:
@@ -18,9 +18,7 @@ class Database:
             max_overflow=10,
             echo=settings.DEBUG,
         )
-        self.SessionLocal = sessionmaker(
-            autocommit=False, autoflush=False, bind=self.engine
-        )
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     @contextmanager
     def get_session(self):

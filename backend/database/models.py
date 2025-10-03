@@ -24,7 +24,7 @@ class Base(DeclarativeBase):
 
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -35,9 +35,7 @@ class User(Base):
     # MFA fields
     mfa_secret = Column(String(255), nullable=True)
     mfa_enabled = Column(Boolean, nullable=False, default=False)
-    mfa_method = Column(
-        String(20), default="totp"
-    )  # 'totp', 'email', 'sms', 'backup_code'
+    mfa_method = Column(String(20), default='totp')  # 'totp', 'email', 'sms', 'backup_code'
     mfa_backup_codes = Column(ARRAY(Text), nullable=True)
     mfa_configured_at = Column(DateTime, nullable=True)
 
@@ -55,7 +53,7 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     department = Column(String(100), nullable=True)
     job_title = Column(String(100), nullable=True)
-    timezone = Column(String(50), default="UTC")
+    timezone = Column(String(50), default='UTC')
 
     # User preferences (UI, notifications, etc...)
     preferences = Column(JSON, default=dict)
@@ -70,17 +68,17 @@ class User(Base):
     verification_token = Column(String(255), nullable=True)
 
     # Relationship
-    roles = relationship("Role", secondary="user_roles", back_populates="users")
-    sessions = relationship("UserSession", back_populates="user")
+    roles = relationship('Role', secondary='user_roles', back_populates='users')
+    sessions = relationship('UserSession', back_populates='user')
 
 
 class UserSession(Base):
     """Database model for user session tracking."""
 
-    __tablename__ = "user_sessions"
+    __tablename__ = 'user_sessions'
 
     id = Column(String(255), primary_key=True)  # Session ID
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     device_info = Column(String(255))  # Browser/device info
     ip_address = Column(String(45))  # Support IPv6
     user_agent = Column(Text)
@@ -89,50 +87,46 @@ class UserSession(Base):
     expires_at = Column(DateTime, nullable=False)
     is_active = Column(Boolean, default=True)
 
-    user = relationship("User", back_populates="sessions")
+    user = relationship('User', back_populates='sessions')
 
 
 class Role(Base):
-    __tablename__ = "roles"
+    __tablename__ = 'roles'
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
 
-    users = relationship("User", secondary="user_roles", back_populates="roles")
-    permissions = relationship(
-        "Permission", secondary="role_permissions", back_populates="roles"
-    )
+    users = relationship('User', secondary='user_roles', back_populates='roles')
+    permissions = relationship('Permission', secondary='role_permissions', back_populates='roles')
 
 
 # Association table for many-to-many between users and roles
 user_roles = Table(
-    "user_roles",
+    'user_roles',
     Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
-    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
-    Column("assigned_at", DateTime, default=func.now()),
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True),
+    Column('assigned_at', DateTime, default=func.now()),
 )
 
 
 class Permission(Base):
-    __tablename__ = "permissions"
+    __tablename__ = 'permissions'
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
     description = Column(String(255))
     category = Column(String(50), nullable=True)
 
-    roles = relationship(
-        "Role", secondary="role_permissions", back_populates="permissions"
-    )
+    roles = relationship('Role', secondary='role_permissions', back_populates='permissions')
 
 
 # Association table for role-permission many-to-many
 role_permissions = Table(
-    "role_permissions",
+    'role_permissions',
     Base.metadata,
-    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
-    Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
-    Column("granted_at", DateTime, default=func.now()),
+    Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True),
+    Column('permission_id', Integer, ForeignKey('permissions.id'), primary_key=True),
+    Column('granted_at', DateTime, default=func.now()),
 )

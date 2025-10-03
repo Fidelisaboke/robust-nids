@@ -46,6 +46,9 @@ dependencies = [
     "PyJWT>=2.10,<3.0",
     "pyotp>=2.9,<3.0",
     "qrcode>=8.2,<9.0",
+    "bcrypt==5.0.0",
+    "python-multipart>=0.0.20,<1.0"
+
 ]
 
 [project.optional-dependencies]
@@ -75,5 +78,5 @@ target-version = "py312"
 
 [tool.ruff.format]
 quote-style = "single"
-indent-style = "tab"
+indent-style = "space"
 docstring-code-format = true
