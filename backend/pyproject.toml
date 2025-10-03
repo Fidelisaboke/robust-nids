@@ -75,7 +75,7 @@ packages = [
 line-length = 120
 target-version = "py312"
 select = ["E", "F", "W", "I", "C90"]
-ignore = ["E203", "W503"]
+ignore = ["E203"]
 
 [tool.ruff.format]
 quote-style = "double"
