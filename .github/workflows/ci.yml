@@ -29,19 +29,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install linters
+      - name: Install Ruff
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black
+          pip install ruff
 
-      - name: Run Flake8
+      - name: Run Ruff lint & format checks
         run: |
-          flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 backend --count --exit-zero --max-complexity=10 --max-line-length=127 \
-            --statistics --ignore=E722,W503,E203
-
-      - name: Run Black check
-        run: black --check backend
+          # Lint and fail on errors
+          ruff check backend --exit-zero=false
 
   backend-test:
     name: Backend Tests
