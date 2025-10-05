@@ -37,7 +37,7 @@ dependencies = [
     # --- Web API (FastAPI stack) ---
     "fastapi>=0.115,<1.0",
     "uvicorn[standard]>=0.32,<1.0",
-    "pydantic>=2.11,<3.0",
+    "pydantic[email,timezone]>=2.11,<3.0",
     "pydantic-settings>=2.6,<3.0",
 
     # --- Utils ---
