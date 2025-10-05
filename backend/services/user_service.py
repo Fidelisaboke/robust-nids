@@ -47,7 +47,7 @@ class UserService:
         self.session.refresh(new_user)
         return self.user_repo.get_by_id(new_user.id)
 
-    def get_user(self, user_id: id) -> User:
+    def get_user(self, user_id: int) -> User:
         """Fetch a user by ID."""
         user = self.user_repo.get_by_id(user_id)
         if not user:

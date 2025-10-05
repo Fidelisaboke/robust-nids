@@ -1,3 +1,5 @@
+import secrets
+import string
 from datetime import datetime
 
 from backend.core.config import settings
@@ -10,6 +12,12 @@ from .base import BaseSeeder
 
 class UserSeeder(BaseSeeder):
     """Seeder for initial users"""
+
+    @staticmethod
+    def _generate_secure_password(length=12):
+        """Generate a secure random password."""
+        characters = string.ascii_letters + string.digits + string.punctuation
+        return ''.join(secrets.choice(characters) for _ in range(length))
 
     @classmethod
     def run(cls):
@@ -31,7 +39,7 @@ class UserSeeder(BaseSeeder):
                 {
                     'email': 'admin@example.com',
                     'username': 'admin',
-                    'password': 'Admin123!',  # Change in production!
+                    'password': cls._generate_secure_password(),
                     'first_name': 'Jane',
                     'last_name': 'Doe',
                     'role_names': [SystemRoles.ADMIN.value],
@@ -42,7 +50,7 @@ class UserSeeder(BaseSeeder):
                 {
                     'email': 'manager@example.com',
                     'username': 'manager',
-                    'password': 'Manager123!',
+                    'password': cls._generate_secure_password(),
                     'first_name': 'Leo',
                     'last_name': 'Mario',
                     'role_names': [SystemRoles.MANAGER.value],
@@ -53,7 +61,7 @@ class UserSeeder(BaseSeeder):
                 {
                     'email': 'analyst@example.com',
                     'username': 'analyst',
-                    'password': 'Analyst123!',
+                    'password': cls._generate_secure_password(),
                     'first_name': 'Alice',
                     'last_name': 'Burns',
                     'role_names': [SystemRoles.ANALYST.value],
@@ -64,7 +72,7 @@ class UserSeeder(BaseSeeder):
                 {
                     'email': 'viewer@example.com',
                     'username': 'viewer',
-                    'password': 'Viewer123!',
+                    'password': cls._generate_secure_password(),
                     'first_name': 'John',
                     'last_name': 'Doe',
                     'role_names': [SystemRoles.VIEWER.value],

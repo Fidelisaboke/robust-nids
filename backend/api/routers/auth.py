@@ -120,8 +120,12 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
         raise refresh_token_exception
 
     # Get user ID from token payload
-    user_id = int(payload.get('sub'))
-    if user_id is None:
+    sub = payload.get('sub')
+    if sub is None:
+        raise refresh_token_exception
+    try:
+        user_id = int(sub)
+    except (ValueError, TypeError):
         raise refresh_token_exception
 
     # Check if the user still exists and is active
@@ -147,7 +151,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
 
 @router.get('/users/me', response_model=UserOut)
 async def read_profile(
-    current_user: UserOut = Depends(get_current_active_user),
+        current_user: UserOut = Depends(get_current_active_user),
 ) -> UserOut:
     """Get the current user's profile.
 

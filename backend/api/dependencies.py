@@ -28,7 +28,8 @@ def require_permissions(*permissions: str):
 
         # Deny access if any required permission is missing
         if missing_permissions:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail='You are not authorized to perform this action')
 
         return True
 
