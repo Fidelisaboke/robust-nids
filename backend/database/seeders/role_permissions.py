@@ -56,10 +56,6 @@ class RolePermissionSeeder(BaseSeeder):
                         role_name, set()
                     )
 
-            # Administrator gets everything
-            if 'administrator' in role_dict:
-                role_permission_sets['administrator'] = set(SystemPermissions)
-
             # Assign permissions to roles
             for role_name, permission_enums in role_permission_sets.items():
                 role = role_dict.get(role_name)

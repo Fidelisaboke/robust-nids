@@ -7,17 +7,17 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from api.schemas.auth import LoginRequest, RefreshRequest, TokenResponse
-from api.schemas.users import UserOut
-from api.services.auth_service import (
+from backend.api.schemas.auth import LoginRequest, RefreshRequest, TokenResponse
+from backend.api.schemas.users import UserOut
+from backend.database.db import db
+from backend.database.models import User
+from backend.services.auth_service import (
     authenticate_user,
     create_access_token,
     create_refresh_token,
     decode_token,
     get_current_active_user,
 )
-from database.db import db
-from database.models import User
 
 router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 
@@ -43,8 +43,8 @@ def login(request: LoginRequest) -> TokenResponse:
             headers={'WWW-Authenticate': 'Bearer'},
         )
 
-    access_token = create_access_token(data={'sub': str(user.id)})
-    refresh_token = create_refresh_token(data={'sub': str(user.id)})
+    new_access_token = create_access_token(data={'sub': str(user.id)})
+    new_refresh_token = create_refresh_token(data={'sub': str(user.id)})
 
     # Update last login time
     with db.get_session() as session:
@@ -54,7 +54,7 @@ def login(request: LoginRequest) -> TokenResponse:
             session.add(user_in_db)
             session.commit()
 
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token)
 
 
 @router.post('/token', response_model=TokenResponse)
@@ -69,7 +69,6 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     Returns:
         TokenResponse: Access token and refresh token.
     """
-    # In your case, username will be the email
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -78,8 +77,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={'WWW-Authenticate': 'Bearer'},
         )
 
-    access_token = create_access_token(data={'sub': str(user.id)})
-    refresh_token = create_refresh_token(data={'sub': str(user.id)})
+    new_access_token = create_access_token(data={'sub': str(user.id)})
+    new_refresh_token = create_refresh_token(data={'sub': str(user.id)})
 
     # Update last login time
     with db.get_session() as session:
@@ -89,7 +88,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
             session.add(user_in_db)
             session.commit()
 
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token, token_type='bearer')
+    return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token, token_type='bearer')
 
 
 @router.post('/refresh', response_model=TokenResponse)
@@ -107,7 +106,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
     """
     refresh_token_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='Could not validate refresh token',
+        detail='Refresh token is invalid or expired',
         headers={'WWW-Authenticate': 'Bearer'},
     )
 
@@ -118,11 +117,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
     # Check token expiration
     exp = payload.get('exp')
     if exp is None or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Refresh token has expired',
-            headers={'WWW-Authenticate': 'Bearer'},
-        )
+        raise refresh_token_exception
 
     # Get user ID from token payload
     user_id = int(payload.get('sub'))
@@ -152,12 +147,12 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
 
 @router.get('/users/me', response_model=UserOut)
 async def read_profile(
-    current_user: User = Depends(get_current_active_user),
+    current_user: UserOut = Depends(get_current_active_user),
 ) -> UserOut:
     """Get the current user's profile.
 
     Args:
-        current_user (User): The currently authenticated user.
+        current_user (UserOut): The currently authenticated user.
 
     Returns:
         UserOut: The current user's profile.

@@ -5,10 +5,12 @@ import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from pydantic import EmailStr
 
-from core.config import settings
-from database.db import db
-from database.models import User
+from backend.core.config import settings
+from backend.database.db import db
+from backend.database.models import User
+from backend.database.repositories.user import UserRepository
 
 # OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/token')
@@ -36,7 +38,7 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
 
 
-def authenticate_user(email: str, password: str):
+def authenticate_user(email: str | EmailStr, password: str):
     """Authenticate user by email and password."""
     with db.get_session() as session:
         user = session.query(User).filter(User.email == email).first()
@@ -50,7 +52,9 @@ def authenticate_user(email: str, password: str):
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT access token."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({'exp': expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
@@ -59,7 +63,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT refresh token."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({'exp': expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
@@ -103,7 +109,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
 
     with db.get_session() as session:
-        user = session.query(User).filter(User.id == user_id).first()
+        user_repo = UserRepository(session)
+        user = user_repo.get_by_id(user_id)
         if user is None:
             raise credentials_exception
         return user

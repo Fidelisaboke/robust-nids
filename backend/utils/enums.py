@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class SystemRoles(Enum):
+class SystemRoles(StrEnum):
     """Enum for system roles."""
 
     VIEWER = 'viewer'
@@ -10,13 +10,13 @@ class SystemRoles(Enum):
     ADMIN = 'admin'
 
 
-class MFAMethod(Enum):
+class MFAMethod(StrEnum):
     """Enum for MFA methods."""
 
     TOTP = 'totp'
 
 
-class SystemPermissions(Enum):
+class SystemPermissions(StrEnum):
     """System-wide permissions that can be assigned to roles"""
 
     # Dashboard permissions
