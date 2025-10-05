@@ -1,6 +1,7 @@
 {
-  "name": "frontend",
+  "name": "nids-frontend",
   "version": "0.1.0",
+  "description": "NIDS - Frontend Application",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
