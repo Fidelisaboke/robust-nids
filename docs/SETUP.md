@@ -1,98 +1,171 @@
-
 # Setup Guide
 
-This guide walks through the complete setup process for the development environment.
+This guide walks through the complete setup process for the **Robust NIDS** full-stack system — including the **FastAPI
+backend**, **Next.js frontend**, and **dataset configuration**.
 
 ## Table of Contents
-*   [Prerequisites](#prerequisites)
-*   [1. WSL Configuration](#1-wsl2-configuration-windows-users)
-*   [2. Python Environment Setup](#2-python-environment-setup)
-*   [3. Environment Variables](#3-environment-variables)
-*   [4. PostgreSQL Setup](#4-postgresql-setup)
-*   [5. Dataset Setup](#5-dataset-setup-tii-ssrc-23-dataset)
-*   [Next Steps](#next-steps)
+
+* [Prerequisites](#prerequisites)
+* [1. WSL2 Configuration (Windows Users)](#1-wsl2-configuration-windows-users)
+* [2. Backend Setup (FastAPI)](#2-backend-setup-fastapi)
+* [3. Frontend Setup (Nextjs--React)](#3-frontend-setup-nextjs--react)
+* [4. Environment Variables](#4-environment-variables)
+* [5. PostgreSQL Setup](#5-postgresql-setup)
+* [6. Dataset Setup (TII-SSRC-23)](#6-dataset-setup-tii-ssrc-23)
+* [Next Steps](#next-steps)
 
 ## Prerequisites
 
-*   **Git**
-*   **Python 3.9+** (Ensure this is installed on your WSL2 distribution, not just Windows)
-*   **WSL2** (Windows users only. Already installed and updated.)
-*   **PostgreSQL 12** or higher
-*   **psql** command-line tool available
-*   **Access to the TII-SSRC-23 Dataset** (Ensure you have the download link or credentials ready.)
+Ensure the following are installed on your system (preferably inside WSL2 for Windows users):
+
+* **Git**
+* **Python 3.9+**
+* **Node.js 20+** and **npm** (or **pnpm**)
+* **PostgreSQL 12+**
+* **WSL2** (Windows only)
+* **Kaggle API credentials** (optional for dataset download)
 
 ## 1. WSL2 Configuration (Windows Users)
 
-For optimal performance on Windows, it is strongly recommended to use WSL2.
+For optimal performance and compatibility, run both backend and frontend within **WSL2** (Ubuntu recommended).
 
-**Key Configuration:**
-1.  **Install WSL2:** Follow the [official Microsoft guide](https://learn.microsoft.com/en-us/windows/wsl/install).
-2.  **Clone and work inside WSL2:** Do not work on files in the `/mnt/c/` mount. Clone the repository inside your WSL2
-3. home directory (e.g., `~/projects/robust-nids`).
-    *   **Important:** Ensure Python 3.9+ is installed *within* your WSL2 distribution (e.g., Ubuntu). You can check
-with `python3 --version`.
-4. **Resource Management (Optional):** To prevent WSL2 from consuming all your RAM, create a `.wslconfig` file in your
-Windows user directory (`C:\Users\<YourUsername>`):
-    ```ini
-    [wsl2]
-    memory=12GB
-    processors=6
-    ```
+### Steps
 
-## 2. Python Environment Setup
+1. **Install WSL2:**
+   Follow the [official Microsoft guide](https://learn.microsoft.com/en-us/windows/wsl/install).
 
-It is crucial to use an isolated Python environment to manage dependencies.
+2. **Clone repository inside WSL2:**
+   ```bash
+   cd ~
+   mkdir projects && cd projects
+   git clone https://github.com/Fidelisaboke/robust-nids.git
+   cd robust-nids
+   ```
 
-1.  **Create a virtual environment:**
-    ```bash
-    # Create the environment in a directory named '.venv'
-    python -m venv .venv
-    ```
+3. **Avoid working inside `/mnt/c/`**, which causes file-sync issues.
 
-2.  **Activate the virtual environment:**
-    ```bash
-    # On Linux, WSL2, or macOS:
-    source .venv/bin/activate
-    # On Windows:
-    .venv\Scripts\activate
-    ```
+4. **Limit resources (optional):**
+   Create `C:\Users\<YourUsername>\.wslconfig` and configure:
 
-3.  **Upgrade pip and install core dependencies:**
-    ```bash
-    pip install --upgrade pip
+   ```ini
+   [wsl2]
+   memory=12GB
+   processors=6
+   ```
 
-    # Install required dependencies
-    pip install -e .
+## 2. Backend Setup (FastAPI)
 
-    # Alternatively, to install optional dev tools
-    pip install -e .[dev]
-    ```
+### 2.1 Create Python Environment
 
-4.  **Verify the installation:** Run a quick test to ensure the core scientific libraries can be imported without errors.
-    ```bash
-    python -c "import pandas; import sklearn; print('All core libraries imported successfully!')"
-    ```
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate  # (Linux/macOS)
+# or
+.venv\Scripts\activate     # (Windows)
+```
 
-## 3. Environment Variables
-- To set up your environment, you'll need to set some secret credentials.
-- This can be done by creating the environment file (`.env`):
-    ```bash
-    cp .env.example .env
-    ```
-- Edit the `.env` file with your credentials.
+### 2.2 Install Dependencies
 
-## 4. PostgreSQL Setup
+```bash
+pip install --upgrade pip
+pip install -e .[dev]
+```
 
-### PostgreSQL Installation
-- If you do not have PostgreSQL, ensure you have it installed for your OS:
+### 2.3 Run Development Server
+
+```bash
+uvicorn api.main:app --reload
+```
+
+### 2.4 Verify
+
+Visit **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** to access Swagger UI and test the API routes.
+
+## 3. Frontend Setup (Next.js + React)
+
+The frontend uses **Next.js 15**, **TypeScript**, and **ShadCN UI**.
+
+### 3.1 Install Dependencies
+
+```bash
+cd frontend
+npm install
+# or
+pnpm install
+```
+
+### 3.2 Environment Variables
+
+Copy and edit the environment example:
+
+```bash
+cp .env.example .env.local
+```
+
+Set the API base URL (for example):
+
+```
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+```
+
+### 3.3 Run Development Server
+
+```bash
+npm run dev
+```
+
+Your app should now be live at **[http://localhost:3000](http://localhost:3000)**
+
+### 3.4 Folder Overview
+
+```
+frontend/
+├── components/      # Shared UI components
+├── hooks/           # Custom React hooks
+├── lib/             # Helper functions (API, auth, utils)
+├── pages/ or app/   # Main routes
+├── styles/          # Global styles
+└── types/           # TypeScript definitions
+```
+
+## 4. Environment Variables
+
+Both backend and frontend rely on `.env` files.
+
+### 4.1 Backend (`backend/.env`)
+
+```bash
+cp .env.example .env
+```
+
+Then configure values such as:
+
+```
+DATABASE_URL=postgresql://nids_user:password@localhost:5432/nids_db
+JWT_SECRET_KEY=your_secret_key
+JWT_REFRESH_SECRET_KEY=your_refresh_secret
+```
+
+### 4.2 Frontend (`frontend/.env.local`)
+
+```
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+```
+
+## 5. PostgreSQL Setup
+
+### 5.1 Installation
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
 **macOS (Homebrew):**
+
 ```bash
 brew install postgresql
 brew services start postgresql
@@ -101,95 +174,94 @@ brew services start postgresql
 **Windows:**
 Download from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/)
 
-### DB Setup Script
-- **Run the setup script:** This provides an interactive shell for setting up the database instance, making it easier to set up quickly.
-   ```bash
-   ./scripts/setup_db.sh
-   ```
+### 5.2 Database Creation
 
-### Manual Setup (Alternative)
-
-If you prefer to set up PostgreSQL manually:
-
-1. **Connect to PostgreSQL as admin**
-   ```bash
-   sudo -u postgres psql
-   ```
-
-2. **Create database and user**
-   ```sql
-   CREATE DATABASE nids_db;
-   CREATE USER nids_user WITH PASSWORD 'your_secure_password';
-   GRANT ALL PRIVILEGES ON DATABASE nids_db TO nids_user;
-   ```
-
-3. **Set up schema permissions**
-   ```sql
-   \c nids_db
-   REVOKE ALL ON SCHEMA public FROM PUBLIC;
-   GRANT USAGE ON SCHEMA public TO nids_user;
-   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO nids_user;
-   ```
-
-### Verification
-
-After setup, verify the database connection:
+Run the helper script:
 
 ```bash
-# Test connection as application user
-psql -h localhost -p 5432 -U nids_user -d nids_db -c "SELECT version();"
+./scripts/setup_db.sh
 ```
 
-### Troubleshooting
-1. **Connection refused**
-   - Ensure PostgreSQL is running: `sudo service postgresql start`
-   - Check if PostgreSQL is listening on the correct port
+Or manually:
 
-2. **Authentication failed**
-   - Verify your password in the `.env` file
-   - Check pg_hba.conf for authentication method
+```sql
+CREATE DATABASE nids_db;
+CREATE USER nids_user WITH PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE nids_db TO nids_user;
+```
 
-3. **Permission denied**
-   - Ensure the admin user has sufficient privileges
+Verify connection:
 
-### Security Notes
-
-- Change default passwords in production
-- Restrict database access to specific IPs in production
-- Regularly backup your database
-- Consider using SSL for database connections in production
-
-For detailed configuration, refer to the [PostgreSQL documentation](https://www.postgresql.org/docs/).
-
-
-## 5. Dataset Setup (TII-SSRC-23 Dataset)
-
-The TII-SSRC-23 dataset is not stored in Git.
-
-**Option 1: Manual Download (Recommended)**
-
-1.  Download only the CSV dataset (`csv/data.csv`) from the official source on Kaggle (about 5 GB).
-2.  Place the raw data files in the `data/raw/` directory.
-
-**Option 2: Download via Script**
-
-A helper script is provided to download the data from a predefined source. Use this if you'd like to
-download the entire dataset, including PCAP files. (Warning: the ZIP file will be very big, approx. 30 GB)
-- **Note:**: This requires a [Kaggle API token.](https://www.kaggle.com/code/webdevbadger/comprehensive-kaggle-workspace-with-vs-code-wsl)
 ```bash
-# Run the download script
+psql -h localhost -U nids_user -d nids_db -c "SELECT version();"
+```
+
+## 6. Dataset Setup (TII-SSRC-23)
+
+The TII-SSRC-23 dataset is not tracked in Git due to its size.
+
+### Option 1: Manual Download (Recommended)
+
+1. Download `data.csv` from the official Kaggle source.
+2. Place it in:
+
+   ```
+   data/raw/data.csv
+   ```
+
+### Option 2: Scripted Download
+
+You can automatically fetch and unpack the dataset (requires Kaggle API setup):
+
+```bash
 python scripts/download_data.py
 ```
+
+*(Note: this may take hours depending on bandwidth; ~30 GB total size.)*
 
 ## Next Steps
 
 After setup:
 
-1. Run the Streamlit application:
+1. **Start backend:**
+
    ```bash
-   streamlit run app.py
+   # Should be at project root
+   uvicorn api.main:app --reload
    ```
 
-2. The first time you run the app, it will create the necessary tables
+2. **Start frontend:**
 
-3. Log in with the default admin credentials (check your app documentation)
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+3. **Access the app:**
+
+    * Frontend: [http://localhost:3000](http://localhost:3000)
+    * API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+4. **Login or register:**
+   Default admin credentials are defined in your `.env` or seed script.
+
+## Recommended Development Workflow
+
+| Step | Description                                                    |
+|------|----------------------------------------------------------------|
+| 1    | Run PostgreSQL locally (`sudo service postgresql start`)       |
+| 2    | Start FastAPI backend (`uvicorn api.main:app --reload`)        |
+| 3    | Launch frontend (`npm run dev`)                                |
+| 4    | View logs and alerts via `/nids/logs` and `/nids/alerts`       |
+| 5    | Use `scripts/` for seeding, dataset management, and migrations |
+
+## Troubleshooting
+
+**Backend not connecting to DB:**
+→ Check `.env` `DATABASE_URL` and ensure PostgreSQL is running.
+
+**Frontend fetch errors:**
+→ Verify `NEXT_PUBLIC_API_URL` is reachable and CORS is configured in FastAPI.
+
+**Dataset errors:**
+→ Ensure CSV exists at `data/raw/data.csv` and paths are correct in preprocessing scripts.

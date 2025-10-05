@@ -1,147 +1,226 @@
 # Adversarially Robust Network Intrusion Detection System (NIDS)
 
 [![python-3.12](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
-[![Python Code Quality and Tests](https://github.com/Fidelisaboke/robust-nids/actions/workflows/test.yml/badge.svg)](https://github.com/Fidelisaboke/robust-nids/actions/workflows/test.yml)
+[![FastAPI](https://img.shields.io/badge/backend-FastAPI-green)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/frontend-Next.js-black)](https://nextjs.org/)
+[![CI Tests](https://github.com/Fidelisaboke/robust-nids/actions/workflows/ci.yml/badge.svg)](https://github.com/Fidelisaboke/robust-nids/actions/workflows/test.yml)
 
 ## Project Overview
-A machine learning-based Network Intrusion Detection System designed to be resilient against adversarial evasion attacks.
-Features a dashboard for analysts to monitor traffic, review alerts, and provide feedback for continuous improvement.
+
+A machine learning-based Network Intrusion Detection System designed to be resilient against adversarial evasion
+attacks.
+It integrates AI, cybersecurity analytics, and a modern full-stack architecture, combining a FastAPI backend for ML
+inference and adversarial training with a Next.js dashboard for visualization, alerts, and analyst features
 
 **Key Features:**
-*   **Adversarial Training:** Models are hardened against evasion attempts using state-of-the-art attacks from the
-Adversarial Robustness Toolbox (ART).
-*   **Dual Detection Strategy:** Combines a powerful XGBoost classifier for known attacks with an Autoencoder for
+
+* **Adversarial Training:** Models are hardened against evasion attempts using state-of-the-art attacks from the
+  Adversarial Robustness Toolbox (ART).
+* **Dual Detection Strategy:** Combines a powerful XGBoost classifier for known attacks with an Autoencoder for
 * detecting novel anomalies.
-*   **Analyst-in-the-Loop:** Includes a feedback mechanism for cybersecurity operators to label false
+* **Analyst-in-the-Loop:** Includes a feedback mechanism for cybersecurity operators to label false
 * positives/negatives, enabling iterative model refinement.
-*   **Explainable AI:** Integrates LIME to provide explanations for model predictions, building trust and understanding.
-*   **Live Monitoring Dashboard:** A Streamlit-based dashboard for real-time traffic analysis and alert visualization.
+* **Explainable AI:** Integrates LIME to provide explanations for model predictions, building trust and understanding.
+* **Live Monitoring Dashboard:** A modern, Next.js dashboard for real-time traffic analysis and alert visualization.
 
 ## Table of Contents
 
-1.  [Tech Stack](#tech-stack)
-2.  [Getting Started](#getting-started)
-    *   [Prerequisites](#prerequisites)
-    *   [Quick Install](#quick-install)
-3.  [Basic Usage](#basic-usage)
-4.  [Project Structure](#project-structure)
-5.  [License](#license)
+1. [Tech Stack](#tech-stack)
+2. [Getting Started](#getting-started)
+    * [Prerequisites](#prerequisites)
+    * [Quick Install](#quick-install)
+3. [Basic Usage](#basic-usage)
+4. [Project Structure](#project-structure)
+5. [License](#license)
 
 ## Tech Stack
-### Machine Learning & Data Processing
-- Pandas
-- Scikit-learn
-- XGBoost
-- TensorFlow
-- Adversarial Robustness Toolbox (ART)
 
-### Dashboard
-- Streamlit
-- Streamlit Authenticator
-- **Note**: Streamlit has been used just to demo the NIDS pipeline, but in future works, an improved UI
-will be built for the system.
+### Backend (API & ML Engine)
 
-### Development & Operations
-- Git
-- GitHub Actions
-- MinIO
-- pytest
-- Black
-- Flake8
+* **FastAPI**: High-performance REST API
+* **SQLAlchemy + Alembic:** ORM and migrations
+* **PostgreSQL:** Relational database
+* **TensorFlow, XGBoost, Scikit-learn:** Model training & inference
+* **Adversarial Robustness Toolbox (ART):** Adversarial sample generation
+* **Docker:** Containerized deployment
+
+### Frontend (Dashboard)
+
+* **Next.js 15 (TypeScript)**: Modern React framework with App Router
+* **Tailwind CSS:** Utility-first CSS framework
+* **Recharts:** Charting library for data visualization
+* **React Query:** Data fetching and state management
+* **Axios:** HTTP client for API requests
+* **React Hook Form + Zod:** Form handling and validation
+* **Shadcn UI:** Pre-built accessible UI components
+
+### Development & Deployment
+
+* **Pre-commit Hooks:** enforced via `.pre-commit-config.yaml`
+* **Linting:** `ruff` for Python, `eslint` + `prettier` for TypeScript
+* **Testing:** `pytest` (backend) and `jest` or `vitest` (frontend planned)
+* **CI/CD:** GitHub Actions (`.github/workflows/ci.yml`)
+* **Containerization:** `backend/Dockerfile` (frontend container optional)
 
 ## Getting Started
 
 ### Prerequisites
-- Ubuntu 20.04+ or Ubuntu-WSL2 (Preferred OSs)
-- Python 3.12+
-- Git
-- PostgreSQL
-- Bash shell environment
+
+* Python **3.12+**
+* Node.js **18+**
+* PostgreSQL (or Docker)
+* Git
+* Bash shell (Linux/WSL2 recommended)
 
 ### Quick Install
+
 - For detailed instructions, see [`docs/SETUP.md`](docs/SETUP.md).
 
-1.  **Clone the repo:**
-    ```bash
-    git clone https://github.com/Fidelisaboke/robust-nids
-    cd robust-nids
-    ```
+#### Backend Setup (FastAPI)
 
-2.  **Create and activate a virtual environment:**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # Linux/WSL2/macOS
-    # .venv\Scripts\activate  # Windows
-    ```
+1. **Clone the repository:**
 
-3.  **Install dependencies:**
-    ```bash
-    pip install --upgrade pip
+   ```bash
+   git clone https://github.com/Fidelisaboke/robust-nids
+   cd robust-nids/backend
+   ```
 
-    # Install required dependencies
-    pip install -e .
+2. **Create and activate a virtual environment:**
 
-    # Alternatively, to install optional dev tools
-    pip install -e .[dev]
-    ```
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Linux/WSL2/macOS
+   # .venv\Scripts\activate   # Windows
+   ```
 
-4. **Create your environment file:**
-    ```bash
-    cp .env.example .env
-    ```
-5. Edit the `.env` file with your credentials.
+3. **Install dependencies:**
 
-6. **Set up the PostgreSQL database:**
-    ```bash
+   ```bash
+   pip install --upgrade pip
+   pip install -e .[dev]
+   ```
+
+4. **Set up environment variables:**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+5. **Run Alembic migrations:**
+
+   ```bash
+   alembic upgrade head
+   ```
+
+6. **Run database setup:**
+
+   ```bash
    ./scripts/setup_db.sh
-    ```
+   ```
 
-7. **Set up the dataset:** Follow the detailed instructions in [`docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
+7. **Seed initial data (users, roles):**
+
+   ```bash
+   cd ..
+   python -m backend.scripts.seed_database
+   ```
+
+8. **Set up the dataset:** Follow the detailed instructions in [
+   `docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
+
+9. **Start the FastAPI server:**
+
+   ```bash
+   cd ..
+   uvicorn api.main:app --reload
+   ```
+
+   Access the API docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+#### Frontend Setup (Next.js + TypeScript)
+
+1. **Navigate to the frontend directory:**
+
+   ```bash
+   cd frontend
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+3. **Run the development server:**
+
+   ```bash
+   npm run dev
+   ```
+
+   Visit the dashboard at: [http://localhost:3000](http://localhost:3000)
 
 ## Basic Usage
 
-1.  **Start the Streamlit Dashboard:**
-    Navigate to the project root and run:
-    ```bash
-    streamlit run app.py
-    ```
-    The application will start and be available in your web browser at `http://localhost:8501`.
+1. **Log In:**
+   Access the web dashboard and authenticate using configured credentials.
 
-2.  **Log In:**
-    Use the credentials configured in `config.yaml` to log in via the Streamlit-Authenticator interface.
+2. **Monitor Traffic:**
+   The dashboard provides:
 
-3.  **Using the Dashboard:**
-    *   **Dashboard Tab:** View high-level system metrics and live traffic overview.
-    *   **Monitoring Tab:** See a simulated feed of network traffic alerts. Provide feedback on false positives/negatives.
-    *   **Analytics Tab:** Explore model performance metrics (F1-Score, AUC-ROC curves) and explanations for predictions using LIME.
-    *   **Playground Tab:** Input feature values manually to get a real-time model prediction and explanation.
+    * **Real-time alerts** (via `/nids/alerts`)
+    * **System logs** (via `/nids/logs`)
+    * **Network metrics** and **visual analytics**
 
-4.  **Running Tests:**
-    To ensure code quality, run the test suite with pytest:
-    ```bash
-    pytest -v tests/
-    ```
+3. **Run Predictions:**
+   Submit samples to `/nids/predict` to detect malicious activity.
+
+4. **Trigger Adversarial Training:**
+   Train models against evasion attacks using `/nids/train`.
+
+5. **Review & Label:**
+   Analysts can flag false positives/negatives, improving model feedback loops.
+
+6. **Testing:**
+
+   ```bash
+   pytest -v
+   ```
 
 ## Project Structure
 
 ```
-├── .github/workflows          # GitHub Actions CI/CD workflows
-├── data/                      # IGNORED BY GIT - Raw and processed data
-├── docs/                      # Project documentation and guides
-├── models/                    # IGNORED BY GIT - Serialized trained models
-├── notebooks/                 # Jupyter notebooks for EDA and prototyping
-├── pages/                     # Directory for all Streamlit page modules
-├── scripts/                   # Utility scripts (e.g., data download, database setup)
-├── src/                       # Main source code package
-│   ├── data/                  # Code for data loading and preprocessing
-│   ├── features/              # Code for feature engineering & adversarial generation
-│   ├── models/                # Code for training, prediction, and evaluation
-│   └── visualization/         # Code for generating plots and charts
-├── tests/                     # Unit tests
-├── app.py                     # Main Streamlit application entry point
-├── requirements.txt           # Project dependencies
-└── README.md                  # This file
+robust-nids/
+├── backend/                 # FastAPI backend
+│   ├── api/                 # Routes, schemas, and dependencies
+│   ├── core/                # Config, logging, constants
+│   ├── database/            # Models, repositories, migrations
+│   ├── ml/                  # ML pipeline (train, predict, adversarial)
+│   ├── services/            # Business logic
+│   ├── scripts/             # Setup utilities
+│   └── tests/               # Unit tests
+│
+├── frontend/                # Next.js + TypeScript web dashboard
+│   ├── src/app/             # App Router structure
+│   │   ├── (auth)/          # Authentication pages
+│   │   ├── (dashboard)/     # Dashboard pages
+│   │   └── (admin)/         # Admin tools (users, logs, roles)
+│   └── public/              # Static assets
+│
+├── notebooks/               # Research notebooks (EDA, training, testing)
+├── docs/                    # Setup and project documentation
+└── .github/                 # CI/CD workflows
 ```
+
+## Key Endpoints (Backend)
+
+| Endpoint        | Method | Description                       |
+|-----------------|--------|-----------------------------------|
+| `/nids/predict` | POST   | Run ML inference on incoming data |
+| `/nids/train`   | POST   | Perform adversarial training      |
+| `/nids/alerts`  | GET    | Retrieve recent detection alerts  |
+| `/nids/logs`    | GET    | Fetch system or training logs     |
+| `/auth/login`   | POST   | Authenticate user                 |
+| `/users/`       | CRUD   | Manage analyst and admin accounts |
 
 ## License
 
