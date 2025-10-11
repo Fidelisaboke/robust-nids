@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # Application settings
     SECRET_KEY: str = Field(..., validation_alias='SECRET_KEY')
     DEBUG: bool = Field(False, validation_alias='DEBUG')
+    APP_NAME: str = Field('NIDS', validation_alias='APP_NAME')
 
     # Database settings
     DB_HOST: str = Field('localhost', validation_alias='DB_HOST')

@@ -39,13 +39,14 @@ dependencies = [
     "uvicorn[standard]>=0.32,<1.0",
     "pydantic[email,timezone]>=2.11,<3.0",
     "pydantic-settings>=2.6,<3.0",
+    "slow-api>=0.1.9,<1.0",
 
     # --- Utils ---
     "requests>=2.32,<3.0",
     "python-dotenv>=1.0,<2.0",
     "PyJWT>=2.10,<3.0",
     "pyotp>=2.9,<3.0",
-    "qrcode>=8.2,<9.0",
+    "qrcode[pil]>=8.2,<9.0",
     "bcrypt==5.0.0",
     "python-multipart>=0.0.20,<1.0"
 

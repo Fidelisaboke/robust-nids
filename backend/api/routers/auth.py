@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from backend.api.schemas.auth import LoginRequest, RefreshRequest, TokenResponse
+from backend.api.schemas.auth import LoginRequest, MFARequiredResponse, RefreshRequest, TokenResponse
 from backend.api.schemas.users import UserOut
 from backend.database.db import db
 from backend.database.models import User
@@ -22,8 +22,8 @@ from backend.services.auth_service import (
 router = APIRouter(prefix='/api/v1/auth', tags=['auth'])
 
 
-@router.post('/login', response_model=TokenResponse)
-def login(request: LoginRequest) -> TokenResponse:
+@router.post('/login', response_model=TokenResponse | MFARequiredResponse)
+def login(request: LoginRequest) -> TokenResponse | MFARequiredResponse:
     """User login endpoint.
 
     Args:
@@ -42,6 +42,10 @@ def login(request: LoginRequest) -> TokenResponse:
             detail='Invalid email or password',
             headers={'WWW-Authenticate': 'Bearer'},
         )
+
+    print(f"User DETAILS ON LOGIN ===>{user.__dict__}")
+    if user.mfa_enabled:
+        return MFARequiredResponse(mfa_required=True, user_id=user.id)
 
     new_access_token = create_access_token(data={'sub': str(user.id)})
     new_refresh_token = create_refresh_token(data={'sub': str(user.id)})
