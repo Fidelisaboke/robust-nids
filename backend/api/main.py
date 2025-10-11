@@ -12,6 +12,9 @@ async def add_body_to_state(request: Request, call_next):
         body = await request.body()
         request.state.body = body
 
+        # Make the body available for future reads
+        request._body = body
+
     response = await call_next(request)
     return response
 

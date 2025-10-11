@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import HTTPBearer
 from pydantic import EmailStr
 
 from backend.core.config import settings
@@ -11,8 +11,8 @@ from backend.database.db import db
 from backend.database.models import User
 from backend.database.repositories.user import UserRepository
 
-# OAuth2 scheme for token extraction
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/token')
+# HTTP Bearer scheme for MFA challenge token extraction
+http_bearer_scheme = HTTPBearer()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -72,6 +72,18 @@ def create_refresh_token(user_id: int):
     return encoded_jwt
 
 
+def create_mfa_challenge_token(user_id: int):
+    """Create a JWT token for MFA challenge."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        'sub': str(user_id),
+        'exp': expire,
+        'token_type': 'mfa_challenge',
+    }
+    encoded_jwt = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return encoded_jwt
+
+
 def decode_token(token: str):
     """Decode a JWT token."""
     try:
@@ -93,7 +105,7 @@ def is_token_expired(token: str) -> bool:
     return expiration < datetime.now(timezone.utc)
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(credentials=Security(http_bearer_scheme)):
     """Retrieve the current user based on the JWT token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -101,8 +113,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={'WWW-Authenticate': 'Bearer'},
     )
 
+    # Extract the token from the credentials
+    token = credentials.credentials
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+
+        # Ensure the token is an access token
+        if payload.get('token_type') != 'access':
+            raise credentials_exception
+
         user_id = int(payload.get('sub'))
         if user_id is None:
             raise credentials_exception
@@ -122,3 +142,37 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail='Inactive user')
     return current_user
+
+
+async def get_user_from_mfa_challenge_token(credentials=Security(http_bearer_scheme)):
+    """Retrieve user from MFA challenge token."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='Could not validate MFA challenge token',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+
+    # Extract the token from the credentials
+    token = credentials.credentials
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+
+        # Ensure the token is an MFA challenge token
+        if payload.get('token_type') != 'mfa_challenge':
+            raise credentials_exception
+
+        user_id = int(payload.get('sub'))
+        if user_id is None:
+            raise credentials_exception
+
+    except jwt.PyJWTError:
+        raise credentials_exception
+
+    with db.get_session() as session:
+        user_repo = UserRepository(session)
+        user = user_repo.get_by_id(user_id)
+        if user is None:
+            raise credentials_exception
+
+        return user

@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = Field('HS256', validation_alias='JWT_ALGORITHM')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(30, validation_alias='ACCESS_TOKEN_EXPIRE_MINUTES')  # 30 minutes
     REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(1440, validation_alias='REFRESH_TOKEN_EXPIRE_MINUTES')  # 1 day
+    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = Field(5, validation_alias='MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES')
 
 
+# noinspection PyArgumentList
 settings = Settings()

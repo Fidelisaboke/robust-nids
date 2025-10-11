@@ -11,10 +11,10 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = 'bearer'
 
-
-class MFARequiredResponse(BaseModel):
+class MFAChallengeResponse(BaseModel):
     mfa_required: bool = True
-    user_id: int
+    mfa_challenge_token: str
+
 
 
 class RefreshRequest(BaseModel):
