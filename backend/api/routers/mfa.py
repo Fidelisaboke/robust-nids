@@ -57,6 +57,6 @@ def verify_mfa(request: Request, payload: MFAVerifyPayload):
         if not service.verify_mfa_code(user, payload.code):
             raise HTTPException(status_code=400, detail="Invalid or expired code")
 
-        access = create_access_token(data={"sub": str(user.id)})
-        refresh = create_refresh_token(data={"sub": str(user.id)})
+        access = create_access_token(user.id)
+        refresh = create_refresh_token(user.id)
         return TokenResponse(access_token=access, refresh_token=refresh)

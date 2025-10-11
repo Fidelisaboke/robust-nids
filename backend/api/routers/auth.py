@@ -47,8 +47,8 @@ def login(request: LoginRequest) -> TokenResponse | MFARequiredResponse:
     if user.mfa_enabled:
         return MFARequiredResponse(mfa_required=True, user_id=user.id)
 
-    new_access_token = create_access_token(data={'sub': str(user.id)})
-    new_refresh_token = create_refresh_token(data={'sub': str(user.id)})
+    new_access_token = create_access_token(user.id)
+    new_refresh_token = create_refresh_token(user.id)
 
     # Update last login time
     with db.get_session() as session:
@@ -81,8 +81,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={'WWW-Authenticate': 'Bearer'},
         )
 
-    new_access_token = create_access_token(data={'sub': str(user.id)})
-    new_refresh_token = create_refresh_token(data={'sub': str(user.id)})
+    new_access_token = create_access_token(user.id)
+    new_refresh_token = create_refresh_token(user.id)
 
     # Update last login time
     with db.get_session() as session:
@@ -118,6 +118,11 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
     if payload is None:
         raise refresh_token_exception
 
+    # Check if token provided is a refersh token
+    token_type = payload.get('token_type')
+    if token_type != 'refresh':
+        raise refresh_token_exception
+
     # Check token expiration
     exp = payload.get('exp')
     if exp is None or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
@@ -149,7 +154,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
                 headers={'WWW-Authenticate': 'Bearer'},
             )
 
-    new_access_token = create_access_token(data={'sub': str(user_id)})
+    new_access_token = create_access_token(user.id)
     return TokenResponse(access_token=new_access_token, refresh_token=request.refresh_token)
 
 
