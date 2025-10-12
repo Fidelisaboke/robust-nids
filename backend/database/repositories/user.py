@@ -6,7 +6,6 @@ from sqlalchemy.orm import joinedload
 
 from backend.database.models import Role, User
 from backend.database.repositories.base import BaseRepository
-from backend.schemas.users import UserCreate, UserUpdate
 
 
 class UserRepository(BaseRepository):
@@ -58,16 +57,15 @@ class UserRepository(BaseRepository):
             query = query.filter(User.is_active.is_(True))
         return query.all()
 
-    def create(self, data: UserCreate) -> User:
+    def create(self, data: dict) -> User:
         """Create a new user."""
-        new_user = User(**data.model_dump())
+        new_user = User(**data)
         self.session.add(new_user)
         return new_user
 
-    def update(self, user: User, data: UserUpdate) -> User:
+    def update(self, user: User, data: dict) -> User:
         """Update an existing user."""
-        update_data = data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
+        for key, value in data.items():
             setattr(user, key, value)
         return user
 
