@@ -2,15 +2,14 @@ from datetime import datetime, timezone
 from typing import Type
 
 from fastapi import Depends
-from sqlalchemy.orm import Session
 
 from backend.core.config import settings
-from backend.core.dependencies import get_db_session
+from backend.core.dependencies import get_role_repository, get_user_repository
+from backend.core.security import get_password_hash
 from backend.database.models import User
 from backend.database.repositories.role import RoleRepository
 from backend.database.repositories.user import UserRepository
 from backend.schemas.users import UserCreate, UserUpdate
-from backend.services.auth_service import get_password_hash
 from backend.services.exceptions.user import (
     EmailAlreadyExistsError,
     RoleNotAssignedError,
@@ -24,10 +23,14 @@ from backend.services.mfa_service import MFAService
 class UserService:
     """Service for managing user operations."""
 
-    def __init__(self, session: Session = Depends(get_db_session), mfa_service: MFAService = Depends()):
-        self.session = session
-        self.user_repo = UserRepository(session)
-        self.role_repo = RoleRepository(session)
+    def __init__(
+            self,
+            user_repo: UserRepository = Depends(get_user_repository),
+            role_repo: RoleRepository = Depends(get_role_repository),
+            mfa_service: MFAService = Depends()
+    ):
+        self.user_repo = user_repo
+        self.role_repo = role_repo
         self.mfa_service = mfa_service
 
     def create_user(self, user_data: UserCreate) -> User:
@@ -53,7 +56,8 @@ class UserService:
         user_dict['roles'] = self._handle_role_updates(user_dict)
 
         new_user = self.user_repo.create(user_dict)
-        self.session.refresh(new_user)
+        self.user_repo.session.flush()
+        self.user_repo.session.refresh(new_user)
         return new_user
 
     def get_user(self, user_id: int) -> User:
@@ -99,7 +103,8 @@ class UserService:
         update_dict['last_profile_update'] = datetime.now(timezone.utc)
 
         updated_user = self.user_repo.update(user, update_dict)
-        self.session.refresh(updated_user)
+        self.user_repo.session.flush()
+        self.user_repo.session.refresh(updated_user)
         return updated_user
 
     def delete_user(self, user_id: int) -> None:
@@ -120,6 +125,6 @@ class UserService:
         for role_id in data['roles']:
             role = self.role_repo.get_by_id(role_id)
             if not role:
-                raise RoleNotFoundError()
+                raise RoleNotFoundError(role_id)
             role_objects.append(role)
         return role_objects

@@ -8,10 +8,12 @@ import bcrypt
 import pyotp
 import qrcode
 
+from backend.core.config import settings
+
 
 class TOTPService:
-    def __init__(self, issuer_name: str = 'NIDS'):
-        self.issuer_name = issuer_name
+    def __init__(self):
+        self.issuer_name = settings.APP_NAME
 
     @staticmethod
     def generate_totp_secret() -> str:

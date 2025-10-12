@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 from fastapi import Depends
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
@@ -156,7 +157,7 @@ class MFAService:
             'backup_codes_remaining': len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
         }
 
-    def initiate_mfa_recovery(self, email: str):
+    def initiate_mfa_recovery(self, email: EmailStr):
         """Initiate MFA recovery process by generating a recovery token"""
 
         user_repo = UserRepository(self.session)
