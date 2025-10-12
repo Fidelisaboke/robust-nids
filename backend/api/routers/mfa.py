@@ -74,7 +74,7 @@ def verify_mfa(
             raise HTTPException(status_code=400, detail="Invalid or expired code")
 
         # Record successful login
-        user.last_login = datetime.now(timezone.utc)
+        user_in_session.last_login = datetime.now(timezone.utc)
         session.commit()
 
         # Issue new access and refresh tokens
@@ -83,7 +83,6 @@ def verify_mfa(
         return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-# MFA disable endpoint
 @router.post("/disable")
 def disable_mfa(payload: MFAVerifyPayload, current_user: User = Depends(get_current_active_user)):
     """Disable MFA for the current user after verifying their TOTP code."""
