@@ -2,6 +2,7 @@ from typing import Type
 
 from backend.database.models import Permission
 from backend.database.repositories.base import BaseRepository
+from backend.schemas.permissions import PermissionCreate, PermissionUpdate
 
 
 class PermissionRepository(BaseRepository):
@@ -17,15 +18,16 @@ class PermissionRepository(BaseRepository):
         """Return all permissions."""
         return self.session.query(Permission).all()
 
-    def create(self, data: dict) -> Permission:
+    def create(self, data: PermissionCreate) -> Permission:
         """Create a new permission and persist."""
-        new_permission = Permission(**data)
+        new_permission = Permission(**data.model_dump())
         self.session.add(new_permission)
         return new_permission
 
-    def update(self, permission: Permission, data: dict) -> Permission:
+    def update(self, permission: Permission, data: PermissionUpdate) -> Permission:
         """Update an existing permission."""
-        for key, value in data.items():
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
             setattr(permission, key, value)
         return permission
 

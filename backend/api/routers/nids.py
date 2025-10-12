@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
-from backend.api.schemas.nids import PredictRequest, PredictResponse, TrainRequest
+from backend.schemas.nids import PredictRequest, PredictResponse, TrainRequest
 
 router = APIRouter(
     prefix="/api/v1/nids",

@@ -4,11 +4,11 @@ from typing import Type
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from backend.api.schemas.users import UserCreate, UserUpdate
 from backend.core.config import settings
 from backend.database.models import User
 from backend.database.repositories.role import RoleRepository
 from backend.database.repositories.user import UserRepository
+from backend.schemas.users import UserCreate, UserUpdate
 from backend.services.auth_service import get_password_hash
 
 

@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from backend.api.schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
-from backend.api.schemas.users import UserOut
 from backend.database.db import db
 from backend.database.models import User
+from backend.schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
+from backend.schemas.users import UserOut
 from backend.services.auth_service import (
     authenticate_user,
     create_access_token,

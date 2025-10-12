@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from backend.database.models import Role, User
 from backend.database.repositories.base import BaseRepository
+from backend.schemas.users import UserCreate, UserUpdate
 
 
 class UserRepository(BaseRepository):
@@ -40,11 +41,15 @@ class UserRepository(BaseRepository):
 
     def get_by_mfa_recovery_token(self, token: str) -> User | None:
         """Fetch user by MFA recovery token."""
-        return self.session.query(User).filter(
-            User.mfa_recovery_token == token,
-            User.mfa_recovery_token_expires.isnot(None),
-            User.mfa_recovery_token_expires > datetime.now(timezone.utc),
-        ).first()
+        return (
+            self.session.query(User)
+            .filter(
+                User.mfa_recovery_token == token,
+                User.mfa_recovery_token_expires.isnot(None),
+                User.mfa_recovery_token_expires > datetime.now(timezone.utc),
+            )
+            .first()
+        )
 
     def list_all(self, active_only: bool = False) -> list[Type[User]]:
         """Return all users, optionally filtering by active status."""
@@ -53,15 +58,16 @@ class UserRepository(BaseRepository):
             query = query.filter(User.is_active.is_(True))
         return query.all()
 
-    def create(self, data) -> User:
+    def create(self, data: UserCreate) -> User:
         """Create a new user."""
-        new_user = User(**data)
+        new_user = User(**data.model_dump())
         self.session.add(new_user)
         return new_user
 
-    def update(self, user: User, data: dict) -> User:
+    def update(self, user: User, data: UserUpdate) -> User:
         """Update an existing user."""
-        for key, value in data.items():
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
             setattr(user, key, value)
         return user
 

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status
 
 from backend.api.dependencies import require_permissions
-from backend.api.schemas.users import UserCreate, UserOut, UserUpdate
 from backend.database.db import db
 from backend.database.models import User
+from backend.schemas.users import UserCreate, UserOut, UserUpdate
 from backend.services.auth_service import get_current_active_user
 from backend.services.mfa_service import MFAService
 from backend.services.totp_service import totp_service

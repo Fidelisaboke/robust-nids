@@ -4,16 +4,16 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 
-from backend.api.schemas.auth import TokenResponse
-from backend.api.schemas.mfa import (
+from backend.database.db import db
+from backend.database.models import User
+from backend.database.repositories.user import UserRepository
+from backend.schemas.auth import TokenResponse
+from backend.schemas.mfa import (
     MFAEnablePayload,
     MFARecoveryCompleteRequest,
     MFARecoveryInitiateRequest,
     MFAVerifyPayload,
 )
-from backend.database.db import db
-from backend.database.models import User
-from backend.database.repositories.user import UserRepository
 from backend.services.auth_service import (
     create_access_token,
     create_refresh_token,

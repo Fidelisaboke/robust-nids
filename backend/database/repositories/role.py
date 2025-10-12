@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from backend.database.models import Permission, Role
 from backend.database.repositories.base import BaseRepository
+from backend.schemas.roles import RoleCreate, RoleUpdate
 
 
 class RoleRepository(BaseRepository):
@@ -25,15 +26,16 @@ class RoleRepository(BaseRepository):
         """Return all roles."""
         return self.session.query(Role).options(joinedload(Role.permissions)).all()
 
-    def create(self, data) -> Role:
+    def create(self, data: RoleCreate) -> Role:
         """Create a new role."""
-        new_role = Role(**data)
+        new_role = Role(**data.model_dump())
         self.session.add(new_role)
         return new_role
 
-    def update(self, role: Role, data: dict) -> Role:
+    def update(self, role: Role, data: RoleUpdate) -> Role:
         """Update an existing role."""
-        for key, value in data.items():
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
             setattr(role, key, value)
         return role
 
