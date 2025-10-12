@@ -37,6 +37,7 @@ def list_alerts():
         status_code=status.HTTP_200_OK
     )
 
+@router.get("/alerts/{alert_id}", status_code=status.HTTP_200_OK)
 def get_alert(alert_id: int):
     """Fetch a specific alert by its ID."""
     # TODO: query from alerts table by alert_id
