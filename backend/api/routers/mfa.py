@@ -83,7 +83,19 @@ def verify_mfa(
         return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-# MFA Recovery initiation endpoint
+# MFA disable endpoint
+@router.post("/disable")
+def disable_mfa(payload: MFAVerifyPayload, current_user: User = Depends(get_current_active_user)):
+    """Disable MFA for the current user after verifying their TOTP code."""
+    with db.get_session() as session:
+        # Attach user to session
+        current_user = session.merge(current_user)
+        mfa_service = MFAService(session, totp_service=totp_service)
+        mfa_service.disable_mfa(current_user, payload.code)
+
+    return {"detail": "MFA has been disabled successfully."}
+
+
 @router.post("/recovery/initiate")
 @limiter_by_user.limit("5/hour")
 def initiate_mfa_recovery(request: Request, payload: MFARecoveryInitiateRequest):
