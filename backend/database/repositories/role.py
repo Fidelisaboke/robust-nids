@@ -2,7 +2,7 @@ from typing import Type
 
 from sqlalchemy.orm import joinedload
 
-from backend.database.models import Role
+from backend.database.models import Permission, Role
 from backend.database.repositories.base import BaseRepository
 
 
@@ -40,3 +40,12 @@ class RoleRepository(BaseRepository):
     def delete(self, role: Role) -> None:
         """Delete a role."""
         self.session.delete(role)
+
+    def add_permission(self, role: Role, permission: Permission) -> None:
+        """Assign a permission to a role."""
+        if permission not in role.permissions:
+            role.permissions.append(permission)
+
+    def remove_permission(self, role: Role, permission: Permission) -> None:
+        if permission in role.permissions:
+            role.permissions.remove(permission)
