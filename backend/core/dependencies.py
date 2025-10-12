@@ -1,10 +1,17 @@
+"""Core FastAPI dependencies for FastAPI routes."""
 
+from typing import Generator
+
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from backend.database.db import db
+from backend.database.repositories.permission import PermissionRepository
+from backend.database.repositories.role import RoleRepository
+from backend.database.repositories.user import UserRepository
 
 
-def get_db_session() -> Session:
+def get_db_session() -> Generator[Session, None, None]:
     """
     FastAPI dependency that manages the request's database transaction.
     """
@@ -14,3 +21,17 @@ def get_db_session() -> Session:
             session.commit()
         except Exception:
             raise
+
+def get_user_repository(session: Session = Depends(get_db_session)) -> UserRepository:
+    """Dependency to provide a UserRepository instance."""
+    return UserRepository(session)
+
+
+def get_role_repository(session: Session = Depends(get_db_session)) -> RoleRepository:
+    """Dependency to provide a RoleRepository instance."""
+    return RoleRepository(session)
+
+
+def get_permission_repository(session: Session = Depends(get_db_session)) -> PermissionRepository:
+    """Dependency to provide a PermissionRepository instance."""
+    return PermissionRepository(session)
