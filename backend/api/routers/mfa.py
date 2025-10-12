@@ -5,9 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 
 from backend.api.schemas.auth import TokenResponse
-from backend.api.schemas.mfa import MFAEnablePayload, MFAVerifyPayload
+from backend.api.schemas.mfa import (
+    MFAEnablePayload,
+    MFARecoveryCompleteRequest,
+    MFARecoveryInitiateRequest,
+    MFAVerifyPayload,
+)
 from backend.database.db import db
 from backend.database.models import User
+from backend.database.repositories.user import UserRepository
 from backend.services.auth_service import (
     create_access_token,
     create_refresh_token,
@@ -75,3 +81,37 @@ def verify_mfa(
         access = create_access_token(user_in_session.id)
         refresh = create_refresh_token(user_in_session.id)
         return TokenResponse(access_token=access, refresh_token=refresh)
+
+
+# MFA Recovery initiation endpoint
+@router.post("/recovery/initiate")
+def initiate_mfa_recovery(request: MFARecoveryInitiateRequest):
+    """Initiate MFA recovery process by sending a recovery email."""
+    with db.get_session() as session:
+        user_repo = UserRepository(session)
+        user = user_repo.get_by_email(request.email)
+
+        if user and user.mfa_enabled:
+            mfa_service = MFAService(session, totp_service=totp_service)
+            mfa_service.initiate_mfa_recovery(user)
+
+    return {"detail": "If the email is registered, a recovery link has been sent."}
+
+
+@router.post("/recovery/complete")
+def complete_mfa_recovery(request: MFARecoveryCompleteRequest):
+    """Complete MFA recovery using a valid recovery token."""
+    # Hash incoming token
+    hashed_token = totp_service.hash_searchable_token(request.token)
+
+    with db.get_session() as session:
+        user_repo = UserRepository(session)
+        user = user_repo.get_by_mfa_recovery_token(hashed_token)
+
+        if not user:
+            raise HTTPException(status_code=400, detail="Invalid or expired recovery token")
+
+        mfa_service = MFAService(session, totp_service=totp_service)
+        mfa_service.complete_mfa_recovery(user)
+
+    return {"detail": "MFA has been disabled. Please log in and set up MFA again if desired."}

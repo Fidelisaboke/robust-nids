@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import io
 import secrets
 from typing import List
@@ -69,6 +70,10 @@ class TOTPService:
                 return True, updated
         return False, stored_codes
 
+    @staticmethod
+    def hash_searchable_token(token: str) -> str:
+        """Hash a token for secure storage and searching."""
+        return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 # Singleton instance
 totp_service = TOTPService()

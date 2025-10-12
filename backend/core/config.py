@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(1440, validation_alias='REFRESH_TOKEN_EXPIRE_MINUTES')  # 1 day
     MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = Field(5, validation_alias='MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES')
 
+    # MFA Settings
+    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = Field(1, validation_alias='MFA_RECOVERY_TOKEN_EXPIRES_HOURS')
+
 
 # noinspection PyArgumentList
 settings = Settings()

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Type
 
 from pydantic import EmailStr
@@ -36,6 +37,14 @@ class UserRepository(BaseRepository):
             .filter(User.username == username)
             .first()
         )
+
+    def get_by_mfa_recovery_token(self, token: str) -> User | None:
+        """Fetch user by MFA recovery token."""
+        return self.session.query(User).filter(
+            User.mfa_recovery_token == token,
+            User.mfa_recovery_token_expires.isnot(None),
+            User.mfa_recovery_token_expires > datetime.now(timezone.utc),
+        ).first()
 
     def list_all(self, active_only: bool = False) -> list[Type[User]]:
         """Return all users, optionally filtering by active status."""

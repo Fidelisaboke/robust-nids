@@ -1,9 +1,11 @@
-from datetime import datetime, timezone
+import secrets
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from backend.core.config import settings
 from backend.database.models import User
 from backend.services.totp_service import TOTPService
 
@@ -125,3 +127,40 @@ class MFAService:
             'mfa_configured_at': user.mfa_configured_at,
             'backup_codes_remaining': len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
         }
+
+    def initiate_mfa_recovery(self, user: User):
+        """Initiate MFA recovery process by generating a recovery token"""
+        if not user.mfa_enabled:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='MFA not enabled for user')
+
+        # Generate a secure recovery token
+        recovery_token = secrets.token_urlsafe(32)
+
+        # Hash token before storing it for security
+        user.mfa_recovery_token = self.totp_service.hash_searchable_token(recovery_token)
+        user.mfa_recovery_token_expires = (
+                datetime.now(timezone.utc) + timedelta(hours=settings.MFA_RECOVERY_TOKEN_EXPIRES_HOURS)
+        )
+
+        self.db.commit()
+
+        # TODO: Send the recovery token to the user via email
+        # send_mfa_recovery_email(user.email, recovery_token)
+
+    def complete_mfa_recovery(self, user: User):
+        """Disable MFA for a user after successful recovery."""
+        if not user.mfa_enabled:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='MFA not enabled for user')
+
+        # Clear MFA data
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        user.mfa_backup_codes = None
+        user.mfa_configured_at = None
+        user.mfa_recovery_token = None
+        user.mfa_recovery_token_expires = None
+
+        self.db.commit()
+
+        # TODO: Notify user that MFA has been disabled
+        # send_mfa_disabled_notification(user.email)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class MFAVerifyPayload(BaseModel):
@@ -7,3 +7,10 @@ class MFAVerifyPayload(BaseModel):
 class MFAEnablePayload(BaseModel):
     verification_code: str
     temp_secret: str
+
+class MFARecoveryInitiateRequest(BaseModel):
+    email: EmailStr
+
+
+class MFARecoveryCompleteRequest(BaseModel):
+    token: str

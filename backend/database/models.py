@@ -38,6 +38,8 @@ class User(Base):
     mfa_method = Column(String(20), default='totp')  # 'totp', 'email', 'sms', 'backup_code'
     mfa_backup_codes = Column(ARRAY(Text), nullable=True)
     mfa_configured_at = Column(DateTime, nullable=True)
+    mfa_recovery_token = Column(String(255), nullable=True)
+    mfa_recovery_token_expires = Column(DateTime, nullable=True)
 
     # Security fields
     is_active = Column(Boolean, default=True)
