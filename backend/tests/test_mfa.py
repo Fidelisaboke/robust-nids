@@ -5,12 +5,12 @@ import pyotp
 import pytest
 from fastapi.testclient import TestClient
 
-from api.main import app
-from api.routers.mfa import limiter_by_user
+from backend.api.main import app
+from backend.api.routers.mfa import limiter_by_user
+from backend.database.db import db
+from backend.database.models import User
 from backend.services.exceptions.mfa import InvalidMFARecoveryTokenError, InvalidMFAVerificationCodeError
-from database.db import db
-from database.models import User
-from services.totp_service import totp_service
+from backend.services.totp_service import totp_service
 
 client = TestClient(app)
 
