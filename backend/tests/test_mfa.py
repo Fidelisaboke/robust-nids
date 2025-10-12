@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pyotp
@@ -6,8 +7,10 @@ from fastapi.testclient import TestClient
 
 from api.main import app
 from api.routers.mfa import limiter_by_user
+from backend.services.exceptions.mfa import InvalidMFARecoveryTokenError, InvalidMFAVerificationCodeError
 from database.db import db
 from database.models import User
+from services.totp_service import totp_service
 
 client = TestClient(app)
 
@@ -36,27 +39,36 @@ def test_mfa_verify_invalid_code(mfa_user):
     assert login_resp.status_code == 200
     challenge_token = login_resp.json()['mfa_challenge_token']
     headers = {'Authorization': f'Bearer {challenge_token}'}
-    verify_resp = client.post(
-        '/api/v1/auth/mfa/verify',
-        json={
-            'code': '000000',  # Invalid code
-        },
-        headers=headers,
-    )
-    assert verify_resp.status_code == 400
-    assert 'Invalid or expired code' in verify_resp.text
+    with pytest.raises(InvalidMFAVerificationCodeError):
+        client.post('/api/v1/auth/mfa/verify', json={'code': '000000'}, headers=headers)
 
 
 @pytest.mark.usefixtures('mfa_user')
 def test_mfa_verify_rate_limit(mfa_user):
+    # Reset rate limiter storage for this user before starting
     login_resp = client.post('/api/v1/auth/login', json={'email': 'mfa@example.com', 'password': 'mfapass'})
     assert login_resp.status_code == 200
     challenge_token = login_resp.json()['mfa_challenge_token']
+    key = f'mfa-verify-{mfa_user.id}'
+    try:
+        limiter_by_user._storage.clear(key)
+    except Exception:
+        pass
     headers = {'Authorization': f'Bearer {challenge_token}'}
-    for _ in range(6):
-        resp = client.post('/api/v1/auth/mfa/verify', json={'code': '000000'}, headers=headers)
-    assert resp.status_code == 429
-    assert 'rate limit' in resp.text.lower() or resp.json().get('detail')
+    limiter_by_user.enabled = True
+    totp = pyotp.TOTP(mfa_user.mfa_secret)
+    # First 3 requests: should not be rate limited
+    for i in range(3):
+        code = totp.now()
+        resp = client.post('/api/v1/auth/mfa/verify', json={'code': code}, headers=headers)
+        assert resp.status_code in (200, 400), (
+            f'Unexpected status {resp.status_code} on request {i + 1} (should not be rate limited yet)'
+        )
+    # 4th and 5th requests: should be rate limited
+    for i in range(2):
+        code = totp.now()
+        resp = client.post('/api/v1/auth/mfa/verify', json={'code': code}, headers=headers)
+        assert resp.status_code == 429, f'Expected 429 rate limit on request {4 + i}, got {resp.status_code}'
 
 
 @pytest.mark.usefixtures('mfa_user')
@@ -133,12 +145,9 @@ def test_mfa_recovery_initiate_success(mfa_user):
 
 
 def test_mfa_recovery_complete_success(mfa_user):
-    from datetime import datetime, timedelta, timezone
-
     with db.get_session() as session:
         user = session.merge(mfa_user)
         token = 'valid-token-123'
-        from backend.services.totp_service import totp_service
 
         user.mfa_recovery_token = totp_service.hash_searchable_token(token)
         user.mfa_recovery_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -151,9 +160,8 @@ def test_mfa_recovery_complete_success(mfa_user):
 
 
 def test_mfa_recovery_complete_invalid_token(mfa_user):
-    resp = client.post('/api/v1/auth/mfa/recovery/complete', json={'token': 'invalid-token'})
-    assert resp.status_code == 400
-    assert 'Invalid or expired recovery token' in resp.text
+    with pytest.raises(InvalidMFARecoveryTokenError):
+        client.post('/api/v1/auth/mfa/recovery/complete', json={'token': 'invalid-token'})
 
 
 def test_admin_reset_mfa_success(mfa_user, admin_user):
