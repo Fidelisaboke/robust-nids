@@ -4,12 +4,12 @@ Dependencies for user-dependent routes and operations
 
 from fastapi import Depends, HTTPException, status
 
-from backend.services.auth_service import get_current_user
+from backend.services.auth_service import get_current_active_user
 
 
 # Dependency for permission requirements
 def require_permissions(*permissions: str):
-    def dependency(user=Depends(get_current_user)):
+    def dependency(user=Depends(get_current_active_user)):
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

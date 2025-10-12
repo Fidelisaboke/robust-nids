@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
@@ -8,6 +9,8 @@ from sqlalchemy.orm import Session
 from backend.core.config import settings
 from backend.database.models import User
 from backend.services.totp_service import TOTPService
+
+logger = logging.getLogger(__name__)
 
 
 class MFAService:
@@ -83,6 +86,15 @@ class MFAService:
 
         self.db.commit()
 
+    def admin_disable_mfa(self, user: User, performing_admin: User) -> None:
+        """Disables MFA for a user, performed by an admin"""
+        logger.info(
+            f"ADMIN ACTION: MFA for user {user.email} (ID: {user.id}) "
+            f"disabled by admin {performing_admin.email} (ID: {performing_admin.id})"
+        )
+
+        self.complete_mfa_recovery(user)
+
     def verify_mfa_code(self, user: User, code: str) -> bool:
         """Verify MFA code (TOTP or backup code)"""
         if not user.mfa_enabled:
@@ -97,8 +109,10 @@ class MFAService:
             is_valid, updated_codes = self.totp_service.verify_backup_code(code, user.mfa_backup_codes)
             if is_valid:
                 user.mfa_backup_codes = updated_codes
+                logger.warning(f"Backup code used for user_id={user.id}. {len(updated_codes)} codes left.")
                 return True
 
+        logger.warning(f"Failed MFA attempt for user_id={user.id}.")
         return False
 
     def generate_new_backup_codes(self, user: User, verification_code: str) -> List[str]:

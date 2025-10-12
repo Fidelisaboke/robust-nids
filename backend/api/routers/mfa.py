@@ -85,11 +85,12 @@ def verify_mfa(
 
 # MFA Recovery initiation endpoint
 @router.post("/recovery/initiate")
-def initiate_mfa_recovery(request: MFARecoveryInitiateRequest):
+@limiter_by_user.limit("5/hour")
+def initiate_mfa_recovery(request: Request, payload: MFARecoveryInitiateRequest):
     """Initiate MFA recovery process by sending a recovery email."""
     with db.get_session() as session:
         user_repo = UserRepository(session)
-        user = user_repo.get_by_email(request.email)
+        user = user_repo.get_by_email(payload.email)
 
         if user and user.mfa_enabled:
             mfa_service = MFAService(session, totp_service=totp_service)
