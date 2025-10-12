@@ -3,6 +3,11 @@ import json
 from fastapi import APIRouter, Depends, Request
 from slowapi import Limiter
 
+from backend.api.dependencies import get_current_active_user, get_user_from_mfa_challenge_token
+from backend.core.security import (
+    create_access_token,
+    create_refresh_token,
+)
 from backend.database.models import User
 from backend.schemas.auth import TokenResponse
 from backend.schemas.mfa import (
@@ -10,12 +15,6 @@ from backend.schemas.mfa import (
     MFARecoveryCompleteRequest,
     MFARecoveryInitiateRequest,
     MFAVerifyPayload,
-)
-from backend.services.auth_service import (
-    create_access_token,
-    create_refresh_token,
-    get_current_active_user,
-    get_user_from_mfa_challenge_token,
 )
 from backend.services.mfa_service import MFAService
 

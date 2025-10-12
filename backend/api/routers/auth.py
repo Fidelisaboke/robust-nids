@@ -6,28 +6,32 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from backend.database.db import db
-from backend.database.models import User
-from backend.schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
-from backend.schemas.users import UserOut
-from backend.services.auth_service import (
-    authenticate_user,
+from backend.api.dependencies import get_current_active_user
+from backend.core.security import (
     create_access_token,
     create_mfa_challenge_token,
     create_refresh_token,
     decode_token,
-    get_current_active_user,
 )
+from backend.database.db import db
+from backend.database.models import User
+from backend.schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
+from backend.schemas.users import UserOut
+from backend.services.auth_service import AuthService
 
 router = APIRouter(prefix='/api/v1/auth', tags=['Authentication'])
 
 
 @router.post('/login', response_model=TokenResponse | MFAChallengeResponse)
-def login(request: LoginRequest) -> TokenResponse | MFAChallengeResponse:
+def login(
+    request: LoginRequest,
+    auth_service: AuthService = Depends()
+) -> TokenResponse | MFAChallengeResponse:
     """User login endpoint.
 
     Args:
         request (LoginRequest): The login request containing email and password.
+        auth_service (AuthService): The authentication service dependency.
 
     Raises:
         HTTPException: If authentication fails.
@@ -35,7 +39,7 @@ def login(request: LoginRequest) -> TokenResponse | MFAChallengeResponse:
     Returns:
         TokenResponse: The token response containing access and refresh tokens.
     """
-    user = authenticate_user(request.email, request.password)
+    user = auth_service.authenticate(request.email, request.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

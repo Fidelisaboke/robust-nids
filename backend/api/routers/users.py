@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, status
 
-from backend.api.dependencies import require_permissions
+from backend.api.dependencies import get_current_active_user, require_permissions
 from backend.database.models import User
 from backend.schemas.users import UserCreate, UserOut, UserUpdate
-from backend.services.auth_service import get_current_active_user
 from backend.services.user_service import UserService
 from backend.utils.enums import SystemPermissions
 
@@ -112,7 +111,6 @@ async def delete_user(user_id: int, user_service: UserService = Depends()):
 @router.post(
     '/{user_id}/reset-mfa',
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
-    status_code=status.HTTP_204_NO_CONTENT,
 )
 def admin_reset_user_mfa(
     user_id: int,
@@ -129,3 +127,4 @@ def admin_reset_user_mfa(
 
     """
     user_service.admin_reset_mfa_for_user(user_id, admin_user)
+    return {'detail': 'MFA has been reset for the user.'}
