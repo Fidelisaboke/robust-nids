@@ -2,9 +2,13 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from .exception_handlers import exc_handlers
+from .middleware import ServiceExceptionHandlerMiddleware
 from .routers import auth, mfa, nids, users
 
 app = FastAPI(title='Robust NIDS API', version='1.0.0')
+
+# Service exception handling middleware
+app.add_middleware(ServiceExceptionHandlerMiddleware) # noqa
 
 
 @app.middleware("http")
@@ -20,11 +24,13 @@ async def add_body_to_state(request: Request, call_next):
     response = await call_next(request)
     return response
 
+
 # Include API routers
 app.include_router(auth.router)
 app.include_router(mfa.router)
 app.include_router(users.router)
 app.include_router(nids.router)
+
 
 # Global exception handler
 @app.exception_handler(Exception)
@@ -36,6 +42,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={'detail': 'An unexpected error occurred.'},
     )
+
 
 # Health check endpoint
 @app.get('/')
