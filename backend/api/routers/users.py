@@ -1,12 +1,9 @@
 from fastapi import APIRouter, Depends, status
 
 from backend.api.dependencies import require_permissions
-from backend.database.db import db
 from backend.database.models import User
 from backend.schemas.users import UserCreate, UserOut, UserUpdate
 from backend.services.auth_service import get_current_active_user
-from backend.services.mfa_service import MFAService
-from backend.services.totp_service import totp_service
 from backend.services.user_service import UserService
 from backend.utils.enums import SystemPermissions
 
@@ -21,18 +18,18 @@ MANAGE_USERS_PERMISSION = SystemPermissions.MANAGE_USERS
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_201_CREATED,
 )
-async def create_user(user_data: UserCreate):
+async def create_user(user_data: UserCreate, user_service: UserService = Depends()):
     """
     Create a user.
 
     Args:
         user_data: Details of the user to create.
+        user_service (UserService): The user service dependency.
+
     Returns:
         User: The created user object.
     """
-    with db.get_session() as session:
-        user_service = UserService(session)
-        return user_service.create_user(user_data)
+    return user_service.create_user(user_data)
 
 
 @router.get(
@@ -41,16 +38,15 @@ async def create_user(user_data: UserCreate):
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
 )
-async def list_users():
+async def list_users(user_service: UserService = Depends()):
     """
     List all users in the system.
 
     Returns:
         list[UserOut]: A list of user objects.
+        user_service (UserService): The user service dependency.
     """
-    with db.get_session() as session:
-        user_service = UserService(session)
-        return user_service.list_users()
+    return user_service.list_users()
 
 
 @router.get(
@@ -59,19 +55,18 @@ async def list_users():
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
 )
-async def get_user(user_id: int):
+async def get_user(user_id: int, user_service: UserService = Depends()):
     """
     Get a user by their ID.
 
     Args:
         user_id (int): The ID of the user to retrieve.
+        user_service (UserService): The user service dependency.
 
     Returns:
         User: The user object.
     """
-    with db.get_session() as session:
-        user_service = UserService(session)
-        return user_service.get_user(user_id)
+    return user_service.get_user(user_id)
 
 
 @router.put(
@@ -80,20 +75,19 @@ async def get_user(user_id: int):
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
 )
-async def update_user(user_id: int, user_data: UserUpdate):
+async def update_user(user_id: int, user_data: UserUpdate, user_service: UserService = Depends()):
     """
     Update a user's information.
 
     Args:
         user_id (int): The ID of the user to update.
         user_data (UserUpdate): Fields to update for user.
+        user_service (UserService): The user service dependency.
 
     Returns:
         User: The updated user object.
     """
-    with db.get_session() as session:
-        user_service = UserService(session)
-        return user_service.update_user(user_id, user_data)
+    return user_service.update_user(user_id, user_data)
 
 
 @router.delete(
@@ -101,41 +95,37 @@ async def update_user(user_id: int, user_data: UserUpdate):
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_user(user_id: int):
+async def delete_user(user_id: int, user_service: UserService = Depends()):
     """
     Delete a user.
 
     Args:
         user_id (int): The ID of the user.
+        user_service (UserService): The user service dependency.
 
     Returns:
         dict: A message indicating the delete status.
     """
-    with db.get_session() as session:
-        user_service = UserService(session)
-        user_service.delete_user(user_id)
+    return user_service.delete_user(user_id)
 
 
 @router.post(
-    "/{user_id}/reset-mfa",
+    '/{user_id}/reset-mfa',
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
-    status_code=status.HTTP_204_NO_CONTENT
+    status_code=status.HTTP_204_NO_CONTENT,
 )
-def admin_reset_user_mfa(user_id: int, admin_user: User = Depends(get_current_active_user)):
+def admin_reset_user_mfa(
+    user_id: int,
+    admin_user: User = Depends(get_current_active_user),
+    user_service: UserService = Depends(),
+):
     """
     Admin endpoint to reset a user's MFA settings.
 
     Args:
         user_id (int): The ID of the user whose MFA settings are to be reset.
         admin_user (User): The admin user performing the action.
+        user_service (UserService): The user service dependency.
 
     """
-    with db.get_session() as session:
-        user_service = UserService(session)
-        user_to_reset = user_service.get_user(user_id)
-
-        mfa_service = MFAService(session, totp_service)
-        mfa_service.admin_disable_mfa(
-            user=session.merge(user_to_reset),
-            performing_admin=session.merge(admin_user)
-        )
+    user_service.admin_reset_mfa_for_user(user_id, admin_user)

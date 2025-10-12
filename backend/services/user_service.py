@@ -1,32 +1,42 @@
 from datetime import datetime, timezone
 from typing import Type
 
-from fastapi import HTTPException
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
+from backend.core.dependencies import get_db_session
 from backend.database.models import User
 from backend.database.repositories.role import RoleRepository
 from backend.database.repositories.user import UserRepository
 from backend.schemas.users import UserCreate, UserUpdate
 from backend.services.auth_service import get_password_hash
+from backend.services.exceptions.user import (
+    EmailAlreadyExistsError,
+    RoleNotAssignedError,
+    RoleNotFoundError,
+    UsernameAlreadyExistsError,
+    UserNotFoundError,
+)
+from backend.services.mfa_service import MFAService
 
 
 class UserService:
     """Service for managing user operations."""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session = Depends(get_db_session), mfa_service: MFAService = Depends()):
         self.session = session
         self.user_repo = UserRepository(session)
         self.role_repo = RoleRepository(session)
+        self.mfa_service = mfa_service
 
     def create_user(self, user_data: UserCreate) -> User:
         """Handles the creation of a new user."""
         if self.user_repo.get_by_email(user_data.email):
-            raise HTTPException(status_code=400, detail='Email already registered')
+            raise EmailAlreadyExistsError()
 
         if self.user_repo.get_by_username(user_data.username):
-            raise HTTPException(status_code=400, detail='Username already taken')
+            raise UsernameAlreadyExistsError()
 
         # Hash password
         password_hash = get_password_hash(user_data.password)
@@ -39,19 +49,18 @@ class UserService:
 
         # Assign roles
         if not user_dict.get('roles'):
-            raise HTTPException(status_code=400, detail='At least one role must be assigned to the user')
+            raise RoleNotAssignedError()
         user_dict['roles'] = self._handle_role_updates(user_dict)
 
         new_user = self.user_repo.create(user_dict)
-        self.session.commit()
         self.session.refresh(new_user)
-        return self.user_repo.get_by_id(new_user.id)
+        return new_user
 
     def get_user(self, user_id: int) -> User:
         """Fetch a user by ID."""
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=404, detail='User not found')
+            raise UserNotFoundError()
         return user
 
     def list_users(self, active_only: bool = False) -> list[Type[User]]:
@@ -62,18 +71,18 @@ class UserService:
         """Handles updating an existing user."""
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=404, detail='User not found')
+            raise UserNotFoundError()
 
         update_dict = update_data.model_dump(exclude_unset=True)
 
         # Validate uniqueness
         if 'email' in update_dict and update_dict['email'] != user.email:
             if self.user_repo.get_by_email(update_dict['email']):
-                raise HTTPException(status_code=400, detail='Email already registered')
+                raise EmailAlreadyExistsError()
 
         if 'username' in update_dict and update_dict['username'] != user.username:
             if self.user_repo.get_by_username(update_dict['username']):
-                raise HTTPException(status_code=400, detail='Username already taken')
+                raise UsernameAlreadyExistsError()
 
         if 'password' in update_dict:
             update_dict['password_hash'] = get_password_hash(update_dict.pop('password'))
@@ -90,18 +99,20 @@ class UserService:
         update_dict['last_profile_update'] = datetime.now(timezone.utc)
 
         updated_user = self.user_repo.update(user, update_dict)
-        self.session.commit()
         self.session.refresh(updated_user)
-        return self.user_repo.get_by_id(updated_user.id)
+        return updated_user
 
     def delete_user(self, user_id: int) -> None:
         """Handles deleting a user."""
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=404, detail='User not found')
+            raise UserNotFoundError()
 
         self.user_repo.delete(user)
-        self.session.commit()
+
+    def admin_reset_mfa_for_user(self, user_id: int, admin_user: User):
+        user_to_reset = self.get_user(user_id)
+        self.mfa_service.admin_disable_mfa(user_to_reset, admin_user)
 
     def _handle_role_updates(self, data: dict):
         """Replace role IDs with actual Role objects."""
@@ -109,6 +120,6 @@ class UserService:
         for role_id in data['roles']:
             role = self.role_repo.get_by_id(role_id)
             if not role:
-                raise HTTPException(status_code=404, detail=f'Failed to assign role {role_id}: not found')
+                raise RoleNotFoundError()
             role_objects.append(role)
         return role_objects
