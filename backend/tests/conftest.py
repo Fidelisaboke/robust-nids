@@ -2,12 +2,12 @@ import bcrypt
 import pytest
 from fastapi.testclient import TestClient
 
-from api.main import app
+from backend.api.main import app
+from backend.database.db import db
 from backend.database.models import User
-from database.db import db
-from database.repositories.permission import PermissionRepository
-from database.repositories.role import RoleRepository
-from utils.enums import SystemPermissions, SystemRoles
+from backend.database.repositories.permission import PermissionRepository
+from backend.database.repositories.role import RoleRepository
+from backend.utils.enums import SystemPermissions, SystemRoles
 
 client = TestClient(app)
 
@@ -38,8 +38,8 @@ def non_mfa_user():
 def mfa_user():
     password = 'mfapass'
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    # Hash backup codes as expected by backend
-    backup_codes = ['BACKUPCODE1', 'BACKUPCODE2']
+    # Use formatted backup codes and hash them as backend expects
+    backup_codes = ['CODE1-CODE2', 'CODE3-CODE4']
     hashed_backup_codes = [bcrypt.hashpw(code.encode(), bcrypt.gensalt()).decode() for code in backup_codes]
     with db.get_session() as session:
         user = User(
@@ -83,10 +83,10 @@ def admin_user():
             session.commit()
 
         user = User(
-            email='admin@example.com',
+            email='mock_admin_test@example.com',
             password_hash=hashed,
             is_active=True,
-            username='adminuser',
+            username='mockadminuser',
             roles=[admin_role],
         )
         session.add(user)

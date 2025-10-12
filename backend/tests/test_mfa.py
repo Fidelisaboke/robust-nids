@@ -9,7 +9,6 @@ from backend.api.main import app
 from backend.api.routers.mfa import limiter_by_user
 from backend.database.db import db
 from backend.database.models import User
-from backend.services.exceptions.mfa import InvalidMFARecoveryTokenError, InvalidMFAVerificationCodeError
 from backend.services.totp_service import totp_service
 
 client = TestClient(app)
@@ -39,8 +38,9 @@ def test_mfa_verify_invalid_code(mfa_user):
     assert login_resp.status_code == 200
     challenge_token = login_resp.json()['mfa_challenge_token']
     headers = {'Authorization': f'Bearer {challenge_token}'}
-    with pytest.raises(InvalidMFAVerificationCodeError):
-        client.post('/api/v1/auth/mfa/verify', json={'code': '000000'}, headers=headers)
+    resp = client.post('/api/v1/auth/mfa/verify', json={'code': '000000'}, headers=headers)
+    assert resp.status_code == 400
+    assert 'Invalid MFA verification code' in resp.json().get('detail', '')
 
 
 @pytest.mark.usefixtures('mfa_user')
@@ -81,7 +81,7 @@ def test_mfa_verify_used_backup_code(mfa_user):
         assert login_resp.status_code == 200
         challenge_token = login_resp.json()['mfa_challenge_token']
 
-        backup_code = 'BACKUPCODE1'  # A known, valid backup code
+        backup_code = 'CODE1-CODE2'  # A known, valid backup code matching the fixture
         headers = {'Authorization': f'Bearer {challenge_token}'}
 
         verify_resp = client.post('/api/v1/auth/mfa/verify', json={'code': backup_code}, headers=headers)
@@ -160,8 +160,9 @@ def test_mfa_recovery_complete_success(mfa_user):
 
 
 def test_mfa_recovery_complete_invalid_token(mfa_user):
-    with pytest.raises(InvalidMFARecoveryTokenError):
-        client.post('/api/v1/auth/mfa/recovery/complete', json={'token': 'invalid-token'})
+    resp = client.post('/api/v1/auth/mfa/recovery/complete', json={'token': 'invalid-token'})
+    assert resp.status_code == 400
+    assert 'Invalid or expired MFA recovery token' in resp.json().get('detail', '')
 
 
 def test_admin_reset_mfa_success(mfa_user, admin_user):
