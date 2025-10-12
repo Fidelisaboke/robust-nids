@@ -12,5 +12,8 @@ exc_handlers = {
     user_exceptions.RoleNotFoundError: user_bad_request_handler,
     user_exceptions.RoleNotAssignedError: user_bad_request_handler,
     # MFA Exception Handlers
-    mfa_exceptions.MFAException: mfa_bad_request_handler,
+    mfa_exceptions.InvalidMFAVerificationCodeError: mfa_bad_request_handler,
+    mfa_exceptions.InvalidMFARecoveryTokenError: mfa_bad_request_handler,
+    mfa_exceptions.MFAAlreadyEnabledError: mfa_bad_request_handler,
+    mfa_exceptions.MFANotEnabledError: mfa_bad_request_handler,
 }
