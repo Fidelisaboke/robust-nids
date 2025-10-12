@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from database.seeders.manager import SeederManager  # noqa: E402
+from backend.database.seeders.manager import SeederManager  # noqa: E402
 
 
 def seed():

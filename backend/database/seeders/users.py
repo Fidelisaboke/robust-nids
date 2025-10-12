@@ -3,8 +3,8 @@ import string
 from datetime import datetime
 
 from backend.core.config import settings
+from backend.core.security import get_password_hash
 from backend.database.models import Role, User
-from backend.services.auth_service import get_password_hash
 from backend.utils.enums import SystemRoles
 
 from .base import BaseSeeder
