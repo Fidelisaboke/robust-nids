@@ -11,9 +11,14 @@ from backend.core.security import (
 from backend.database.models import User
 from backend.schemas.auth import TokenResponse
 from backend.schemas.mfa import (
+    MFADisableResponse,
     MFAEnablePayload,
+    MFAEnableResponse,
     MFARecoveryCompleteRequest,
+    MFARecoveryCompleteResponse,
     MFARecoveryInitiateRequest,
+    MFARecoveryInitiateResponse,
+    MFASetupResponse,
     MFAVerifyPayload,
 )
 from backend.services.mfa_service import MFAService
@@ -38,13 +43,13 @@ router = APIRouter(prefix='/api/v1/auth/mfa', tags=['Multi-Factor Authentication
 limiter_by_user = Limiter(key_func=get_key_from_request_state)
 
 
-@router.post('/setup')
+@router.get('/setup', response_model=MFASetupResponse)
 def setup_mfa(current_user: User = Depends(get_current_active_user), mfa_service: MFAService = Depends()):
     """Begin MFA setup for logged-in user."""
     return mfa_service.setup_mfa(current_user)
 
 
-@router.post('/enable')
+@router.post('/enable', response_model=MFAEnableResponse)
 def enable_mfa(
     payload: MFAEnablePayload,
     current_user: User = Depends(get_current_active_user),
@@ -69,7 +74,7 @@ def verify_mfa(
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
-@router.post('/disable')
+@router.post('/disable', response_model=MFADisableResponse)
 def disable_mfa(
     payload: MFAVerifyPayload,
     current_user: User = Depends(get_current_active_user),
@@ -78,10 +83,11 @@ def disable_mfa(
     """Disable MFA for the current user after verifying their TOTP code."""
     mfa_service.disable_mfa(current_user, payload.code)
 
+
     return {'detail': 'MFA has been disabled successfully.'}
 
 
-@router.post('/recovery/initiate')
+@router.post('/recovery/initiate', response_model=MFARecoveryInitiateResponse)
 @limiter_by_user.limit('5/hour')
 def initiate_mfa_recovery(
     request: Request, payload: MFARecoveryInitiateRequest, mfa_service: MFAService = Depends()
@@ -92,9 +98,9 @@ def initiate_mfa_recovery(
     return {'detail': 'If the email is registered, a recovery link has been sent.'}
 
 
-@router.post('/recovery/complete')
+@router.post('/recovery/complete', response_model=MFARecoveryCompleteResponse)
 def complete_mfa_recovery(request: MFARecoveryCompleteRequest, mfa_service: MFAService = Depends()):
     """Complete MFA recovery using a valid recovery token."""
-    mfa_service.complete_mfa_recovery(request.token)
+    mfa_service.complete_mfa_recovery(request.mfa_recovery_token)
 
     return {'detail': 'MFA has been disabled. Please log in and set up MFA again if desired.'}

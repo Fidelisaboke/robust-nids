@@ -68,7 +68,7 @@ class MFAService:
 
         return {
             'backup_codes': backup_codes,
-            'message': 'MFA enabled successfully. Save your backup codes securely.',
+            'detail': 'MFA enabled successfully. Save your backup codes securely.',
         }
 
     def disable_mfa(self, user: User, verification_code: str) -> None:
