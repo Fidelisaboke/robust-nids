@@ -23,7 +23,15 @@ jobs:
 
       - name: Install uv & Ruff
         run: |
-          pip install uv
+          pipx install uv
+
+      - name: Set up virtual environment
+        run: |
+          uv venv
+          source .venv/bin/activate
+
+      - name: Install Ruff
+        run: |
           uv pip install ruff
 
       - name: Run Ruff lint & format checks
