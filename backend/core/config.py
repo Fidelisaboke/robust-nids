@@ -5,7 +5,7 @@ Configuration module for the backend application.
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import Field, PostgresDsn
+from pydantic import Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,6 +36,23 @@ class Settings(BaseSettings):
     # Database Admin credentials (for DB setup)
     DB_ADMIN_USER: str = Field('postgres', validation_alias='DB_ADMIN_USER')
     DB_ADMIN_PASSWORD: str = Field('admin_password', validation_alias='DB_ADMIN_PASSWORD')
+
+    # Redis configuration
+    REDIS_URL: str = Field(..., validation_alias='REDIS_URL')
+
+    # CORS origins
+    BACKEND_CORS_ORIGINS: list[str] = Field(..., validation_alias='BACKEND_CORS_ORIGINS')
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def split_cors_origins(cls, v: str) -> list[str]:
+        """
+        Splits a comma-separated string into a list of strings.
+        """
+        if isinstance(v, str):
+            # Split the string by commas and strip any whitespace from each item
+            return [item.strip() for item in v.split(",")]
+        return v
 
     # Default user preferences for the dashboard
     DEFAULT_USER_PREFERENCES: ClassVar[dict] = {

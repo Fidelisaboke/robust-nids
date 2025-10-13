@@ -1,21 +1,22 @@
+
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+from backend.core.config import settings
 
 from .exception_handlers import exc_handlers
 from .middleware import ServiceExceptionHandlerMiddleware
 from .routers import auth, mfa, nids, users
 
-app = FastAPI(title='Robust NIDS API', version='1.0.0')
+app = FastAPI(title="Robust NIDS API", version="1.0.0")
 
 # Origins (Frontend URLs)
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
-]
+origins = settings.BACKEND_CORS_ORIGINS
 
 # Service exception handling middleware
-app.add_middleware(ServiceExceptionHandlerMiddleware) # noqa
+app.add_middleware(ServiceExceptionHandlerMiddleware)  # noqa
 
 # Add CORS middleware
 app.add_middleware(
@@ -56,11 +57,27 @@ async def global_exception_handler(request: Request, exc: Exception):
         return await handler(request, exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={'detail': 'An unexpected error occurred.'},
+        content={"detail": "An unexpected error occurred."},
     )
 
 
-# Health check endpoint
-@app.get('/')
-def health_check():
-    return {'message': 'API is running smoothly!'}
+@app.get("/", tags=["Root"])
+async def root():
+    """
+    Root endpoint to check if API is running.
+    """
+    return {
+        "message": "API is running smoothly!",
+        "app_name": settings.APP_NAME,
+        "version": "1.0.0",
+        "debug": settings.DEBUG,
+    }
+
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """
+    Simple health check endpoint.
+    Returns 200 OK if all services are healthy.
+    """
+    return {"status": "healthy"}

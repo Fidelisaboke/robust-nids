@@ -6,50 +6,39 @@ build-backend = "setuptools.build_meta"
 name = "robust-nids"
 version = "0.1.0"
 description = "Robust NIDS Application"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 
 dependencies = [
-    # --- Core scientific stack ---
     "numpy>=2.3,<3.0",
     "pandas>=2.3,<3.0",
     "scipy>=1.16,<2.0",
     "scikit-learn>=1.7,<2.0",
     "matplotlib>=3.10,<4.0",
     "seaborn>=0.13,<1.0",
-
-    # --- Machine Learning / DL ---
     "tensorflow>=2.20,<3.0",
     "keras>=3.11,<4.0",
     "xgboost>=3.0,<4.0",
-    "lime>=0.2,<1.0",
     "adversarial-robustness-toolbox>=1.20,<2.0",
-
-    # --- Data tools ---
     "altair>=5.5,<6.0",
     "plotly>=6.3,<7.0",
     "pyarrow>=21.0,<22.0",
-
-    # --- Database ---
     "SQLAlchemy>=2.0,<3.0",
     "psycopg[binary]>=3.2,<4.0",
     "alembic>=1.14,<2.0",
-
-    # --- Web API (FastAPI stack) ---
     "fastapi>=0.115,<1.0",
     "uvicorn[standard]>=0.32,<1.0",
     "pydantic[email,timezone]>=2.11,<3.0",
     "pydantic-settings>=2.6,<3.0",
-    "slow-api>=0.1.9,<1.0",
-
-    # --- Utils ---
+    "slowapi>=0.1.9,<1.0",
     "requests>=2.32,<3.0",
     "python-dotenv>=1.0,<2.0",
     "PyJWT>=2.10,<3.0",
     "pyotp>=2.9,<3.0",
     "qrcode[pil]>=8.2,<9.0",
     "bcrypt==5.0.0",
-    "python-multipart>=0.0.20,<1.0"
-
+    "python-multipart>=0.0.20,<1.0",
+    "redis>=6.4.0",
+    "pre-commit>=4.3.0",
 ]
 
 [project.optional-dependencies]
@@ -61,15 +50,6 @@ dev = [
 test = [
     "pytest>=8.0,<10.0",
     "pytest-cov>=4.0,<5.0"
-]
-
-[tool.setuptools]
-packages = [
-    "api",
-    "core",
-    "database",
-    "ml",
-    "utils",
 ]
 
 [tool.ruff]
@@ -85,3 +65,7 @@ ignore = ["E203"]
 quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api", "core", "database", "ml", "schemas", "scripts", "services", "utils"]
