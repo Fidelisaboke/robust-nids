@@ -9,6 +9,9 @@ from .roles import RoleOut
 class UserOut(BaseModel):
     id: int
     email: EmailStr
+    mfa_enabled: bool
+    mfa_configured_at: Optional[datetime]
+    mfa_method: str
     username: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
