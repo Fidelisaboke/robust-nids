@@ -27,17 +27,14 @@ jobs:
 
       - name: Set up virtual environment
         run: |
+          cd backend
           uv venv
           source .venv/bin/activate
-
-      - name: Install Ruff
-        run: |
-          uv add ruff
 
       - name: Run Ruff lint & format checks
         run: |
           # Lint and fail on errors
-          ruff check backend
+          uv ruff check .
 
   backend-test:
     name: Backend Tests
