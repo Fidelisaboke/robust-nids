@@ -34,7 +34,7 @@ jobs:
       - name: Run Ruff lint & format checks
         run: |
           # Lint and fail on errors
-          uv ruff check .
+          uv run ruff check .
 
   backend-test:
     name: Backend Tests
