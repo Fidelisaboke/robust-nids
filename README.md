@@ -58,9 +58,10 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 
 * **Pre-commit Hooks:** enforced via `.pre-commit-config.yaml`
 * **Linting:** `ruff` for Python, `eslint` + `prettier` for TypeScript
-* **Testing:** `pytest` (backend) and `jest` or `vitest` (frontend planned)
+* **Testing:** `pytest` (backend)
 * **CI/CD:** GitHub Actions (`.github/workflows/ci.yml`)
-* **Containerization:** `backend/Dockerfile` (frontend container optional)
+* **Containerization:** `backend/Dockerfile`
+* **Package Manager:** `uv` for Python backend, `npm` for frontend
 
 ## Getting Started
 
@@ -71,12 +72,19 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 * PostgreSQL (or Docker)
 * Git
 * Bash shell (Linux/WSL2 recommended)
+* uv (Python project manager)
 
 ### Quick Install
 
 - For detailed instructions, see [`docs/SETUP.md`](docs/SETUP.md).
 
 #### Backend Setup (FastAPI)
+- To quickly set up a Docker container, simply run (at project root):
+```bash
+./scripts/build-dev.sh
+```
+
+- Otherwise, follow the steps below for a local setup:
 
 1. **Clone the repository:**
 
@@ -88,7 +96,7 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 2. **Create and activate a virtual environment:**
 
    ```bash
-   python -m venv .venv
+   uv venv
    source .venv/bin/activate  # Linux/WSL2/macOS
    # .venv\Scripts\activate   # Windows
    ```
@@ -96,14 +104,16 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 3. **Install dependencies:**
 
    ```bash
-   pip install --upgrade pip
-   pip install -e .[dev]
+   uv sync
+
+   # Optionally, for dev and test dependencies
+   uv sync --extra dev --extra test
    ```
 
 4. **Set up environment variables:**
 
    ```bash
-   cp .env.example .env
+   cp .env.example .env # Configure your settings
    ```
 
 5. **Run Alembic migrations:**
@@ -121,8 +131,7 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 7. **Seed initial data (users, roles):**
 
    ```bash
-   cd ..
-   python -m backend.scripts.seed_database
+   python database/seed.py
    ```
 
 8. **Set up the dataset:** Follow the detailed instructions in [
@@ -131,13 +140,13 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 9. **Start the FastAPI server:**
 
    ```bash
-   cd ..
    uvicorn api.main:app --reload
    ```
 
    Access the API docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 #### Frontend Setup (Next.js + TypeScript)
+- It's preferred to run backend and frontend on separate terminal instances.
 
 1. **Navigate to the frontend directory:**
 
@@ -149,6 +158,11 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 
    ```bash
    npm install
+   ```
+
+3. **Set up `.env`:**
+   ```bash
+   cp .env.local.example .env.local
    ```
 
 3. **Run the development server:**

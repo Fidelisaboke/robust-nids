@@ -19,11 +19,12 @@ backend**, **Next.js frontend**, and **dataset configuration**.
 Ensure the following are installed on your system (preferably inside WSL2 for Windows users):
 
 * **Git**
-* **Python 3.9+**
+* **Python 3.12+**
 * **Node.js 20+** and **npm** (or **pnpm**)
 * **PostgreSQL 12+**
 * **WSL2** (Windows only)
 * **Kaggle API credentials** (optional for dataset download)
+* [**uv** Python project and package manager](https://docs.astral.sh/uv/getting-started/installation/)
 
 ## 1. WSL2 Configuration (Windows Users)
 
@@ -55,30 +56,48 @@ For optimal performance and compatibility, run both backend and frontend within 
 
 ## 2. Backend Setup (FastAPI)
 
-### 2.1 Create Python Environment
+- Create python environment:
 
 ```bash
 cd backend
-python -m venv .venv
+uv venv
 source .venv/bin/activate  # (Linux/macOS)
 # or
 .venv\Scripts\activate     # (Windows)
 ```
 
-### 2.2 Install Dependencies
+- Install dependencies:
 
 ```bash
-pip install --upgrade pip
-pip install -e .[dev]
+uv pip install --upgrade pip
+uv sync
 ```
 
-### 2.3 Run Development Server
+- Set up `.env`:
+```bash
+cp .env.example .env
+```
+
+- Set up database:
+```bash
+./scripts/setup_db.sh
+```
+
+- Run alembic migrations:
+```bash
+alembic upgrade head
+```
+
+- Seed database:
+```bash
+python database/seed.py
+```
+
+- Run local server
 
 ```bash
 uvicorn api.main:app --reload
 ```
-
-### 2.4 Verify
 
 Visit **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** to access Swagger UI and test the API routes.
 
@@ -86,7 +105,7 @@ Visit **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** to access Swa
 
 The frontend uses **Next.js 15**, **TypeScript**, and **ShadCN UI**.
 
-### 3.1 Install Dependencies
+- Install dependencies:
 
 ```bash
 cd frontend
@@ -95,21 +114,20 @@ npm install
 pnpm install
 ```
 
-### 3.2 Environment Variables
 
-Copy and edit the environment example:
+- Copy and edit the environment example:
 
 ```bash
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
-Set the API base URL (for example):
+- Set the API base URL (for example):
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
 
-### 3.3 Run Development Server
+- Run development server:
 
 ```bash
 npm run dev
