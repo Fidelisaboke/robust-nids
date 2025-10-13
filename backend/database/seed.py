@@ -1,14 +1,10 @@
-#!/usr/bin/env python3
 """
 Database seeder script for NIDS Application.
 """
 
 import sys
-from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from backend.database.seeders.manager import SeederManager  # noqa: E402
+from database.seeders.manager import SeederManager
 
 
 def seed():
