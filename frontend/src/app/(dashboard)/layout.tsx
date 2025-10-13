@@ -1,175 +1,191 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Network,
+  LayoutDashboard,
+  AlertTriangle,
+  Activity,
+  MapPin,
+  FileText,
+  Settings,
+  Globe,
+  LogOut,
+  Menu,
+  X,
+  ChevronDown,
+  User,
+  Loader2,
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentUser } from '@/hooks/useAuthMutations';
 
-const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: '📊' },
-  { name: 'Alerts', href: '/alerts', icon: '🚨' },
-  { name: 'Metrics', href: '/metrics', icon: '📈' },
-  { name: 'Reports', href: '/reports', icon: '📄' },
-  { name: 'Network Map', href: '/network-map', icon: '🗺️' },
-  { name: 'Threat Intel', href: '/threat-intelligence', icon: '🎯' },
-  { name: 'Account Settings', href: '/settings', icon: '⚙️' },
-];
-
-const adminNavigation = [
-  { name: 'User Management', href: '/admin/users', icon: '👥' },
-  { name: 'Roles & Permissions', href: '/admin/roles', icon: '🔐' },
-  { name: 'Audit Logs', href: '/admin/audit-logs', icon: '📝' },
-  { name: 'System Config', href: '/admin/system-config', icon: '⚙️' },
-];
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
+  const { logout, isAuthenticated, isLoading } = useAuth();
+  const { data: user } = useCurrentUser(isAuthenticated);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Alerts', href: '/alerts', icon: AlertTriangle },
+    { name: 'Metrics', href: '/metrics', icon: Activity },
+    { name: 'Network Map', href: '/network-map', icon: MapPin },
+    { name: 'Threat Intelligence', href: '/threat-intelligence', icon: Globe },
+    { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-900">
+        <Loader2 className="animate-spin h-12 w-12 text-blue-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-900">
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-slate-900 border-r border-slate-800 transition-all duration-300 ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        }`}
+      <motion.aside
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-800/95 backdrop-blur-xl border-r border-slate-700 transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/50">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            {sidebarOpen && (
-              <span className="font-bold text-xl text-white">NIDS</span>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-8">
-          {/* Main Navigation */}
-          <div>
-            {sidebarOpen && (
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-3 px-3">
-                Dashboard
-              </p>
-            )}
-            <div className="space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                      : 'text-gray-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  {sidebarOpen && <span className="font-medium">{item.name}</span>}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Admin Navigation */}
-          <div>
-            {sidebarOpen && (
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-3 px-3">
-                Administration
-              </p>
-            )}
-            <div className="space-y-1">
-              {adminNavigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                    isActive(item.href)
-                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                      : 'text-gray-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  {sidebarOpen && <span className="font-medium">{item.name}</span>}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </nav>
-
-        {/* Sidebar Toggle */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute bottom-4 right-4 p-2 rounded-lg bg-slate-800 text-gray-400 hover:text-white transition-colors"
-        >
-          <svg
-            className={`w-5 h-5 transition-transform ${sidebarOpen ? 'rotate-0' : 'rotate-180'}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-      </aside>
-
-      {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
-        {/* Header */}
-        <header className="h-16 bg-slate-900/50 border-b border-slate-800 backdrop-blur-sm sticky top-0 z-40">
-          <div className="h-full px-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-white">
-                {navigation.find(item => isActive(item.href))?.name ||
-                 adminNavigation.find(item => isActive(item.href))?.name ||
-                 'Dashboard'}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="Search..."
-                  className="w-64 px-4 py-2 pl-10 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-                <svg
-                  className="absolute left-3 top-2.5 w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700">
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <Network className="w-6 h-6 text-blue-400" />
               </div>
+              <span className="text-xl font-bold text-white">NIDS</span>
+            </Link>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-              {/* Notifications */}
-              <button className="relative p-2 text-gray-400 hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${isActive
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                      : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'
+                    }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* User Info */}
+          <div className="px-4 py-4 border-t border-slate-700">
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
+                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-white truncate">
+                    {user?.first_name} {user?.last_name}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* User Menu */}
-              <div className="flex items-center gap-3 pl-4 border-l border-slate-800">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-white">Admin User</p>
-                  <p className="text-xs text-gray-400">Administrator</p>
-                </div>
-                <button className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-medium">
-                  AU
-                </button>
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute bottom-full left-0 right-0 mb-2 bg-slate-700 border border-slate-600 rounded-lg shadow-xl overflow-hidden"
+                  >
+                    <Link
+                      href="/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-slate-600 hover:text-white transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">Profile Settings</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        logout();
+                      }}
+                      className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-slate-600 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm">Sign Out</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </motion.aside>
+
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="lg:pl-64">
+        {/* Top Bar */}
+        <header className="sticky top-0 z-30 bg-slate-800/95 backdrop-blur-xl border-b border-slate-700">
+          <div className="flex items-center justify-between px-6 py-4">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            <div className="flex items-center space-x-4 ml-auto">
+              <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-slate-900/50 rounded-lg border border-slate-700">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-sm text-gray-400">System Online</span>
               </div>
             </div>
           </div>

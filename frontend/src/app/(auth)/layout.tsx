@@ -1,49 +1,54 @@
-import React from 'react';
+'use client';
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { motion } from 'framer-motion';
+import { Network, Shield } from 'lucide-react';
+import Link from 'next/link';
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 grid-pattern">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 
-      <div className="relative z-10 w-full max-w-md px-4">
-        {/* Logo and Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 mb-4 shadow-lg shadow-blue-500/50">
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              />
-            </svg>
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo/Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-8"
+        >
+          <Link href="/" className="inline-flex items-center justify-center space-x-3 mb-4">
+            <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+              <Network className="w-8 h-8 text-blue-400" />
+            </div>
+            <span className="text-3xl font-bold text-white">NIDS</span>
+          </Link>
+          <div className="flex items-center justify-center space-x-2 text-sm text-gray-400">
+            <Shield className="w-4 h-4" />
+            <span>Network Intrusion Detection System</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            NIDS
-          </h1>
-          <p className="text-gray-400">
-            Network Intrusion Detection System
-          </p>
-        </div>
+        </motion.div>
 
-        {/* Auth Form Container */}
-        <div className="glass rounded-2xl p-8 shadow-2xl">
+        {/* Auth Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-8"
+        >
           {children}
-        </div>
+        </motion.div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-8">
-          © 2025 NIDS. All rights reserved.
-        </p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-6 text-center text-sm text-gray-500"
+        >
+          <p>© 2025 NIDS. All rights reserved.</p>
+        </motion.div>
       </div>
     </div>
   );

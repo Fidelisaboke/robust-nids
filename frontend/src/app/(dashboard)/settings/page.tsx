@@ -1,332 +1,345 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Shield, Loader2, AlertCircle, CheckCircle, User, Bell, Lock } from 'lucide-react';
+import { useSetupMfaMutation, useCurrentUser, useDisableMfaMutation } from '@/hooks/useAuthMutations';
+import { normalizeError } from '@/lib/api/apiClient';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const router = useRouter();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('security');
+
+  const setupMfaMutation = useSetupMfaMutation();
+  const disableMfaMutation = useDisableMfaMutation();
+
+  const handleEnableMfa = async () => {
+    try {
+      router.push('/totp-setup');
+    } catch (error) {
+      console.error('Failed to setup MFA:', normalizeError(error));
+    }
+  };
+
+  const handleDisableMfa = async () => {
+
+  }
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: '👤' },
-    { id: 'security', label: 'Security', icon: '🔐' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'preferences', label: 'Preferences', icon: '⚙️' },
+    { id: 'profile' as const, label: 'Profile', icon: User },
+    { id: 'security' as const, label: 'Security', icon: Lock },
+    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Account Settings</h2>
-        <p className="text-gray-400">Manage your account preferences and security settings</p>
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-2 space-y-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                    : 'text-gray-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                <span className="text-xl">{tab.icon}</span>
-                <span className="font-medium">{tab.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+          <p className="text-gray-400">Manage your account settings and preferences</p>
+        </motion.div>
 
-        {/* Content */}
-        <div className="lg:col-span-3">
-          {activeTab === 'profile' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
-              <h3 className="text-xl font-bold text-white">Profile Information</h3>
-
-              <div className="flex items-center gap-6">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-3xl font-bold">
-                  AU
-                </div>
-                <div>
-                  <button className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors border border-slate-700">
-                    Change Avatar
-                  </button>
-                  <p className="text-sm text-gray-500 mt-2">JPG, PNG or GIF. Max size 2MB</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="Admin"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="User"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  defaultValue="admin@nids.local"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Job Title
-                </label>
-                <input
-                  type="text"
-                  defaultValue="System Administrator"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button className="px-6 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors">
-                  Cancel
+        <div className="mt-8 flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Tabs */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:w-64 space-y-2"
+          >
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-blue-500/20 border border-blue-500/50 text-blue-400'
+                      : 'bg-slate-800/50 border border-slate-700 text-gray-400 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{tab.label}</span>
                 </button>
-                <button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all">
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          )}
+              );
+            })}
+          </motion.div>
 
-          {activeTab === 'security' && (
-            <div className="space-y-6">
-              {/* Password */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-                <h3 className="text-xl font-bold text-white">Change Password</h3>
+          {/* Content Area */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex-1"
+          >
+            {activeTab === 'profile' && (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-6">
+                <h2 className="text-2xl font-bold text-white">Profile Information</h2>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all">
-                  Update Password
-                </button>
-              </div>
-
-              {/* 2FA */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-2">Two-Factor Authentication</h3>
-                    <p className="text-sm text-gray-400">Enhance your account security with TOTP</p>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                    <input
+                      type="text"
+                      value={user?.first_name || ''}
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white"
+                    />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400 text-sm font-medium">Enabled</span>
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+                    <input
+                      type="text"
+                      value={user?.last_name || ''}
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                    <input
+                      type="text"
+                      value={user?.username || ''}
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Department</label>
+                    <input
+                      type="text"
+                      value={user?.department || ''}
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Job Title</label>
+                    <input
+                      type="text"
+                      value={user?.job_title || ''}
+                      readOnly
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'security' && (
+              <div className="space-y-6">
+                {/* MFA Section */}
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-3 bg-blue-500/10 rounded-lg">
+                        <Shield className="w-6 h-6 text-blue-400" />
+                      </div>
+
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-white mb-2">
+                          Two-Factor Authentication
+                        </h3>
+                        <p className="text-gray-400 mb-4">
+                          Add an extra layer of security to your account by requiring a code from your authenticator app.
+                        </p>
+
+                        {/* MFA Status */}
+                        {user?.mfa_enabled ? (
+                          <div className="space-y-3 mb-4">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                              <span className="text-sm text-emerald-400 font-medium">Enabled</span>
+                            </div>
+
+                            <div className="text-sm text-gray-400 space-y-1">
+                              <p>
+                                <span className="text-gray-300 font-medium">Method:</span>{' '}
+                                {user?.mfa_method?.toUpperCase() || 'TOTP'}
+                              </p>
+                              {user?.mfa_configured_at && (
+                                <p>
+                                  <span className="text-gray-300 font-medium">Configured on:</span>{' '}
+                                  {new Date(user?.mfa_configured_at).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={handleDisableMfa}
+                              disabled={disableMfaMutation.isPending}
+                              className="px-6 py-2.5 bg-red-600/90 text-white font-medium rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {disableMfaMutation.isPending ? (
+                                <span className="flex items-center">
+                                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                                  Disabling...
+                                </span>
+                              ) : (
+                                'Disable MFA'
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center space-x-2 mb-4">
+                              <div className="w-2 h-2 rounded-full bg-amber-400" />
+                              <span className="text-sm text-gray-400">Not Enabled</span>
+                            </div>
+
+                            {setupMfaMutation.isError && (
+                              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start space-x-2">
+                                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-red-400 text-sm font-medium">Setup Failed</p>
+                                  <p className="text-red-300 text-sm mt-1">
+                                    {normalizeError(setupMfaMutation.error).message}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={handleEnableMfa}
+                              disabled={setupMfaMutation.isPending}
+                              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {setupMfaMutation.isPending ? (
+                                <span className="flex items-center">
+                                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                                  Setting up...
+                                </span>
+                              ) : (
+                                'Enable MFA'
+                              )}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-blue-500/10 rounded-lg">
-                      <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
+
+                {/* Password Section */}
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 bg-purple-500/10 rounded-lg">
+                      <Lock className="w-6 h-6 text-purple-400" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-white font-medium mb-1">Google Authenticator</p>
-                      <p className="text-sm text-gray-400">Your account is protected with TOTP 2FA</p>
+                      <h3 className="text-xl font-semibold text-white mb-2">Password</h3>
+                      <p className="text-gray-400 mb-4">
+                        Change your password regularly to keep your account secure.
+                      </p>
+                      <button className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-all">
+                        Change Password
+                      </button>
                     </div>
-                    <button className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/20">
-                      Disable
-                    </button>
                   </div>
                 </div>
 
-                <button className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
-                  View Recovery Codes →
-                </button>
-              </div>
-
-              {/* Active Sessions */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-                <h3 className="text-xl font-bold text-white">Active Sessions</h3>
-
-                <div className="space-y-3">
-                  {[
-                    { device: 'Chrome on Windows', location: 'Nairobi, Kenya', current: true, time: 'Current session' },
-                    { device: 'Safari on iPhone', location: 'Nairobi, Kenya', current: false, time: '2 hours ago' },
-                  ].map((session, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-blue-500/10 rounded-lg">
-                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">{session.device}</p>
-                          <p className="text-sm text-gray-400">{session.location} • {session.time}</p>
-                        </div>
+                {/* Active Sessions */}
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-white mb-4">Active Sessions</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+                      <div>
+                        <p className="text-white font-medium">Current Session</p>
+                        <p className="text-sm text-gray-400">
+                          {user?.last_login ? new Date(user.last_login).toLocaleString() : 'Unknown'}
+                        </p>
                       </div>
-                      {session.current ? (
-                        <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">
-                          Current
-                        </span>
-                      ) : (
-                        <button className="px-3 py-1 text-red-400 hover:bg-red-500/10 rounded-lg text-sm transition-colors">
-                          Revoke
-                        </button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                        <span className="text-sm text-green-400">Active</span>
+                      </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'notifications' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
-              <h3 className="text-xl font-bold text-white">Notification Preferences</h3>
+            {activeTab === 'notifications' && (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-6">
+                <h2 className="text-2xl font-bold text-white">Notification Preferences</h2>
 
-              <div className="space-y-4">
-                {[
-                  { label: 'Critical Alerts', desc: 'Get notified about critical security threats', checked: true },
-                  { label: 'High Priority Alerts', desc: 'Receive notifications for high priority events', checked: true },
-                  { label: 'System Updates', desc: 'Updates about system maintenance and changes', checked: true },
-                  { label: 'Weekly Reports', desc: 'Receive weekly security summary reports', checked: false },
-                  { label: 'User Activity', desc: 'Notifications about user management changes', checked: true },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700"
-                  >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
                     <div>
-                      <p className="text-white font-medium">{item.label}</p>
-                      <p className="text-sm text-gray-400 mt-1">{item.desc}</p>
+                      <p className="text-white font-medium">Email Notifications</p>
+                      <p className="text-sm text-gray-400">Receive alerts via email</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" defaultChecked={item.checked} className="sr-only peer" />
-                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                      <input
+                        type="checkbox"
+                        checked={user?.preferences?.notifications?.email}
+                        readOnly
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                ))}
-              </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all">
-                  Save Preferences
-                </button>
-              </div>
-            </div>
-          )}
+                  <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+                    <div>
+                      <p className="text-white font-medium">Browser Notifications</p>
+                      <p className="text-sm text-gray-400">Get push notifications in your browser</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={user?.preferences?.notifications?.browser}
+                        readOnly
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
 
-          {activeTab === 'preferences' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
-              <h3 className="text-xl font-bold text-white">Display Preferences</h3>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Theme
-                </label>
-                <select className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Dark (Default)</option>
-                  <option>Light</option>
-                  <option>System</option>
-                </select>
+                  <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+                    <div>
+                      <p className="text-white font-medium">Critical Alerts</p>
+                      <p className="text-sm text-gray-400">High-priority security alerts</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={user?.preferences?.notifications?.critical_alerts}
+                        readOnly
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Time Zone
-                </label>
-                <select className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Africa/Nairobi (EAT)</option>
-                  <option>UTC</option>
-                  <option>America/New_York (EST)</option>
-                  <option>Europe/London (GMT)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Date Format
-                </label>
-                <select className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>YYYY-MM-DD</option>
-                  <option>DD/MM/YYYY</option>
-                  <option>MM/DD/YYYY</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Default Dashboard View
-                </label>
-                <select className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Overview</option>
-                  <option>Alerts</option>
-                  <option>Metrics</option>
-                  <option>Network Map</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button className="px-6 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors">
-                  Reset to Defaults
-                </button>
-                <button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all">
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </motion.div>
         </div>
       </div>
     </div>

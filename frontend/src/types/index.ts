@@ -1,16 +1,3 @@
-// Auth Types
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: UserRole;
-  status: UserStatus;
-  mfaEnabled: boolean;
-  lastLogin: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export enum UserRole {
   ADMIN = 'Administrator',
   ANALYST = 'Security Analyst',

@@ -1,339 +1,244 @@
 'use client';
 
-import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, Download, Calendar, Clock, Eye, TrendingUp } from 'lucide-react';
 
 export default function ReportsPage() {
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-
   const reports = [
     {
       id: 1,
-      title: 'Daily Security Summary',
-      type: 'daily',
-      status: 'ready',
-      createdBy: 'System',
-      createdAt: '2025-10-05 08:00:00',
-      period: '2025-10-04',
-      format: 'PDF',
+      title: 'Monthly Security Overview',
+      description: 'Comprehensive security analysis for October 2025',
+      type: 'Security',
+      date: '2025-10-01',
       size: '2.4 MB',
+      format: 'PDF',
+      status: 'ready',
     },
     {
       id: 2,
-      title: 'Weekly Threat Analysis',
-      type: 'weekly',
-      status: 'ready',
-      createdBy: 'Admin User',
-      createdAt: '2025-10-01 09:30:00',
-      period: 'Sep 24 - Oct 01',
+      title: 'Incident Response Report',
+      description: 'Critical incidents and response actions',
+      type: 'Incident',
+      date: '2025-10-10',
+      size: '1.8 MB',
       format: 'PDF',
-      size: '5.8 MB',
+      status: 'ready',
     },
     {
       id: 3,
-      title: 'Monthly Compliance Report',
-      type: 'monthly',
-      status: 'generating',
-      createdBy: 'Admin User',
-      createdAt: '2025-10-05 14:00:00',
-      period: 'September 2025',
+      title: 'Threat Intelligence Summary',
+      description: 'Weekly threat landscape analysis',
+      type: 'Intelligence',
+      date: '2025-10-13',
+      size: '3.1 MB',
       format: 'PDF',
-      size: '-',
+      status: 'generating',
     },
     {
       id: 4,
-      title: 'Incident Response Report',
-      type: 'incident',
-      status: 'ready',
-      createdBy: 'Security Team',
-      createdAt: '2025-10-03 16:45:00',
-      period: 'Oct 02 Incident',
+      title: 'Compliance Audit Report',
+      description: 'Security compliance and policy adherence',
+      type: 'Compliance',
+      date: '2025-09-30',
+      size: '4.2 MB',
       format: 'PDF',
-      size: '1.2 MB',
+      status: 'ready',
+    },
+    {
+      id: 5,
+      title: 'Network Traffic Analysis',
+      description: 'Detailed network traffic patterns and anomalies',
+      type: 'Analytics',
+      date: '2025-10-12',
+      size: '5.6 MB',
+      format: 'CSV',
+      status: 'ready',
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      ready: 'bg-green-500/10 text-green-400 border-green-500/20',
-      generating: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-      failed: 'bg-red-500/10 text-red-400 border-red-500/20',
-    };
-    return colors[status as keyof typeof colors];
-  };
+  const stats = [
+    { label: 'Total Reports', value: '127', icon: FileText, color: 'text-blue-400' },
+    { label: 'This Month', value: '12', icon: Calendar, color: 'text-purple-400' },
+    { label: 'Pending', value: '3', icon: Clock, color: 'text-orange-400' },
+    { label: 'Downloads', value: '489', icon: Download, color: 'text-green-400' },
+  ];
 
   const getTypeColor = (type: string) => {
-    const colors = {
-      daily: 'bg-blue-500/10 text-blue-400',
-      weekly: 'bg-purple-500/10 text-purple-400',
-      monthly: 'bg-cyan-500/10 text-cyan-400',
-      incident: 'bg-orange-500/10 text-orange-400',
-      compliance: 'bg-green-500/10 text-green-400',
-    };
-    return colors[type as keyof typeof colors];
+    switch (type) {
+      case 'Security':
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'Incident':
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'Intelligence':
+        return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'Compliance':
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'Analytics':
+        return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-white mb-2">Security Reports</h2>
-          <p className="text-gray-400">Generate and manage security analysis reports</p>
-        </div>
-        <button
-          onClick={() => setShowGenerateModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Generate Report
-        </button>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-3xl font-bold text-white">Reports & Analytics</h1>
+        <p className="text-gray-400 mt-2">Generate and access security reports</p>
+      </motion.div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Reports', value: '48', icon: '📄' },
-          { label: 'This Month', value: '12', icon: '📅' },
-          { label: 'Ready', value: '45', icon: '✅' },
-          { label: 'Generating', value: '3', icon: '⏳' },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-slate-900 border border-slate-800 rounded-lg p-4 hover:border-slate-700 transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl">{stat.icon}</span>
-              <span className="text-gray-400 text-sm">{stat.label}</span>
-            </div>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="search"
-              placeholder="Search reports..."
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <select className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>All Types</option>
-            <option>Daily</option>
-            <option>Weekly</option>
-            <option>Monthly</option>
-            <option>Incident</option>
-            <option>Compliance</option>
-          </select>
-          <select className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>All Status</option>
-            <option>Ready</option>
-            <option>Generating</option>
-            <option>Failed</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Reports Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {reports.map((report) => (
-          <div
-            key={report.id}
-            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-2">{report.title}</h3>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getTypeColor(report.type)}`}>
-                    {report.type}
-                  </span>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(report.status)}`}>
-                    {report.status}
-                  </span>
-                </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <Icon className={`w-8 h-8 ${stat.color}`} />
               </div>
-              <div className="flex items-center gap-2">
+              <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
+              <p className="text-sm text-gray-400">{stat.label}</p>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Generate New Report */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-xl p-6"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-2">Generate New Report</h2>
+            <p className="text-gray-400">Create custom security reports with specific date ranges and filters</p>
+          </div>
+          <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all">
+            Create Report
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Reports List */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+      >
+        <h2 className="text-xl font-bold text-white mb-6">Recent Reports</h2>
+
+        <div className="space-y-4">
+          {reports.map((report, index) => (
+            <motion.div
+              key={report.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 + index * 0.1 }}
+              className="bg-slate-900/50 rounded-lg p-5 hover:bg-slate-900 transition-colors"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4 flex-1">
+                  <div className="p-3 bg-blue-500/10 rounded-lg">
+                    <FileText className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold text-white">{report.title}</h3>
+                      <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${getTypeColor(report.type)}`}>
+                        {report.type}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-400 mb-3">{report.description}</p>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-400">{new Date(report.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-500">Size:</span>
+                        <span className="text-gray-400">{report.size}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-500">Format:</span>
+                        <span className="text-gray-400">{report.format}</span>
+                      </div>
+                      {report.status === 'generating' && (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
+                          <span className="text-orange-400 text-xs">Generating...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {report.status === 'ready' && (
-                  <>
-                    <button className="p-2 text-blue-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
+                  <div className="flex items-center space-x-2 ml-4">
+                    <button className="p-2 text-gray-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                      <Eye className="w-5 h-5" />
                     </button>
-                    <button className="p-2 text-green-400 hover:text-green-300 hover:bg-slate-800 rounded-lg transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
+                    <button className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors">
+                      <Download className="w-5 h-5" />
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
-            </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Period:</span>
-                <span className="text-white">{report.period}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Created by:</span>
-                <span className="text-white">{report.createdBy}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Created:</span>
-                <span className="text-white">{report.createdAt}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Format:</span>
-                <span className="text-white">{report.format}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Size:</span>
-                <span className="text-white">{report.size}</span>
-              </div>
+      {/* Quick Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1 }}
+        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+      >
+        <h2 className="text-xl font-bold text-white mb-6">Report Insights</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Critical Findings</span>
+              <span className="text-lg font-semibold text-red-400">23</span>
             </div>
-
-            {report.status === 'generating' && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-gray-400">Generating...</span>
-                  <span className="text-yellow-400">45%</span>
-                </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-300" style={{ width: '45%' }} />
-                </div>
-              </div>
-            )}
+            <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
+              <div className="h-full bg-red-500 w-[75%]" />
+            </div>
           </div>
-        ))}
-      </div>
-
-      {/* Generate Report Modal */}
-      {showGenerateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Generate New Report</h3>
-              <button
-                onClick={() => setShowGenerateModal(false)}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Resolved Issues</span>
+              <span className="text-lg font-semibold text-green-400">156</span>
             </div>
-
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Report Title
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Custom Security Report"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Report Type
-                </label>
-                <select className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Daily Summary</option>
-                  <option>Weekly Analysis</option>
-                  <option>Monthly Report</option>
-                  <option>Incident Report</option>
-                  <option>Compliance Report</option>
-                  <option>Custom Report</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Format
-                </label>
-                <select className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>PDF</option>
-                  <option>CSV</option>
-                  <option>JSON</option>
-                  <option>HTML</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Include Sections
-                </label>
-                <div className="space-y-2">
-                  {[
-                    'Executive Summary',
-                    'Alert Statistics',
-                    'Threat Analysis',
-                    'Network Metrics',
-                    'Incident Timeline',
-                    'Recommendations',
-                  ].map((section) => (
-                    <label key={section} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        defaultChecked
-                        className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 bg-slate-800"
-                      />
-                      <span className="text-sm text-gray-400">{section}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowGenerateModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
-                >
-                  Generate Report
-                </button>
-              </div>
-            </form>
+            <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
+              <div className="h-full bg-green-500 w-[85%]" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Pending Actions</span>
+              <span className="text-lg font-semibold text-yellow-400">42</span>
+            </div>
+            <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
+              <div className="h-full bg-yellow-500 w-[45%]" />
+            </div>
           </div>
         </div>
-      )}
+      </motion.div>
     </div>
   );
 }

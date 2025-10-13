@@ -1,177 +1,147 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { useLoginMutation } from '@/hooks/useAuthMutations';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginRequestSchema, type LoginRequest } from '@/types/auth';
+import { normalizeError } from '@/lib/api/apiClient';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const [step, setStep] = useState<'credentials' | 'totp'>('credentials');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [totpCode, setTotpCode] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const router = useRouter();
+  const { login, saveMfaChallengeToken } = useAuth();
+  const loginMutation = useLoginMutation();
 
-  const handleCredentialsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginRequest>({
+    resolver: zodResolver(LoginRequestSchema),
+  });
 
-    // TODO: Implement API call
-    setTimeout(() => {
-      setLoading(false);
-      setStep('totp');
-    }, 1000);
-  };
+  const onSubmit = async (data: LoginRequest) => {
+    try {
+      const response = await loginMutation.mutateAsync(data);
 
-  const handleTotpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    // TODO: Implement API call
-    setTimeout(() => {
-      setLoading(false);
-      // Redirect to dashboard
-    }, 1000);
+      // Check if MFA is required
+      if (response.mfa_required && response.mfa_challenge_token) {
+        saveMfaChallengeToken(response.mfa_challenge_token);
+        router.push('/login/verify-mfa');
+      } else if (response.access_token && response.refresh_token) {
+        // Login successful without MFA
+        login(response.access_token, response.refresh_token);
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      toast.error(`Login failed: ${normalizeError(error).message}`);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-white">
-          {step === 'credentials' ? 'Sign In' : 'Two-Factor Authentication'}
-        </h2>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="text-3xl font-bold text-white">Sign In</h2>
         <p className="text-gray-400 mt-2">
-          {step === 'credentials'
-            ? 'Enter your credentials to access your account'
-            : 'Enter the 6-digit code from your authenticator app'}
+          Enter your credentials to access your account
         </p>
-      </div>
+      </motion.div>
 
-      {error && (
-        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
-
-      {step === 'credentials' ? (
-        <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-              Email Address
-            </label>
+      <motion.form
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-5"
+      >
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+            Email Address
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
             <input
               id="email"
               type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="admin@nids.local"
+              {...register('email')}
+              className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="admin@example.com"
             />
           </div>
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
+          )}
+        </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-              Password
-            </label>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
             <input
               id="password"
               type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              {...register('password')}
+              className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="••••••••"
             />
           </div>
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
+          )}
+        </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 bg-slate-800"
-              />
-              <span className="ml-2 text-sm text-gray-400">Remember me</span>
-            </label>
-
-            <Link
-              href="/reset-password"
-              className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Signing in...
-              </span>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={handleTotpSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="totp" className="block text-sm font-medium text-gray-300 mb-2">
-              Authentication Code
-            </label>
+        <div className="flex items-center justify-between">
+          <label className="flex items-center cursor-pointer">
             <input
-              id="totp"
-              type="text"
-              required
-              maxLength={6}
-              pattern="[0-9]{6}"
-              value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-center text-2xl tracking-widest placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="000000"
+              type="checkbox"
+              className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 bg-slate-800"
             />
-          </div>
+            <span className="ml-2 text-sm text-gray-400">Remember me</span>
+          </label>
 
-          <button
-            type="submit"
-            disabled={loading || totpCode.length !== 6}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          <Link
+            href="/reset-password"
+            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Verifying...
-              </span>
-            ) : (
-              'Verify & Sign In'
-            )}
-          </button>
+            Forgot password?
+          </Link>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => setStep('credentials')}
-            className="w-full py-2 text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            ← Back to credentials
-          </button>
-        </form>
-      )}
+        <button
+          type="submit"
+          disabled={loginMutation.isPending}
+          className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loginMutation.isPending ? (
+            <span className="flex items-center justify-center">
+              <Loader2 className="animate-spin h-5 w-5 mr-2" />
+              Signing in...
+            </span>
+          ) : (
+            'Sign In'
+          )}
+        </button>
+      </motion.form>
 
       <div className="pt-4 border-t border-slate-700">
         <p className="text-sm text-gray-400 text-center">
           Need help accessing your account?{' '}
-          <Link href="/verify-email" className="text-blue-400 hover:text-blue-300 transition-colors">
+          <Link
+            href="/verify-email"
+            className="text-blue-400 hover:text-blue-300 transition-colors"
+          >
             Contact Support
           </Link>
         </p>

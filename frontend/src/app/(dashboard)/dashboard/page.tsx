@@ -1,174 +1,264 @@
 'use client';
 
+import { motion } from 'framer-motion';
+import { Activity, AlertTriangle, Shield, TrendingUp, Users, Server } from 'lucide-react';
+import { useCurrentUser } from '@/hooks/useAuthMutations';
+
 export default function DashboardPage() {
+  const { data: user } = useCurrentUser();
+
   const stats = [
-    { label: 'Active Alerts', value: '24', change: '+12%', trend: 'up', severity: 'critical' },
-    { label: 'Network Traffic', value: '2.4 TB', change: '+5%', trend: 'up', severity: 'info' },
-    { label: 'Blocked Threats', value: '156', change: '-8%', trend: 'down', severity: 'success' },
-    { label: 'System Health', value: '98%', change: '+2%', trend: 'up', severity: 'success' },
+    {
+      name: 'Active Alerts',
+      value: '12',
+      change: '+3',
+      changeType: 'increase',
+      icon: AlertTriangle,
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10',
+      borderColor: 'border-red-500/20',
+    },
+    {
+      name: 'Network Events',
+      value: '1,234',
+      change: '+12%',
+      changeType: 'increase',
+      icon: Activity,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/20',
+    },
+    {
+      name: 'Protected Assets',
+      value: '48',
+      change: '+2',
+      changeType: 'increase',
+      icon: Shield,
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/10',
+      borderColor: 'border-green-500/20',
+    },
+    {
+      name: 'Threat Score',
+      value: '72',
+      change: '-5%',
+      changeType: 'decrease',
+      icon: TrendingUp,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/20',
+    },
   ];
 
   const recentAlerts = [
-    { id: 1, type: 'DDoS Attack', severity: 'critical', source: '192.168.1.45', time: '2 min ago', status: 'active' },
-    { id: 2, type: 'Port Scan', severity: 'high', source: '10.0.0.123', time: '15 min ago', status: 'investigating' },
-    { id: 3, type: 'Brute Force', severity: 'high', source: '172.16.0.89', time: '32 min ago', status: 'blocked' },
-    { id: 4, type: 'SQL Injection', severity: 'medium', source: '192.168.2.100', time: '1 hour ago', status: 'resolved' },
-    { id: 5, type: 'Malware Detected', severity: 'critical', source: '10.0.1.56', time: '2 hours ago', status: 'active' },
+    {
+      id: 1,
+      type: 'Critical',
+      message: 'Potential SQL Injection Attempt Detected',
+      time: '2 minutes ago',
+      source: '192.168.1.45',
+    },
+    {
+      id: 2,
+      type: 'High',
+      message: 'Unusual Port Scan Activity',
+      time: '15 minutes ago',
+      source: '10.0.0.23',
+    },
+    {
+      id: 3,
+      type: 'Medium',
+      message: 'Failed Authentication Attempts',
+      time: '1 hour ago',
+      source: '172.16.0.8',
+    },
   ];
-
-  const getSeverityColor = (severity: string) => {
-    const colors = {
-      critical: 'bg-red-500/10 text-red-400 border-red-500/20',
-      high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-      medium: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-      low: 'bg-green-500/10 text-green-400 border-green-500/20',
-      info: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-      success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    };
-    return colors[severity as keyof typeof colors] || colors.info;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      active: 'bg-red-500/10 text-red-400',
-      investigating: 'bg-yellow-500/10 text-yellow-400',
-      blocked: 'bg-blue-500/10 text-blue-400',
-      resolved: 'bg-green-500/10 text-green-400',
-    };
-    return colors[status as keyof typeof colors] || colors.active;
-  };
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Dashboard Overview</h2>
-        <p className="text-gray-400">Real-time network security monitoring and threat detection</p>
-      </div>
+      {/* Welcome Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-3xl font-bold text-white">
+          Welcome back, {user?.first_name || 'User'}!
+        </h1>
+        <p className="text-gray-400 mt-2">
+          Here's what's happening with your network security today.
+        </p>
+      </motion.div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm font-medium">{stat.label}</span>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getSeverityColor(stat.severity)}`}>
-                {stat.change}
-              </span>
-            </div>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-3xl font-bold text-white mb-1">{stat.value}</p>
-                <p className="text-xs text-gray-500">Last 24 hours</p>
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div
+              key={stat.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className={`bg-slate-800/50 border ${stat.borderColor} rounded-xl p-6 hover:scale-105 transition-transform`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 ${stat.bgColor} rounded-lg`}>
+                  <Icon className={`w-6 h-6 ${stat.color}`} />
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    stat.changeType === 'increase' ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  {stat.change}
+                </span>
               </div>
-              <svg
-                className={`w-8 h-8 ${stat.trend === 'up' ? 'text-blue-500' : 'text-emerald-500'}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {stat.trend === 'up' ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                )}
-              </svg>
-            </div>
-          </div>
-        ))}
+              <h3 className="text-2xl font-bold text-white mb-1">{stat.value}</h3>
+              <p className="text-sm text-gray-400">{stat.name}</p>
+            </motion.div>
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Alerts */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">Recent Alerts</h3>
-            <button className="px-4 py-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
-              View All →
-            </button>
-          </div>
+      {/* Recent Alerts */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">Recent Alerts</h2>
+          <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            View All
+          </button>
+        </div>
 
-          <div className="space-y-3">
-            {recentAlerts.map((alert) => (
+        <div className="space-y-4">
+          {recentAlerts.map((alert) => (
+            <div
+              key={alert.id}
+              className="flex items-start space-x-4 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900 transition-colors"
+            >
               <div
-                key={alert.id}
-                className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-2 h-2 rounded-full ${
-                    alert.severity === 'critical' ? 'bg-red-500' :
-                    alert.severity === 'high' ? 'bg-orange-500' :
-                    'bg-yellow-500'
-                  } animate-pulse`} />
-                  <div>
-                    <p className="text-white font-medium">{alert.type}</p>
-                    <p className="text-sm text-gray-400">Source: {alert.source}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(alert.status)}`}>
-                    {alert.status}
+                className={`mt-1 w-2 h-2 rounded-full ${
+                  alert.type === 'Critical'
+                    ? 'bg-red-400'
+                    : alert.type === 'High'
+                    ? 'bg-orange-400'
+                    : 'bg-yellow-400'
+                }`}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center space-x-2 mb-1">
+                  <span
+                    className={`text-xs font-semibold px-2 py-1 rounded ${
+                      alert.type === 'Critical'
+                        ? 'bg-red-500/20 text-red-400'
+                        : alert.type === 'High'
+                        ? 'bg-orange-500/20 text-orange-400'
+                        : 'bg-yellow-500/20 text-yellow-400'
+                    }`}
+                  >
+                    {alert.type}
                   </span>
-                  <span className="text-sm text-gray-500">{alert.time}</span>
+                  <span className="text-xs text-gray-400">{alert.time}</span>
                 </div>
+                <p className="text-sm text-white font-medium mb-1">{alert.message}</p>
+                <p className="text-xs text-gray-400">Source: {alert.source}</p>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* System Status */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+        >
+          <div className="flex items-center space-x-3 mb-6">
+            <Server className="w-6 h-6 text-blue-400" />
+            <h2 className="text-xl font-bold text-white">System Health</h2>
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all text-left">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-medium">Run Network Scan</span>
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-400">CPU Usage</span>
+                <span className="text-sm text-white font-medium">45%</span>
               </div>
-            </button>
-
-            <button className="w-full p-4 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-left border border-slate-700">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="font-medium">Generate Report</span>
+              <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 w-[45%]" />
               </div>
-            </button>
-
-            <button className="w-full p-4 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-left border border-slate-700">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="font-medium">Configure Rules</span>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-400">Memory Usage</span>
+                <span className="text-sm text-white font-medium">62%</span>
               </div>
-            </button>
-
-            <button className="w-full p-4 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-left border border-slate-700">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span className="font-medium">Manage Users</span>
+              <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 w-[62%]" />
               </div>
-            </button>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-400">Network Load</span>
+                <span className="text-sm text-white font-medium">38%</span>
+              </div>
+              <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 w-[38%]" />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Network Activity Chart Placeholder */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-xl font-bold text-white mb-6">Network Activity</h3>
-        <div className="h-64 flex items-center justify-center bg-slate-800/50 rounded-lg border border-slate-700">
-          <p className="text-gray-500">Chart will be implemented with real data</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+        >
+          <div className="flex items-center space-x-3 mb-6">
+            <Users className="w-6 h-6 text-purple-400" />
+            <h2 className="text-xl font-bold text-white">Active Sessions</h2>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+              <div>
+                <p className="text-sm text-white font-medium">Administrator</p>
+                <p className="text-xs text-gray-400">Desktop - Chrome</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-xs text-green-400">Active</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+              <div>
+                <p className="text-sm text-white font-medium">Security Analyst</p>
+                <p className="text-xs text-gray-400">Mobile - Safari</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-xs text-green-400">Active</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+              <div>
+                <p className="text-sm text-white font-medium">Network Monitor</p>
+                <p className="text-xs text-gray-400">Tablet - Firefox</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-gray-400" />
+                <span className="text-xs text-gray-400">Idle</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

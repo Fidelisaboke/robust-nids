@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import React from "react";
+import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({
-    variable: "--font-inter",
-    subsets: ["latin"]
-});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -31,10 +25,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={geistSans.className}>
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+            <Toaster richColors position="top-right"/>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
