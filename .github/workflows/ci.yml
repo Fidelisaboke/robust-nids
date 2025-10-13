@@ -77,6 +77,11 @@ jobs:
       - name: Run tests with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}/backend
+          SECRET_KEY: test_key
+          ENVIRONMENT: test
+          DATABASE_URL: postgresql://user:pass@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          BACKEND_CORS_ORIGINS: '["*"]'
         run: uv run pytest -v --cov=. --cov-report=xml
 
       - name: Display coverage summary
