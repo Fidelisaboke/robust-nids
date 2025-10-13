@@ -207,31 +207,6 @@ test_db_connection() {
     fi
 }
 
-# Run database seeding
-run_seeding() {
-    log_info "Starting database seeding process"
-
-    # Check if seeding script exists
-    if [ ! -f "scripts/seed_database.py" ]; then
-        log_warning "Seeding script not found at scripts/seed_database.py"
-        log_info "Skipping database seeding"
-        return 0
-    fi
-
-    # Export database connection string for the seeding script
-    export DB_CONNECTION_STRING="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME"
-    export ADMIN_DB_CONNECTION_STRING="postgresql://$DB_ADMIN_USER:$DB_ADMIN_PASSWORD@$DB_HOST:$DB_PORT/postgres"
-
-    # Run the seeding script
-    if python3 database/seed.py; then
-        log_success "Database seeding completed successfully"
-        return 0
-    else
-        log_error "Database seeding failed"
-        return 1
-    fi
-}
-
 # Main execution
 main() {
     echo -e "${BLUE}========================================${NC}"
@@ -255,17 +230,6 @@ main() {
     create_database
     setup_schema
     test_db_connection
-
-    # Run database seeding
-    if run_seeding; then
-        echo -e "${GREEN}========================================${NC}"
-        echo -e "${GREEN}  Database setup completed successfully!  ${NC}"
-        echo -e "${GREEN}========================================${NC}"
-    else
-        echo -e "${YELLOW}========================================${NC}"
-        echo -e "${YELLOW}  Database setup completed with warnings  ${NC}"
-        echo -e "${YELLOW}========================================${NC}"
-    fi
 
     # Print next steps
     echo -e "${YELLOW}Next steps:${NC}"
