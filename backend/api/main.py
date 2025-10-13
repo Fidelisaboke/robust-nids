@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .exception_handlers import exc_handlers
@@ -7,8 +8,23 @@ from .routers import auth, mfa, nids, users
 
 app = FastAPI(title='Robust NIDS API', version='1.0.0')
 
+# Origins (Frontend URLs)
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
 # Service exception handling middleware
 app.add_middleware(ServiceExceptionHandlerMiddleware) # noqa
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.middleware("http")
