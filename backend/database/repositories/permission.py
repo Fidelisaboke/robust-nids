@@ -1,7 +1,7 @@
 from typing import Type
 
-from backend.database.models import Permission
-from backend.database.repositories.base import BaseRepository
+from database.models import Permission
+from database.repositories.base import BaseRepository
 
 
 class PermissionRepository(BaseRepository):

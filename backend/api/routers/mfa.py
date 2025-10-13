@@ -3,14 +3,14 @@ import json
 from fastapi import APIRouter, Depends, Request
 from slowapi import Limiter
 
-from backend.api.dependencies import get_current_active_user, get_user_from_mfa_challenge_token
-from backend.core.security import (
+from api.dependencies import get_current_active_user, get_user_from_mfa_challenge_token
+from core.security import (
     create_access_token,
     create_refresh_token,
 )
-from backend.database.models import User
-from backend.schemas.auth import TokenResponse
-from backend.schemas.mfa import (
+from database.models import User
+from schemas.auth import TokenResponse
+from schemas.mfa import (
     MFADisableResponse,
     MFAEnablePayload,
     MFAEnableResponse,
@@ -21,7 +21,7 @@ from backend.schemas.mfa import (
     MFASetupResponse,
     MFAVerifyPayload,
 )
-from backend.services.mfa_service import MFAService
+from services.mfa_service import MFAService
 
 
 def get_key_from_request_state(request: Request) -> str:

@@ -2,12 +2,12 @@ import secrets
 import string
 from datetime import datetime
 
-from backend.core.config import settings
-from backend.core.security import get_password_hash
-from backend.database.models import Role, User
-from backend.utils.enums import SystemRoles
-
-from .base import BaseSeeder
+from core.config import settings
+from core.security import get_password_hash
+from database.db import db
+from database.models import Role, User
+from database.seeders.base import BaseSeeder
+from utils.enums import SystemRoles
 
 
 class UserSeeder(BaseSeeder):
@@ -21,8 +21,6 @@ class UserSeeder(BaseSeeder):
 
     @classmethod
     def run(cls):
-        from backend.database.db import db
-
         with db.get_session() as session:
             # Check if users already exist
             existing_users = session.query(User).count()

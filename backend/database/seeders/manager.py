@@ -1,7 +1,7 @@
-from .permissions import PermissionSeeder
-from .role_permissions import RolePermissionSeeder
-from .roles import RoleSeeder
-from .users import UserSeeder
+from database.seeders.permissions import PermissionSeeder
+from database.seeders.role_permissions import RolePermissionSeeder
+from database.seeders.roles import RoleSeeder
+from database.seeders.users import UserSeeder
 
 
 class SeederManager:

@@ -5,10 +5,10 @@ from typing import Generator
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from backend.database.db import db
-from backend.database.repositories.permission import PermissionRepository
-from backend.database.repositories.role import RoleRepository
-from backend.database.repositories.user import UserRepository
+from database.db import db
+from database.repositories.permission import PermissionRepository
+from database.repositories.role import RoleRepository
+from database.repositories.user import UserRepository
 
 
 def get_db_session() -> Generator[Session, None, None]:

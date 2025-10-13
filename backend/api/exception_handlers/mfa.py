@@ -1,7 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-from backend.services.exceptions.mfa import (
+from services.exceptions.mfa import (
     InvalidMFARecoveryTokenError,
     InvalidMFAVerificationCodeError,
     MFAAlreadyEnabledError,

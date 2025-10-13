@@ -6,10 +6,10 @@ import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPBearer
 
-from backend.core.config import settings
-from backend.core.dependencies import get_user_repository
-from backend.database.models import User
-from backend.database.repositories.user import UserRepository
+from core.config import settings
+from core.dependencies import get_user_repository
+from database.models import User
+from database.repositories.user import UserRepository
 
 # HTTP Bearer scheme for MFA challenge token extraction
 http_bearer_scheme = HTTPBearer()

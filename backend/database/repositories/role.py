@@ -2,8 +2,8 @@ from typing import Type
 
 from sqlalchemy.orm import joinedload
 
-from backend.database.models import Permission, Role
-from backend.database.repositories.base import BaseRepository
+from database.models import Permission, Role
+from database.repositories.base import BaseRepository
 
 
 class RoleRepository(BaseRepository):

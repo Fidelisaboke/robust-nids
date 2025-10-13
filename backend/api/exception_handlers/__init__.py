@@ -1,8 +1,11 @@
-from backend.services.exceptions import mfa as mfa_exceptions
-from backend.services.exceptions import user as user_exceptions
-
-from .mfa import mfa_bad_request_handler
-from .user import user_bad_request_handler, user_conflict_handler, user_not_found_handler
+from api.exception_handlers.mfa import mfa_bad_request_handler
+from api.exception_handlers.user import (
+    user_bad_request_handler,
+    user_conflict_handler,
+    user_not_found_handler,
+)
+from services.exceptions import mfa as mfa_exceptions
+from services.exceptions import user as user_exceptions
 
 exc_handlers = {
     # User Exception Handlers

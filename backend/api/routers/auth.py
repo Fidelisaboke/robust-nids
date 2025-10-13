@@ -6,18 +6,18 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from backend.api.dependencies import get_current_active_user
-from backend.core.security import (
+from api.dependencies import get_current_active_user
+from core.security import (
     create_access_token,
     create_mfa_challenge_token,
     create_refresh_token,
     decode_token,
 )
-from backend.database.db import db
-from backend.database.models import User
-from backend.schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
-from backend.schemas.users import UserOut
-from backend.services.auth_service import AuthService
+from database.db import db
+from database.models import User
+from schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
+from schemas.users import UserOut
+from services.auth_service import AuthService
 
 router = APIRouter(prefix='/api/v1/auth', tags=['Authentication'])
 

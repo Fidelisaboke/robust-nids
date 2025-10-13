@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.orm import Session
 
-from backend.database.models import Base
+from database.models import Base
 
 
 class BaseRepository(ABC):

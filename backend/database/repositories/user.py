@@ -4,8 +4,8 @@ from typing import Type
 from pydantic import EmailStr
 from sqlalchemy.orm import joinedload
 
-from backend.database.models import Role, User
-from backend.database.repositories.base import BaseRepository
+from database.models import Role, User
+from database.repositories.base import BaseRepository
 
 
 class UserRepository(BaseRepository):

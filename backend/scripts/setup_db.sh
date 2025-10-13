@@ -223,7 +223,7 @@ run_seeding() {
     export ADMIN_DB_CONNECTION_STRING="postgresql://$DB_ADMIN_USER:$DB_ADMIN_PASSWORD@$DB_HOST:$DB_PORT/postgres"
 
     # Run the seeding script
-    if python3 scripts/seed_database.py; then
+    if python3 database/seed.py; then
         log_success "Database seeding completed successfully"
         return 0
     else

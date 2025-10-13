@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status
 
-from backend.api.dependencies import get_current_active_user, require_permissions
-from backend.database.models import User
-from backend.schemas.users import UserCreate, UserOut, UserUpdate
-from backend.services.user_service import UserService
-from backend.utils.enums import SystemPermissions
+from api.dependencies import get_current_active_user, require_permissions
+from database.models import User
+from schemas.users import UserCreate, UserOut, UserUpdate
+from services.user_service import UserService
+from utils.enums import SystemPermissions
 
 router = APIRouter(prefix='/api/v1/users', tags=['Users'])
 

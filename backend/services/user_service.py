@@ -3,21 +3,21 @@ from typing import Type
 
 from fastapi import Depends
 
-from backend.core.config import settings
-from backend.core.dependencies import get_role_repository, get_user_repository
-from backend.core.security import get_password_hash
-from backend.database.models import User
-from backend.database.repositories.role import RoleRepository
-from backend.database.repositories.user import UserRepository
-from backend.schemas.users import UserCreate, UserUpdate
-from backend.services.exceptions.user import (
+from core.config import settings
+from core.dependencies import get_role_repository, get_user_repository
+from core.security import get_password_hash
+from database.models import User
+from database.repositories.role import RoleRepository
+from database.repositories.user import UserRepository
+from schemas.users import UserCreate, UserUpdate
+from services.exceptions.user import (
     EmailAlreadyExistsError,
     RoleNotAssignedError,
     RoleNotFoundError,
     UsernameAlreadyExistsError,
     UserNotFoundError,
 )
-from backend.services.mfa_service import MFAService
+from services.mfa_service import MFAService
 
 
 class UserService:

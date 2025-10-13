@@ -5,11 +5,11 @@ import pyotp
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.api.main import app
-from backend.api.routers.mfa import limiter_by_user
-from backend.database.db import db
-from backend.database.models import User
-from backend.services.totp_service import totp_service
+from api.main import app
+from api.routers.mfa import limiter_by_user
+from database.db import db
+from database.models import User
+from services.totp_service import totp_service
 
 client = TestClient(app)
 
@@ -136,7 +136,7 @@ def test_mfa_disable_unauthorized(mfa_user):
 
 
 def test_mfa_recovery_initiate_success(mfa_user):
-    with patch('backend.services.mfa_service.MFAService.initiate_mfa_recovery') as mock_recovery:
+    with patch('services.mfa_service.MFAService.initiate_mfa_recovery') as mock_recovery:
         mock_recovery.return_value = None
         resp = client.post('/api/v1/auth/mfa/recovery/initiate', json={'email': mfa_user.email})
         assert resp.status_code == 200
@@ -152,7 +152,7 @@ def test_mfa_recovery_complete_success(mfa_user):
         user.mfa_recovery_token = totp_service.hash_searchable_token(token)
         user.mfa_recovery_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         session.commit()
-    resp = client.post('/api/v1/auth/mfa/recovery/complete', json={'token': token})
+    resp = client.post('/api/v1/auth/mfa/recovery/complete', json={'mfa_recovery_token': token})
     assert resp.status_code == 200
     with db.get_session() as session:
         user = session.get(User, mfa_user.id)
@@ -160,7 +160,7 @@ def test_mfa_recovery_complete_success(mfa_user):
 
 
 def test_mfa_recovery_complete_invalid_token(mfa_user):
-    resp = client.post('/api/v1/auth/mfa/recovery/complete', json={'token': 'invalid-token'})
+    resp = client.post('/api/v1/auth/mfa/recovery/complete', json={'mfa_recovery_token': 'invalid-token'})
     assert resp.status_code == 400
     assert 'Invalid or expired MFA recovery token' in resp.json().get('detail', '')
 

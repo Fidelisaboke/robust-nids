@@ -1,7 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-from backend.services.exceptions.user import (
+from services.exceptions.user import (
     EmailAlreadyExistsError,
     RoleNotAssignedError,
     RoleNotFoundError,

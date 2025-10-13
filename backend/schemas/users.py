@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
-from .roles import RoleOut
+from schemas.roles import RoleOut
 
 
 class UserOut(BaseModel):

@@ -1,16 +1,13 @@
-
-
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.core.config import settings
+from api.exception_handlers import exc_handlers
+from api.middleware import ServiceExceptionHandlerMiddleware
+from api.routers import auth, mfa, nids, users
+from core.config import settings
 
-from .exception_handlers import exc_handlers
-from .middleware import ServiceExceptionHandlerMiddleware
-from .routers import auth, mfa, nids, users
-
-app = FastAPI(title="Robust NIDS API", version="1.0.0")
+app = FastAPI(title='Robust NIDS API', version='1.0.0')
 
 # Origins (Frontend URLs)
 origins = settings.BACKEND_CORS_ORIGINS
@@ -23,15 +20,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 
 
-@app.middleware("http")
+@app.middleware('http')
 async def add_body_to_state(request: Request, call_next):
     """Middleware to read and store request body in state for rate limiting."""
-    if "body" not in request.state.__dict__:
+    if 'body' not in request.state.__dict__:
         body = await request.body()
         request.state.body = body
 
@@ -57,27 +54,27 @@ async def global_exception_handler(request: Request, exc: Exception):
         return await handler(request, exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An unexpected error occurred."},
+        content={'detail': 'An unexpected error occurred.'},
     )
 
 
-@app.get("/", tags=["Root"])
+@app.get('/', tags=['Root'])
 async def root():
     """
     Root endpoint to check if API is running.
     """
     return {
-        "message": "API is running smoothly!",
-        "app_name": settings.APP_NAME,
-        "version": "1.0.0",
-        "debug": settings.DEBUG,
+        'message': 'API is running smoothly!',
+        'app_name': settings.APP_NAME,
+        'version': '1.0.0',
+        'debug': settings.DEBUG,
     }
 
 
-@app.get("/health", tags=["Health"])
+@app.get('/health', tags=['Health'])
 async def health_check():
     """
     Simple health check endpoint.
     Returns 200 OK if all services are healthy.
     """
-    return {"status": "healthy"}
+    return {'status': 'healthy'}

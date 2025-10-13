@@ -5,9 +5,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from backend.services.exceptions.base import ServiceException
-from backend.services.exceptions.mfa import MFAException
-from backend.services.exceptions.user import (
+from services.exceptions.base import ServiceException
+from services.exceptions.mfa import MFAException
+from services.exceptions.user import (
     EmailAlreadyExistsError,
     UserException,
     UsernameAlreadyExistsError,

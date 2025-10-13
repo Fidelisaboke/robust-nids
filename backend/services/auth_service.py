@@ -1,10 +1,10 @@
 from fastapi import Depends
 from pydantic import EmailStr
 
-from backend.core.dependencies import get_user_repository
-from backend.core.security import verify_password
-from backend.database.models import User
-from backend.database.repositories.user import UserRepository
+from core.dependencies import get_user_repository
+from core.security import verify_password
+from database.models import User
+from database.repositories.user import UserRepository
 
 
 class AuthService:

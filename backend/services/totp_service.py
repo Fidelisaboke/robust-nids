@@ -8,7 +8,7 @@ import bcrypt
 import pyotp
 import qrcode
 
-from backend.core.config import settings
+from core.config import settings
 
 
 class TOTPService:

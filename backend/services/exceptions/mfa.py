@@ -1,4 +1,4 @@
-from backend.services.exceptions.base import ServiceException
+from services.exceptions.base import ServiceException
 
 
 class MFAException(ServiceException):

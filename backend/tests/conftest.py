@@ -2,12 +2,12 @@ import bcrypt
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.api.main import app
-from backend.database.db import db
-from backend.database.models import User
-from backend.database.repositories.permission import PermissionRepository
-from backend.database.repositories.role import RoleRepository
-from backend.utils.enums import SystemPermissions, SystemRoles
+from api.main import app
+from database.db import db
+from database.models import User
+from database.repositories.permission import PermissionRepository
+from database.repositories.role import RoleRepository
+from utils.enums import SystemPermissions, SystemRoles
 
 client = TestClient(app)
 

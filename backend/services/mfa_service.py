@@ -7,17 +7,17 @@ from fastapi import Depends
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
-from backend.core.config import settings
-from backend.core.dependencies import get_db_session
-from backend.database.models import User
-from backend.database.repositories.user import UserRepository
-from backend.services.exceptions.mfa import (
+from core.config import settings
+from core.dependencies import get_db_session
+from database.models import User
+from database.repositories.user import UserRepository
+from services.exceptions.mfa import (
     InvalidMFARecoveryTokenError,
     InvalidMFAVerificationCodeError,
     MFAAlreadyEnabledError,
     MFANotEnabledError,
 )
-from backend.services.totp_service import TOTPService
+from services.totp_service import TOTPService
 
 logger = logging.getLogger(__name__)
 
