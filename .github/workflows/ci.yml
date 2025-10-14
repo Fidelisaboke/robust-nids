@@ -90,6 +90,19 @@ jobs:
       - name: Sync dependencies
         run: uv sync --extra dev --extra test
 
+      # Wait for postgres to be ready
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            if pg_isready -h localhost -p 5432 -U test_user; then
+              echo "PostgreSQL is ready"
+              break
+            else
+              echo "Waiting for PostgreSQL..."
+              sleep 5
+            fi
+          done
+
       - name: Load .env.test file
         run: |
           if [ -f ../.env.test ]; then
