@@ -15,16 +15,18 @@ ENV_FILE = BASE_DIR / '.env'
 class Settings(BaseSettings):
     """
     Application settings using Pydantic BaseSettings for environment variable management.
+    Values should be set via the .env file or environment variables. Default values set
+    here should not be relied upon for production deployments.
     """
 
     # Load environment variables from .env file
     model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding='utf-8')
 
     # Application settings
-    SECRET_KEY: str = Field(..., validation_alias='SECRET_KEY')
+    SECRET_KEY: str = Field('mysecretkey', validation_alias='SECRET_KEY')
     DEBUG: bool = Field(False, validation_alias='DEBUG')
     APP_NAME: str = Field('NIDS', validation_alias='APP_NAME')
-    ENVIRONMENT: str = Field(..., validation_alias='ENVIRONMENT')
+    ENVIRONMENT: str = Field('local', validation_alias='ENVIRONMENT')
 
     # Database settings
     DB_HOST: str = Field('localhost', validation_alias='DB_HOST')
@@ -32,7 +34,10 @@ class Settings(BaseSettings):
     DB_NAME: str = Field('nids_db', validation_alias='DB_NAME')
     DB_USER: str = Field('nids_user', validation_alias='DB_USER')
     DB_PASSWORD: str = Field('change_this_in_production', validation_alias='DB_PASSWORD')
-    DATABASE_URL: PostgresDsn = Field(..., validation_alias='DATABASE_URL')
+    DATABASE_URL: PostgresDsn = Field(
+        'postgresql://nids_user:change_this_in_production@localhost:5432/nids_db',
+        validation_alias='DATABASE_URL'
+    )
 
     # Database Admin credentials (for DB setup)
     DB_ADMIN_USER: str = Field('postgres', validation_alias='DB_ADMIN_USER')
@@ -43,10 +48,13 @@ class Settings(BaseSettings):
     PGADMIN_DEFAULT_PASSWORD: str = Field('admin', validation_alias='PGADMIN_DEFAULT_PASSWORD')
 
     # Redis configuration
-    REDIS_URL: str = Field(..., validation_alias='REDIS_URL')
+    REDIS_URL: str = Field('redis://localhost:6379/0', validation_alias='REDIS_URL')
 
     # CORS origins
-    BACKEND_CORS_ORIGINS: list[str] = Field(..., validation_alias='BACKEND_CORS_ORIGINS')
+    BACKEND_CORS_ORIGINS: list[str] = Field(
+        ['http://localhost:3000'],
+        validation_alias='BACKEND_CORS_ORIGINS'
+    )
 
     # Default user preferences for the dashboard
     DEFAULT_USER_PREFERENCES: ClassVar[dict] = {
