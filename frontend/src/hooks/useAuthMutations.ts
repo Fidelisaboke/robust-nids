@@ -95,7 +95,7 @@ export const useCurrentUser = (enabled = true) => {
   return useQuery({
     queryKey: AUTH_QUERY_KEYS.currentUser,
     queryFn: async () => {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       if (!token) throw new Error("No token found");
       return authApi.getCurrentUser();
     },

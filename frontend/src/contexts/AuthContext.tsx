@@ -28,15 +28,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const token = localStorage.getItem("access_token");
-    return !!token;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const router = useRouter();
 
   // Initialize auth state on mount
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = sessionStorage.getItem("access_token");
     if (!token) {
       setIsAuthenticated(false);
       setIsLoading(false);
@@ -51,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(true);
       })
       .catch(() => {
-        localStorage.clear();
+        sessionStorage.clear();
         setIsAuthenticated(false);
       })
       .finally(() => setIsLoading(false));
@@ -62,30 +59,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshToken: string,
     userData?: User,
   ) => {
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
+    sessionStorage.setItem("access_token", accessToken);
+    sessionStorage.setItem("refresh_token", refreshToken);
     if (userData) setUser(userData);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("mfa_challenge_token");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("mfa_challenge_token");
     setUser(null);
     router.push("/login");
   };
 
   const saveMfaChallengeToken = (token: string) => {
-    localStorage.setItem("mfa_challenge_token", token);
+    sessionStorage.setItem("mfa_challenge_token", token);
   };
 
   const getMfaChallengeToken = (): string | null => {
-    return localStorage.getItem("mfa_challenge_token");
+    return sessionStorage.getItem("mfa_challenge_token");
   };
 
   const clearMfaChallengeToken = () => {
-    localStorage.removeItem("mfa_challenge_token");
+    sessionStorage.removeItem("mfa_challenge_token");
   };
 
   const value: AuthContextType = {
