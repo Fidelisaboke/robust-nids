@@ -14,5 +14,6 @@ docker compose -f docker-compose.yml exec backend python scripts/seed_database.p
 
 echo "Services are ready!"
 echo "FastAPI Backend: http://localhost:8000"
-echo "API Docs: http://localhost:8000/docs"
+echo "Swagger Docs: http://localhost:8000/docs"
+echo "ReDoc: http://localhost:8000/redoc"
 echo "PgAdmin: http://localhost:8080"

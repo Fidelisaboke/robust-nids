@@ -13,6 +13,9 @@ COPY uv.lock .
 # Install from uv locked file
 RUN uv sync --locked
 
+# Set PATH to include virtual environment binaries
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Copy source code after installing dependencies
 COPY . .
 
