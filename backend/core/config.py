@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     DB_USER: str = Field('nids_user', validation_alias='DB_USER')
     DB_PASSWORD: str = Field('change_this_in_production', validation_alias='DB_PASSWORD')
     DATABASE_URL: PostgresDsn = Field(
-        'postgresql://nids_user:change_this_in_production@localhost:5432/nids_db',
+        'postgresql+psycopg://nids_user:change_this_in_production@localhost:5432/nids_db',
         validation_alias='DATABASE_URL'
     )
 
