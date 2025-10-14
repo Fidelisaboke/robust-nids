@@ -63,6 +63,7 @@ jobs:
           POSTGRES_PASSWORD: test_pass
           POSTGRES_DB: nids_db_test
         options: >-
+          --health-cmd "pg_isready -U test_user -d nids_db_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -88,19 +89,6 @@ jobs:
 
       - name: Sync dependencies
         run: uv sync --extra dev --extra test
-
-      # Wait for postgres to be ready
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          echo "Waiting for PostgreSQL to be ready..."
-          for i in {1..10}; do
-            if pg_isready -h postgres -p 5432 -U test_user; then
-              echo "PostgreSQL is ready!"
-              break
-            fi
-            echo "PostgreSQL not ready yet... retrying in 5s"
-            sleep 5
-          done
 
       - name: Load .env.test file
         run: |
