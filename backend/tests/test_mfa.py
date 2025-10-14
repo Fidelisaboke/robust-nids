@@ -56,19 +56,20 @@ def test_mfa_verify_rate_limit(mfa_user):
         pass
     headers = {'Authorization': f'Bearer {challenge_token}'}
     limiter_by_user.enabled = True
-    totp = pyotp.TOTP(mfa_user.mfa_secret)
-    # First 3 requests: should not be rate limited
-    for i in range(3):
-        code = totp.now()
-        resp = client.post('/api/v1/auth/mfa/verify', json={'code': code}, headers=headers)
-        assert resp.status_code in (200, 400), (
-            f'Unexpected status {resp.status_code} on request {i + 1} (should not be rate limited yet)'
-        )
-    # 4th and 5th requests: should be rate limited
-    for i in range(2):
-        code = totp.now()
-        resp = client.post('/api/v1/auth/mfa/verify', json={'code': code}, headers=headers)
-        assert resp.status_code == 429, f'Expected 429 rate limit on request {4 + i}, got {resp.status_code}'
+
+    with patch('services.mfa_service.MFAService.verify_mfa_code', return_value=False):
+        # First 3 requests: should not be rate limited
+        for i in range(3):
+            resp = client.post('/api/v1/auth/mfa/verify', json={'code': '000000'}, headers=headers)
+            assert resp.status_code in (200, 400), (
+                f'Unexpected status {resp.status_code} on request {i + 1} (should not be rate limited yet)'
+            )
+        # 4th and 5th requests: should be rate limited
+        for i in range(2):
+            resp = client.post('/api/v1/auth/mfa/verify', json={'code': '000000'}, headers=headers)
+            assert resp.status_code == 429, (
+                f'Expected 429 rate limit on request {4 + i}, got {resp.status_code}'
+            )
 
 
 @pytest.mark.usefixtures('mfa_user')

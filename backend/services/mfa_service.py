@@ -8,7 +8,7 @@ from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from core.config import settings
-from core.dependencies import get_db_session
+from core.dependencies import get_db_session, get_user_repository
 from database.models import User
 from database.repositories.user import UserRepository
 from services.exceptions.mfa import (
@@ -23,9 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class MFAService:
-    def __init__(self, session: Session = Depends(get_db_session), totp_service: TOTPService = Depends()):
+    def __init__(
+        self,
+        session: Session = Depends(get_db_session),
+        totp_service: TOTPService = Depends(),
+        user_repo: UserRepository = Depends(get_user_repository),
+    ):
         self.session = session
         self.totp_service = totp_service
+        self.user_repo = user_repo
 
     def setup_mfa(self, user: User) -> Dict[str, Any]:
         """Start MFA setup process"""
@@ -159,9 +165,10 @@ class MFAService:
 
     def initiate_mfa_recovery(self, email: EmailStr):
         """Initiate MFA recovery process by generating a recovery token"""
+        user = self.user_repo.get_by_email(email)
 
-        user_repo = UserRepository(self.session)
-        user = user_repo.get_by_email(email)
+        if not user:
+            return MFANotEnabledError()
 
         if not user.mfa_enabled:
             raise MFANotEnabledError()
@@ -182,8 +189,7 @@ class MFAService:
         """Disable MFA for a user after successful recovery."""
 
         hashed_token = self.totp_service.hash_searchable_token(recovery_token)
-        user_repo = UserRepository(self.session)
-        user = user_repo.get_by_mfa_recovery_token(hashed_token)
+        user = self.user_repo.get_by_mfa_recovery_token(hashed_token)
 
         if not user:
             raise InvalidMFARecoveryTokenError()
