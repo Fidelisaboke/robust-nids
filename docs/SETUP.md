@@ -1,41 +1,44 @@
-# Setup Guide
+# Robust NIDS — Full Setup Guide
 
-This guide walks through the complete setup process for the **Robust NIDS** full-stack system — including the **FastAPI
-backend**, **Next.js frontend**, and **dataset configuration**.
+This guide walks through the local  setup of the **Robust NIDS** full-stack system, including the **FastAPI backend**, **Next.js frontend**, **dataset**, and **developer tooling**.
 
 ## Table of Contents
 
-* [Prerequisites](#prerequisites)
-* [1. WSL2 Configuration (Windows Users)](#1-wsl2-configuration-windows-users)
-* [2. Backend Setup (FastAPI)](#2-backend-setup-fastapi)
-* [3. Frontend Setup (Nextjs--React)](#3-frontend-setup-nextjs--react)
-* [4. Environment Variables](#4-environment-variables)
-* [5. PostgreSQL Setup](#5-postgresql-setup)
-* [6. Dataset Setup (TII-SSRC-23)](#6-dataset-setup-tii-ssrc-23)
-* [Next Steps](#next-steps)
+- [Prerequisites](#prerequisites)
+- [1. WSL2 Configuration (Windows Users)](#1-wsl2-configuration-windows-users)
+- [2. Backend Setup (FastAPI)](#2-backend-setup-fastapi)
+- [3. Frontend Setup (Nextjs--React)](#3-frontend-setup-nextjs--react)
+- [4. Environment Variables](#4-environment-variables)
+- [5. PostgreSQL Setup](#5-postgresql-setup)
+- [6. Dataset Setup (TII-SSRC-23)](#6-dataset-setup-tii-ssrc-23)
+- [7. Developer Tooling (Code Quality & Security)](#7-developer-tooling-code-quality--security)
+- [Next Steps](#next-steps)
+- [Troubleshooting](#troubleshooting)
+
 
 ## Prerequisites
 
-Ensure the following are installed on your system (preferably inside WSL2 for Windows users):
+Make sure the following are installed on your system (inside **WSL2** if on Windows):
 
-* **Git**
-* **Python 3.12+**
-* **Node.js 20+** and **npm** (or **pnpm**)
-* **PostgreSQL 12+**
-* **WSL2** (Windows only)
-* **Kaggle API credentials** (optional for dataset download)
-* [**uv** Python project and package manager](https://docs.astral.sh/uv/getting-started/installation/)
+- **Git**
+- **Python 3.12+**
+- **Node.js 20+** and **npm** (or **pnpm**)
+- **PostgreSQL 12+**
+- **WSL2** (Windows only)
+- **Kaggle API credentials** (optional for dataset download)
+- [**uv** package manager](https://docs.astral.sh/uv/getting-started/installation/)
+- (Optional) **Docker** if containerizing the app later
 
 ## 1. WSL2 Configuration (Windows Users)
 
-For optimal performance and compatibility, run both backend and frontend within **WSL2** (Ubuntu recommended).
+For optimal performance, run everything inside **WSL2 Ubuntu**.
 
 ### Steps
 
 1. **Install WSL2:**
-   Follow the [official Microsoft guide](https://learn.microsoft.com/en-us/windows/wsl/install).
+   [Microsoft’s official guide →](https://learn.microsoft.com/en-us/windows/wsl/install)
 
-2. **Clone repository inside WSL2:**
+2. **Clone inside WSL2 (not `/mnt/c/`):**
    ```bash
    cd ~
    mkdir projects && cd projects
@@ -43,10 +46,7 @@ For optimal performance and compatibility, run both backend and frontend within 
    cd robust-nids
    ```
 
-3. **Avoid working inside `/mnt/c/`**, which causes file-sync issues.
-
-4. **Limit resources (optional):**
-   Create `C:\Users\<YourUsername>\.wslconfig` and configure:
+3. *(Optional)* Configure `.wslconfig` limits:
 
    ```ini
    [wsl2]
@@ -56,56 +56,60 @@ For optimal performance and compatibility, run both backend and frontend within 
 
 ## 2. Backend Setup (FastAPI)
 
-- Create python environment:
+### 2.1 Create Virtual Environment
 
 ```bash
 cd backend
 uv venv
-source .venv/bin/activate  # (Linux/macOS)
+source .venv/bin/activate  # Linux/macOS
 # or
-.venv\Scripts\activate     # (Windows)
+.venv\Scripts\activate     # Windows
 ```
 
-- Install dependencies:
+### 2.2 Install Dependencies
 
 ```bash
 uv pip install --upgrade pip
 uv sync
 ```
 
-- Set up `.env`:
+### 2.3 Configure Environment
+
 ```bash
 cp .env.example .env
 ```
 
-- Set up database:
+### 2.4 Set Up Database
+
 ```bash
 ./scripts/setup_db.sh
 ```
 
-- Run alembic migrations:
+### 2.5 Run Alembic Migrations
+
 ```bash
 alembic upgrade head
 ```
 
-- Seed database:
+### 2.6 Seed Database
+
 ```bash
 python database/seed.py
 ```
 
-- Run local server
+### 2.7 Start the Development Server
 
 ```bash
-uvicorn api.main:app --reload
+uv run uvicorn api.main:app --reload
 ```
 
-Visit **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** to access Swagger UI and test the API routes.
+Visit: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ## 3. Frontend Setup (Next.js + React)
 
 The frontend uses **Next.js 15**, **TypeScript**, and **ShadCN UI**.
 
-- Install dependencies:
+### 3.1 Install Dependencies
 
 ```bash
 cd frontend
@@ -114,26 +118,25 @@ npm install
 pnpm install
 ```
 
-
-- Copy and edit the environment example:
+### 3.2 Setup Environment
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-- Set the API base URL (for example):
+Then set the backend URL:
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
 
-- Run development server:
+### 3.3 Run the Frontend
 
 ```bash
 npm run dev
 ```
 
-Your app should now be live at **[http://localhost:3000](http://localhost:3000)**
+Your app will be live at: [http://localhost:3000](http://localhost:3000)
 
 ### 3.4 Folder Overview
 
@@ -141,23 +144,21 @@ Your app should now be live at **[http://localhost:3000](http://localhost:3000)*
 frontend/
 ├── components/      # Shared UI components
 ├── hooks/           # Custom React hooks
-├── lib/             # Helper functions (API, auth, utils)
-├── pages/ or app/   # Main routes
+├── lib/             # Helpers (API, auth, utils)
+├── app/             # Main routes
 ├── styles/          # Global styles
 └── types/           # TypeScript definitions
 ```
 
 ## 4. Environment Variables
 
-Both backend and frontend rely on `.env` files.
-
-### 4.1 Backend (`backend/.env`)
+### Backend (`backend/.env`)
 
 ```bash
 cp .env.example .env
 ```
 
-Then configure values such as:
+Example values:
 
 ```
 DATABASE_URL=postgresql://nids_user:password@localhost:5432/nids_db
@@ -165,7 +166,7 @@ JWT_SECRET_KEY=your_secret_key
 JWT_REFRESH_SECRET_KEY=your_refresh_secret
 ```
 
-### 4.2 Frontend (`frontend/.env.local`)
+### Frontend (`frontend/.env.local`)
 
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
@@ -173,16 +174,16 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 
 ## 5. PostgreSQL Setup
 
-### 5.1 Installation
+### Installation
 
-**Ubuntu/Debian:**
+**Ubuntu:**
 
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 ```
 
-**macOS (Homebrew):**
+**macOS:**
 
 ```bash
 brew install postgresql
@@ -190,17 +191,9 @@ brew services start postgresql
 ```
 
 **Windows:**
-Download from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/)
+→ [Download PostgreSQL](https://www.postgresql.org/download/windows/)
 
-### 5.2 Database Creation
-
-Run the helper script:
-
-```bash
-./scripts/setup_db.sh
-```
-
-Or manually:
+### Manual Setup (if script fails)
 
 ```sql
 CREATE DATABASE nids_db;
@@ -208,7 +201,7 @@ CREATE USER nids_user WITH PASSWORD 'your_secure_password';
 GRANT ALL PRIVILEGES ON DATABASE nids_db TO nids_user;
 ```
 
-Verify connection:
+Test:
 
 ```bash
 psql -h localhost -U nids_user -d nids_db -c "SELECT version();"
@@ -216,70 +209,117 @@ psql -h localhost -U nids_user -d nids_db -c "SELECT version();"
 
 ## 6. Dataset Setup (TII-SSRC-23)
 
-The TII-SSRC-23 dataset is not tracked in Git due to its size.
+> ⚠️ The dataset is large (~30 GB) and **not versioned in Git**.
 
-### Option 1: Manual Download (Recommended)
+### Option 1 — Manual Download (Recommended)
 
-1. Download `data.csv` from the official Kaggle source.
-2. Place it in:
+1. Download `data.csv` from the official Kaggle page.
+2. Place it under:
 
    ```
    data/raw/data.csv
    ```
 
-### Option 2: Scripted Download
+### Option 2 — Automated Download
 
-You can automatically fetch and unpack the dataset (requires Kaggle API setup):
+Requires Kaggle API setup:
 
 ```bash
 python scripts/download_data.py
 ```
 
-*(Note: this may take hours depending on bandwidth; ~30 GB total size.)*
+## 7. Developer Tooling (Code Quality & Security)
+
+### 7.1 Enable Pre-commit Hooks
+
+```bash
+pre-commit install
+```
+
+Run checks manually:
+
+```bash
+pre-commit run --all-files
+```
+
+### 7.2 Scan for Secrets
+
+Create a baseline:
+
+```bash
+detect-secrets scan > .secrets.baseline
+```
+
+Audit:
+
+```bash
+detect-secrets audit .secrets.baseline
+```
+
+- Commit `.secrets.baseline` to version control.
+
+### 7.3 Run Linters & Formatters
+
+**Python (backend):**
+
+```bash
+ruff check . --fix
+```
+
+**Frontend (Prettier):**
+
+```bash
+npx prettier . --write
+```
 
 ## Next Steps
-
-After setup:
 
 1. **Start backend:**
 
    ```bash
-   # Should be at project root
-   uvicorn api.main:app --reload
+   # In backend/
+   uv run uvicorn api.main:app --reload
    ```
 
 2. **Start frontend:**
 
    ```bash
-   cd frontend
+   # In frontend/
    npm run dev
    ```
 
-3. **Access the app:**
+3. **Access app:**
 
-    * Frontend: [http://localhost:3000](http://localhost:3000)
-    * API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+   * Frontend → [http://localhost:3000](http://localhost:3000)
+   * API Docs → [http://localhost:8000/docs](http://localhost:8000/docs)
 
-4. **Login or register:**
-   Default admin credentials are defined in your `.env` or seed script.
 
-## Recommended Development Workflow
+## Development Workflow
 
-| Step | Description                                                    |
-|------|----------------------------------------------------------------|
-| 1    | Run PostgreSQL locally (`sudo service postgresql start`)       |
-| 2    | Start FastAPI backend (`uvicorn api.main:app --reload`)        |
-| 3    | Launch frontend (`npm run dev`)                                |
-| 4    | View logs and alerts via `/nids/logs` and `/nids/alerts`       |
-| 5    | Use `scripts/` for seeding, dataset management, and migrations |
+| Step | Action               | Command                                   |
+| ---- | -------------------- | ----------------------------------------- |
+| 1    | Start PostgreSQL     | `sudo service postgresql start`           |
+| 2    | Run FastAPI backend  | `uv run uvicorn api.main:app --reload`    |
+| 3    | Run Next.js frontend | `npm run dev`                             |
+| 4    | Run code checks      | `pre-commit run --all-files`              |
+| 5    | Scan for secrets     | `detect-secrets scan > .secrets.baseline` |
 
 ## Troubleshooting
 
-**Backend not connecting to DB:**
-→ Check `.env` `DATABASE_URL` and ensure PostgreSQL is running.
+**Backend not connecting:**
+→ Verify `.env` `DATABASE_URL` and ensure PostgreSQL is running.
 
 **Frontend fetch errors:**
-→ Verify `NEXT_PUBLIC_API_URL` is reachable and CORS is configured in FastAPI.
+→ Check `NEXT_PUBLIC_API_URL` and CORS settings.
 
 **Dataset errors:**
-→ Ensure CSV exists at `data/raw/data.csv` and paths are correct in preprocessing scripts.
+→ Confirm CSV path `data/raw/data.csv` exists.
+
+📘 *Maintainer Notes:*
+
+* CI/CD is configured via **GitHub Actions** (`.github/workflows/ci.yml`).
+* Secrets scanning runs automatically in PRs.
+* Formatters and type checks are enforced locally and in CI.
+
+**You’re all set!**
+Run both servers and start exploring your full-stack, ML-powered **Robust NIDS** system.

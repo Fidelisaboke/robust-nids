@@ -31,7 +31,9 @@ inference and adversarial training with a Next.js dashboard for visualization, a
     * [Quick Install](#quick-install)
 3. [Basic Usage](#basic-usage)
 4. [Project Structure](#project-structure)
-5. [License](#license)
+5. [Development Workflow](#development-workflow)
+6. [Acknowledgements](#acknowledgements)
+7. [License](#license)
 
 ## Tech Stack
 
@@ -107,7 +109,7 @@ inference and adversarial training with a Next.js dashboard for visualization, a
    uv sync
 
    # Optionally, for dev and test dependencies
-   uv sync --extra dev --extra test
+   uv sync --group dev --group test
    ```
 
 4. **Set up environment variables:**
@@ -204,37 +206,71 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 
 ```
 robust-nids/
-├── backend/                 # FastAPI backend
-│   ├── api/                 # Routes, schemas, and dependencies
-│   ├── core/                # Config, logging, constants
-│   ├── database/            # Models, repositories, migrations
-│   ├── ml/                  # ML pipeline (train, predict, adversarial)
-│   ├── services/            # Business logic
-│   ├── scripts/             # Setup utilities
-│   └── tests/               # Unit tests
+├── backend/                       # FastAPI backend (ML + API)
+│   ├── api/                       # Routes, dependencies, middleware
+│   ├── core/                      # Config, logging, security
+│   ├── database/                  # Models, seeders, repositories
+│   ├── ml/                        # ML pipeline (train, predict, adversarial)
+│   ├── schemas/                   # Pydantic models (validation)
+│   ├── services/                  # Auth, MFA, and user services
+│   ├── utils/                     # Enums, shared helpers
+│   ├── tests/                     # Pytest-based unit tests
+│   ├── alembic/                   # Migration scripts
+│   ├── scripts/                   # Setup scripts (DB, etc.)
+│   ├── Dockerfile
+│   └── pyproject.toml
 │
-├── frontend/                # Next.js + TypeScript web dashboard
-│   ├── src/app/             # App Router structure
-│   │   ├── (auth)/          # Authentication pages
-│   │   ├── (dashboard)/     # Dashboard pages
-│   │   └── (admin)/         # Admin tools (users, logs, roles)
-│   └── public/              # Static assets
+├── frontend/                      # Next.js dashboard (TypeScript)
+│   ├── src/
+│   │   ├── app/                   # App Router pages
+│   │   │   ├── (auth)/            # Authentication (login, MFA, etc.)
+│   │   │   ├── (dashboard)/       # Main dashboard pages
+│   │   │   ├── (admin)/           # Admin management (roles, users)
+│   │   │   └── layout.tsx         # Shared layout
+│   │   ├── components/            # Reusable UI components
+│   │   ├── contexts/              # Global context providers
+│   │   ├── hooks/                 # Custom React hooks
+│   │   ├── providers/             # Query & Auth providers
+│   │   ├── types/                 # TypeScript definitions
+│   │   └── middleware.ts
+│   ├── public/                    # Static assets
+│   ├── package.json
+│   └── next.config.ts
 │
-├── notebooks/               # Research notebooks (EDA, training, testing)
-├── docs/                    # Setup and project documentation
-└── .github/                 # CI/CD workflows
+├── notebooks/                     # Research and EDA notebooks
+├── docs/                          # Documentation (e.g., SETUP.md)
+├── scripts/                       # Project-level scripts
+├── .github/                       # CI/CD & issue templates
+│   └── workflows/ci.yml
+├── .pre-commit-config.yaml        # Lint & test automation
+├── .secrets.baseline              # detect-secrets baseline
+├── docker-compose.yml
+└── README.md
 ```
 
-## Key Endpoints (Backend)
+## Development Workflow
 
-| Endpoint        | Method | Description                       |
-|-----------------|--------|-----------------------------------|
-| `/nids/predict` | POST   | Run ML inference on incoming data |
-| `/nids/train`   | POST   | Perform adversarial training      |
-| `/nids/alerts`  | GET    | Retrieve recent detection alerts  |
-| `/nids/logs`    | GET    | Fetch system or training logs     |
-| `/auth/login`   | POST   | Authenticate user                 |
-| `/users/`       | CRUD   | Manage analyst and admin accounts |
+### Code Quality
+
+- Pre-commit hooks: Automatically lint and format Python, TypeScript, and check secrets before commit.
+
+- Pre-push hook: Runs backend pytest tests before allowing a push.
+
+To install hooks:
+```bash
+pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+To run all checks manually:
+```bash
+pre-commit run --all-files
+```
+
+## Acknowledgments
+
+Built as part of Bsc. Informatics and Computer Science final-year research project on
+Enhancing Robustness of ML-based NIDS Against Adversarial Evasion Attacks using adversarial training
+and explainable AI.
 
 ## License
 
