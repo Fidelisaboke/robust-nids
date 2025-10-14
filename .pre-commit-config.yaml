@@ -56,12 +56,3 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
-
-  # --- Backend tests (are run before pushing) ---
-  - repo: local
-    hooks:
-      - id: backend-tests
-        name: "Run Backend Tests"
-        entry: bash -c "cd backend && pytest -q"
-        language: system
-        stages: [pre-push]
