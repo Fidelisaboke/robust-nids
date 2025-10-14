@@ -94,7 +94,8 @@ jobs:
         run: |
           if [ -f ../.env.test ]; then
             echo "Loading environment variables from .env.test"
-            grep -v '^#|^$' ../.env.test >> $GITHUB_ENV
+            grep -vE '^\s*(#|$)' ../.env.test >> $GITHUB_ENV
+            echo "Environment variables loaded successfully."
           else
             echo ".env.test file not found!"
             exit 1
