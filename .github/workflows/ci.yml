@@ -101,6 +101,9 @@ jobs:
             exit 1
           fi
 
+      - name: Run alembic migrations
+        run: uv run alembic upgrade head
+
       - name: Run tests with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}/backend
