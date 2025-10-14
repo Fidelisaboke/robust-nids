@@ -1,62 +1,62 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Globe, Shield, AlertTriangle, TrendingUp, MapPin } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Globe, Shield, TrendingUp, MapPin } from "lucide-react";
 
 export default function ThreatIntelligencePage() {
   const threats = [
     {
       id: 1,
-      name: 'Mirai Botnet Variant',
-      severity: 'critical',
-      category: 'Botnet',
-      targets: 'IoT Devices',
-      countries: ['CN', 'RU', 'US'],
+      name: "Mirai Botnet Variant",
+      severity: "critical",
+      category: "Botnet",
+      targets: "IoT Devices",
+      countries: ["CN", "RU", "US"],
       confidence: 95,
-      trend: 'increasing',
+      trend: "increasing",
     },
     {
       id: 2,
-      name: 'Emotet Campaign',
-      severity: 'high',
-      category: 'Malware',
-      targets: 'Email Systems',
-      countries: ['DE', 'FR', 'GB'],
+      name: "Emotet Campaign",
+      severity: "high",
+      category: "Malware",
+      targets: "Email Systems",
+      countries: ["DE", "FR", "GB"],
       confidence: 88,
-      trend: 'stable',
+      trend: "stable",
     },
     {
       id: 3,
-      name: 'SQL Injection Attack Pattern',
-      severity: 'high',
-      category: 'Web Attack',
-      targets: 'Web Applications',
-      countries: ['BR', 'IN', 'VN'],
+      name: "SQL Injection Attack Pattern",
+      severity: "high",
+      category: "Web Attack",
+      targets: "Web Applications",
+      countries: ["BR", "IN", "VN"],
       confidence: 92,
-      trend: 'increasing',
+      trend: "increasing",
     },
     {
       id: 4,
-      name: 'Ransomware Activity',
-      severity: 'critical',
-      category: 'Ransomware',
-      targets: 'Healthcare, Finance',
-      countries: ['RU', 'KP', 'IR'],
+      name: "Ransomware Activity",
+      severity: "critical",
+      category: "Ransomware",
+      targets: "Healthcare, Finance",
+      countries: ["RU", "KP", "IR"],
       confidence: 97,
-      trend: 'increasing',
+      trend: "increasing",
     },
   ];
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-        return 'text-red-400 bg-red-500/10 border-red-500/20';
-      case 'high':
-        return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-      case 'medium':
-        return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+      case "critical":
+        return "text-red-400 bg-red-500/10 border-red-500/20";
+      case "high":
+        return "text-orange-400 bg-orange-500/10 border-orange-500/20";
+      case "medium":
+        return "text-yellow-400 bg-yellow-500/10 border-yellow-500/20";
       default:
-        return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+        return "text-blue-400 bg-blue-500/10 border-blue-500/20";
     }
   };
 
@@ -67,7 +67,9 @@ export default function ThreatIntelligencePage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-3xl font-bold text-white">Threat Intelligence</h1>
-        <p className="text-gray-400 mt-2">Global threat landscape and emerging security risks</p>
+        <p className="text-gray-400 mt-2">
+          Global threat landscape and emerging security risks
+        </p>
       </motion.div>
 
       {/* Summary Cards */}
@@ -122,7 +124,9 @@ export default function ThreatIntelligencePage() {
         transition={{ delay: 0.4 }}
         className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
       >
-        <h2 className="text-xl font-bold text-white mb-6">Active Threat Intelligence</h2>
+        <h2 className="text-xl font-bold text-white mb-6">
+          Active Threat Intelligence
+        </h2>
 
         <div className="space-y-4">
           {threats.map((threat, index) => (
@@ -136,8 +140,12 @@ export default function ThreatIntelligencePage() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white">{threat.name}</h3>
-                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getSeverityColor(threat.severity)}`}>
+                    <h3 className="text-lg font-semibold text-white">
+                      {threat.name}
+                    </h3>
+                    <span
+                      className={`text-xs font-semibold px-3 py-1 rounded-full ${getSeverityColor(threat.severity)}`}
+                    >
                       {threat.severity.toUpperCase()}
                     </span>
                   </div>
@@ -152,7 +160,9 @@ export default function ThreatIntelligencePage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500">Confidence:</span>
-                      <span className="text-green-400 font-medium">{threat.confidence}%</span>
+                      <span className="text-green-400 font-medium">
+                        {threat.confidence}%
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -160,15 +170,22 @@ export default function ThreatIntelligencePage() {
                       <MapPin className="w-4 h-4 text-gray-500" />
                       <div className="flex space-x-1">
                         {threat.countries.map((country) => (
-                          <span key={country} className="text-xs px-2 py-1 bg-slate-800 rounded text-gray-400">
+                          <span
+                            key={country}
+                            className="text-xs px-2 py-1 bg-slate-800 rounded text-gray-400"
+                          >
                             {country}
                           </span>
                         ))}
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <TrendingUp className={`w-4 h-4 ${threat.trend === 'increasing' ? 'text-red-400' : 'text-gray-400'}`} />
-                      <span className={`text-xs ${threat.trend === 'increasing' ? 'text-red-400' : 'text-gray-400'}`}>
+                      <TrendingUp
+                        className={`w-4 h-4 ${threat.trend === "increasing" ? "text-red-400" : "text-gray-400"}`}
+                      />
+                      <span
+                        className={`text-xs ${threat.trend === "increasing" ? "text-red-400" : "text-gray-400"}`}
+                      >
                         {threat.trend}
                       </span>
                     </div>
@@ -182,8 +199,12 @@ export default function ThreatIntelligencePage() {
               {/* Confidence Bar */}
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">Confidence Score</span>
-                  <span className="text-xs text-gray-400">{threat.confidence}%</span>
+                  <span className="text-xs text-gray-500">
+                    Confidence Score
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {threat.confidence}%
+                  </span>
                 </div>
                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div
@@ -208,8 +229,12 @@ export default function ThreatIntelligencePage() {
         <div className="h-96 flex items-center justify-center bg-slate-900/50 rounded-lg">
           <div className="text-center">
             <Globe className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">Interactive threat map visualization</p>
-            <p className="text-sm text-gray-500 mt-2">Real-time attack origin tracking</p>
+            <p className="text-gray-400">
+              Interactive threat map visualization
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Real-time attack origin tracking
+            </p>
           </div>
         </div>
       </motion.div>

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Network,
   LayoutDashboard,
@@ -19,11 +19,15 @@ import {
   ChevronDown,
   User,
   Loader2,
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCurrentUser } from '@/hooks/useAuthMutations';
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentUser } from "@/hooks/useAuthMutations";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, isAuthenticated, isLoading } = useAuth();
@@ -33,19 +37,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
+      router.replace("/login");
     }
   }, [isAuthenticated, isLoading, router]);
 
-
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Alerts', href: '/alerts', icon: AlertTriangle },
-    { name: 'Metrics', href: '/metrics', icon: Activity },
-    { name: 'Network Map', href: '/network-map', icon: MapPin },
-    { name: 'Threat Intelligence', href: '/threat-intelligence', icon: Globe },
-    { name: 'Reports', href: '/reports', icon: FileText },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Alerts", href: "/alerts", icon: AlertTriangle },
+    { name: "Metrics", href: "/metrics", icon: Activity },
+    { name: "Network Map", href: "/network-map", icon: MapPin },
+    { name: "Threat Intelligence", href: "/threat-intelligence", icon: Globe },
+    { name: "Reports", href: "/reports", icon: FileText },
+    { name: "Settings", href: "/settings", icon: Settings },
   ];
 
   if (isLoading || !isAuthenticated) {
@@ -62,8 +65,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <motion.aside
         initial={{ x: -300 }}
         animate={{ x: 0 }}
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-800/95 backdrop-blur-xl border-r border-slate-700 transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-800/95 backdrop-blur-xl border-r border-slate-700 transform transition-transform duration-300 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -92,10 +96,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={item.name}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${isActive
-                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                      : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'
-                    }`}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                    isActive
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/50"
+                      : "text-gray-400 hover:bg-slate-700/50 hover:text-white"
+                  }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.name}</span>
@@ -112,15 +117,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  {user?.first_name?.[0]}
+                  {user?.last_name?.[0]}
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-white truncate">
                     {user?.first_name} {user?.last_name}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {user?.email}
+                  </p>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-400 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               <AnimatePresence>
@@ -192,9 +202,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
-          {children}
-        </main>
+        <main className="p-6">{children}</main>
       </div>
     </div>
   );

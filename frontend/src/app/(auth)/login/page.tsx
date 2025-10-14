@@ -1,17 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
-import { useLoginMutation } from '@/hooks/useAuthMutations';
-import { useAuth } from '@/contexts/AuthContext';
-import { LoginRequestSchema, type LoginRequest } from '@/types/auth';
-import { normalizeError } from '@/lib/api/apiClient';
-import { toast } from 'sonner';
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Mail, Lock, Loader2 } from "lucide-react";
+import { useLoginMutation } from "@/hooks/useAuthMutations";
+import { useAuth } from "@/contexts/AuthContext";
+import { LoginRequestSchema, type LoginRequest } from "@/types/auth";
+import { normalizeError } from "@/lib/api/apiClient";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,11 +32,11 @@ export default function LoginPage() {
       // Check if MFA is required
       if (response.mfa_required && response.mfa_challenge_token) {
         saveMfaChallengeToken(response.mfa_challenge_token);
-        router.push('/login/verify-mfa');
+        router.push("/login/verify-mfa");
       } else if (response.access_token && response.refresh_token) {
         // Login successful without MFA
         login(response.access_token, response.refresh_token);
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     } catch (error) {
       toast.error(`Login failed: ${normalizeError(error).message}`);
@@ -65,7 +64,10 @@ export default function LoginPage() {
         className="space-y-5"
       >
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-300 mb-2"
+          >
             Email Address
           </label>
           <div className="relative">
@@ -73,7 +75,7 @@ export default function LoginPage() {
             <input
               id="email"
               type="email"
-              {...register('email')}
+              {...register("email")}
               className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="admin@example.com"
             />
@@ -84,7 +86,10 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-300 mb-2"
+          >
             Password
           </label>
           <div className="relative">
@@ -92,13 +97,15 @@ export default function LoginPage() {
             <input
               id="password"
               type="password"
-              {...register('password')}
+              {...register("password")}
               className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="••••••••"
             />
           </div>
           {errors.password && (
-            <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
+            <p className="mt-1 text-sm text-red-400">
+              {errors.password.message}
+            </p>
           )}
         </div>
 
@@ -130,14 +137,14 @@ export default function LoginPage() {
               Signing in...
             </span>
           ) : (
-            'Sign In'
+            "Sign In"
           )}
         </button>
       </motion.form>
 
       <div className="pt-4 border-t border-slate-700">
         <p className="text-sm text-gray-400 text-center">
-          Need help accessing your account?{' '}
+          Need help accessing your account?{" "}
           <Link
             href="/verify-email"
             className="text-blue-400 hover:text-blue-300 transition-colors"

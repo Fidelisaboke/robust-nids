@@ -1,30 +1,37 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Shield, Lock, Activity, AlertTriangle, Network, ArrowRight } from 'lucide-react';
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  Shield,
+  Lock,
+  Activity,
+  AlertTriangle,
+  Network,
+  ArrowRight,
+} from "lucide-react";
 
 export default function HomePage() {
   const features = [
     {
       icon: Shield,
-      title: 'Advanced Threat Detection',
-      description: 'Real-time monitoring and analysis of network traffic',
+      title: "Advanced Threat Detection",
+      description: "Real-time monitoring and analysis of network traffic",
     },
     {
       icon: Lock,
-      title: 'Multi-Factor Authentication',
-      description: 'Enterprise-grade security with TOTP-based 2FA',
+      title: "Multi-Factor Authentication",
+      description: "Enterprise-grade security with TOTP-based 2FA",
     },
     {
       icon: Activity,
-      title: 'Live Metrics',
-      description: 'Comprehensive dashboards and analytics',
+      title: "Live Metrics",
+      description: "Comprehensive dashboards and analytics",
     },
     {
       icon: AlertTriangle,
-      title: 'Instant Alerts',
-      description: 'Immediate notification of security threats',
+      title: "Instant Alerts",
+      description: "Immediate notification of security threats",
     },
   ];
 
@@ -62,8 +69,8 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
-              Advanced intrusion detection system with real-time monitoring, threat intelligence,
-              and comprehensive security analytics.
+              Advanced intrusion detection system with real-time monitoring,
+              threat intelligence, and comprehensive security analytics.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -94,7 +101,9 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-white mb-4">Powerful Features</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Powerful Features
+            </h2>
             <p className="text-gray-400 text-lg">
               Everything you need to protect your network infrastructure
             </p>
@@ -111,7 +120,9 @@ export default function HomePage() {
                 className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-blue-500/50 transition-all"
               >
                 <feature.icon className="w-12 h-12 text-blue-400 mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {feature.title}
+                </h3>
                 <p className="text-gray-400">{feature.description}</p>
               </motion.div>
             ))}
@@ -133,7 +144,8 @@ export default function HomePage() {
               Ready to Secure Your Network?
             </h2>
             <p className="text-blue-100 text-lg mb-8">
-              Join thousands of organizations protecting their infrastructure with NIDS
+              Join thousands of organizations protecting their infrastructure
+              with NIDS
             </p>
             <Link
               href="/login"

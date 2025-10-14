@@ -1,17 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Copy, Check, Loader2, Download } from 'lucide-react';
-import Image from 'next/image';
-import { useMfaSetupQuery, useEnableMfaMutation } from '@/hooks/useAuthMutations';
-import { EnableMfaRequestSchema, type EnableMfaRequest } from '@/types/auth';
-import { normalizeError } from '@/lib/api/apiClient';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, Copy, Check, Loader2, Download } from "lucide-react";
+import Image from "next/image";
+import {
+  useMfaSetupQuery,
+  useEnableMfaMutation,
+} from "@/hooks/useAuthMutations";
+import { EnableMfaRequestSchema, type EnableMfaRequest } from "@/types/auth";
+import { normalizeError } from "@/lib/api/apiClient";
+import { toast } from "sonner";
 
 export default function TotpSetupPage() {
   const router = useRouter();
@@ -32,10 +35,10 @@ export default function TotpSetupPage() {
     resolver: zodResolver(EnableMfaRequestSchema),
   });
 
-  const copyToClipboard = async (text: string, type: 'secret' | 'code') => {
+  const copyToClipboard = async (text: string, type: "secret" | "code") => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === 'secret') {
+      if (type === "secret") {
         setCopiedSecret(true);
         setTimeout(() => setCopiedSecret(false), 2000);
       } else {
@@ -43,17 +46,17 @@ export default function TotpSetupPage() {
         setTimeout(() => setCopiedCode(null), 2000);
       }
     } catch (error) {
-      console.error('Failed to copy:', error);
+      console.error("Failed to copy:", error);
     }
   };
 
   const downloadBackupCodes = () => {
-    const content = backupCodes.join('\n');
-    const blob = new Blob([content], { type: 'text/plain' });
+    const content = backupCodes.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'nids-backup-codes.txt';
+    a.download = "nids-backup-codes.txt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -78,7 +81,7 @@ export default function TotpSetupPage() {
   };
 
   const handleComplete = () => {
-    router.push('/dashboard');
+    router.push("/dashboard");
   };
 
   if (isLoading) {
@@ -86,7 +89,7 @@ export default function TotpSetupPage() {
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
       </div>
-    )
+    );
   }
 
   if (!mfaSetup) {
@@ -113,7 +116,9 @@ export default function TotpSetupPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
                 <Shield className="w-8 h-8 text-blue-400" />
               </div>
-              <h2 className="text-3xl font-bold text-white">Set Up Two-Factor Authentication</h2>
+              <h2 className="text-3xl font-bold text-white">
+                Set Up Two-Factor Authentication
+              </h2>
               <p className="text-gray-400 mt-2">
                 Scan the QR code with your authenticator app
               </p>
@@ -134,15 +139,23 @@ export default function TotpSetupPage() {
 
             {/* Secret Key */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-              <p className="text-sm text-gray-400 mb-2">Or enter this code manually:</p>
+              <p className="text-sm text-gray-400 mb-2">
+                Or enter this code manually:
+              </p>
               <div className="flex items-center justify-between bg-slate-900/50 rounded-lg p-3">
-                <code className="text-white font-mono text-sm">{mfaSetup.secret}</code>
+                <code className="text-white font-mono text-sm">
+                  {mfaSetup.secret}
+                </code>
                 <button
                   type="button"
-                  onClick={() => copyToClipboard(mfaSetup.secret, 'secret')}
+                  onClick={() => copyToClipboard(mfaSetup.secret, "secret")}
                   className="ml-3 p-2 text-gray-400 hover:text-white hover:bg-slate-700 rounded transition-colors"
                 >
-                  {copiedSecret ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                  {copiedSecret ? (
+                    <Check className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -150,7 +163,10 @@ export default function TotpSetupPage() {
             {/* Verification Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label htmlFor="verification_code" className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  htmlFor="verification_code"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
                   Enter the 6-digit code from your authenticator app
                 </label>
                 <input
@@ -158,7 +174,7 @@ export default function TotpSetupPage() {
                   type="text"
                   inputMode="numeric"
                   maxLength={6}
-                  {...register('verification_code')}
+                  {...register("verification_code")}
                   className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-center text-2xl font-mono tracking-[0.5em] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="000000"
                 />
@@ -172,7 +188,9 @@ export default function TotpSetupPage() {
               {/* Regenerate QR Code Button */}
               <button
                 type="button"
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['mfa-setup'] })}
+                onClick={() =>
+                  queryClient.invalidateQueries({ queryKey: ["mfa-setup"] })
+                }
                 className="text-sm text-blue-400 hover:underline"
               >
                 Regenerate QR Code
@@ -189,7 +207,7 @@ export default function TotpSetupPage() {
                     Verifying...
                   </span>
                 ) : (
-                  'Enable Two-Factor Authentication'
+                  "Enable Two-Factor Authentication"
                 )}
               </button>
             </form>
@@ -206,7 +224,9 @@ export default function TotpSetupPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
                 <Check className="w-8 h-8 text-green-400" />
               </div>
-              <h2 className="text-3xl font-bold text-white">MFA Enabled Successfully!</h2>
+              <h2 className="text-3xl font-bold text-white">
+                MFA Enabled Successfully!
+              </h2>
               <p className="text-gray-400 mt-2">
                 Save these backup codes in a secure location
               </p>
@@ -215,14 +235,18 @@ export default function TotpSetupPage() {
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
               <p className="text-amber-400 text-sm font-medium">⚠️ Important</p>
               <p className="text-amber-300 text-sm mt-1">
-                Each backup code can only be used once. Store them securely - you&apos;ll need them if you lose access to your authenticator app.
+                Each backup code can only be used once. Store them securely -
+                you&apos;ll need them if you lose access to your authenticator
+                app.
               </p>
             </div>
 
             {/* Backup Codes */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-gray-300">Your Backup Codes</p>
+                <p className="text-sm font-medium text-gray-300">
+                  Your Backup Codes
+                </p>
                 <button
                   type="button"
                   onClick={downloadBackupCodes}
@@ -241,7 +265,7 @@ export default function TotpSetupPage() {
                     <code className="text-white font-mono text-sm">{code}</code>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(code, 'code')}
+                      onClick={() => copyToClipboard(code, "code")}
                       className="ml-2 p-1.5 text-gray-400 hover:text-white hover:bg-slate-700 rounded transition-colors"
                     >
                       {copiedCode === code ? (

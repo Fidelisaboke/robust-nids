@@ -1,76 +1,83 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Activity, AlertTriangle, Shield, TrendingUp, Users, Server } from 'lucide-react';
-import { useCurrentUser } from '@/hooks/useAuthMutations';
+import { motion } from "framer-motion";
+import {
+  Activity,
+  AlertTriangle,
+  Shield,
+  TrendingUp,
+  Users,
+  Server,
+} from "lucide-react";
+import { useCurrentUser } from "@/hooks/useAuthMutations";
 
 export default function DashboardPage() {
   const { data: user } = useCurrentUser();
 
   const stats = [
     {
-      name: 'Active Alerts',
-      value: '12',
-      change: '+3',
-      changeType: 'increase',
+      name: "Active Alerts",
+      value: "12",
+      change: "+3",
+      changeType: "increase",
       icon: AlertTriangle,
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10',
-      borderColor: 'border-red-500/20',
+      color: "text-red-400",
+      bgColor: "bg-red-500/10",
+      borderColor: "border-red-500/20",
     },
     {
-      name: 'Network Events',
-      value: '1,234',
-      change: '+12%',
-      changeType: 'increase',
+      name: "Network Events",
+      value: "1,234",
+      change: "+12%",
+      changeType: "increase",
       icon: Activity,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/20',
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/20",
     },
     {
-      name: 'Protected Assets',
-      value: '48',
-      change: '+2',
-      changeType: 'increase',
+      name: "Protected Assets",
+      value: "48",
+      change: "+2",
+      changeType: "increase",
       icon: Shield,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20',
+      color: "text-green-400",
+      bgColor: "bg-green-500/10",
+      borderColor: "border-green-500/20",
     },
     {
-      name: 'Threat Score',
-      value: '72',
-      change: '-5%',
-      changeType: 'decrease',
+      name: "Threat Score",
+      value: "72",
+      change: "-5%",
+      changeType: "decrease",
       icon: TrendingUp,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/20',
+      color: "text-purple-400",
+      bgColor: "bg-purple-500/10",
+      borderColor: "border-purple-500/20",
     },
   ];
 
   const recentAlerts = [
     {
       id: 1,
-      type: 'Critical',
-      message: 'Potential SQL Injection Attempt Detected',
-      time: '2 minutes ago',
-      source: '192.168.1.45',
+      type: "Critical",
+      message: "Potential SQL Injection Attempt Detected",
+      time: "2 minutes ago",
+      source: "192.168.1.45",
     },
     {
       id: 2,
-      type: 'High',
-      message: 'Unusual Port Scan Activity',
-      time: '15 minutes ago',
-      source: '10.0.0.23',
+      type: "High",
+      message: "Unusual Port Scan Activity",
+      time: "15 minutes ago",
+      source: "10.0.0.23",
     },
     {
       id: 3,
-      type: 'Medium',
-      message: 'Failed Authentication Attempts',
-      time: '1 hour ago',
-      source: '172.16.0.8',
+      type: "Medium",
+      message: "Failed Authentication Attempts",
+      time: "1 hour ago",
+      source: "172.16.0.8",
     },
   ];
 
@@ -83,10 +90,10 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-3xl font-bold text-white">
-          Welcome back, {user?.first_name || 'User'}!
+          Welcome back, {user?.first_name || "User"}!
         </h1>
         <p className="text-gray-400 mt-2">
-          Here's what's happening with your network security today.
+          Here&apos;s what&apos;s happening with your network security today.
         </p>
       </motion.div>
 
@@ -108,13 +115,17 @@ export default function DashboardPage() {
                 </div>
                 <span
                   className={`text-sm font-medium ${
-                    stat.changeType === 'increase' ? 'text-green-400' : 'text-red-400'
+                    stat.changeType === "increase"
+                      ? "text-green-400"
+                      : "text-red-400"
                   }`}
                 >
                   {stat.change}
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-1">{stat.value}</h3>
+              <h3 className="text-2xl font-bold text-white mb-1">
+                {stat.value}
+              </h3>
               <p className="text-sm text-gray-400">{stat.name}</p>
             </motion.div>
           );
@@ -143,29 +154,31 @@ export default function DashboardPage() {
             >
               <div
                 className={`mt-1 w-2 h-2 rounded-full ${
-                  alert.type === 'Critical'
-                    ? 'bg-red-400'
-                    : alert.type === 'High'
-                    ? 'bg-orange-400'
-                    : 'bg-yellow-400'
+                  alert.type === "Critical"
+                    ? "bg-red-400"
+                    : alert.type === "High"
+                      ? "bg-orange-400"
+                      : "bg-yellow-400"
                 }`}
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2 mb-1">
                   <span
                     className={`text-xs font-semibold px-2 py-1 rounded ${
-                      alert.type === 'Critical'
-                        ? 'bg-red-500/20 text-red-400'
-                        : alert.type === 'High'
-                        ? 'bg-orange-500/20 text-orange-400'
-                        : 'bg-yellow-500/20 text-yellow-400'
+                      alert.type === "Critical"
+                        ? "bg-red-500/20 text-red-400"
+                        : alert.type === "High"
+                          ? "bg-orange-500/20 text-orange-400"
+                          : "bg-yellow-500/20 text-yellow-400"
                     }`}
                   >
                     {alert.type}
                   </span>
                   <span className="text-xs text-gray-400">{alert.time}</span>
                 </div>
-                <p className="text-sm text-white font-medium mb-1">{alert.message}</p>
+                <p className="text-sm text-white font-medium mb-1">
+                  {alert.message}
+                </p>
                 <p className="text-xs text-gray-400">Source: {alert.source}</p>
               </div>
             </div>
@@ -239,7 +252,9 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
               <div>
-                <p className="text-sm text-white font-medium">Security Analyst</p>
+                <p className="text-sm text-white font-medium">
+                  Security Analyst
+                </p>
                 <p className="text-xs text-gray-400">Mobile - Safari</p>
               </div>
               <div className="flex items-center space-x-2">
@@ -249,7 +264,9 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
               <div>
-                <p className="text-sm text-white font-medium">Network Monitor</p>
+                <p className="text-sm text-white font-medium">
+                  Network Monitor
+                </p>
                 <p className="text-xs text-gray-400">Tablet - Firefox</p>
               </div>
               <div className="flex items-center space-x-2">

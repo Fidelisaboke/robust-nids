@@ -1,14 +1,14 @@
 export enum UserRole {
-  ADMIN = 'Administrator',
-  ANALYST = 'Security Analyst',
-  OPERATOR = 'Operator',
-  VIEWER = 'Viewer',
+  ADMIN = "Administrator",
+  ANALYST = "Security Analyst",
+  OPERATOR = "Operator",
+  VIEWER = "Viewer",
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  SUSPENDED = "suspended",
 }
 
 export interface AuthTokens {
@@ -43,31 +43,31 @@ export interface Alert {
 }
 
 export enum AlertType {
-  DDOS = 'DDoS Attack',
-  PORT_SCAN = 'Port Scan',
-  BRUTE_FORCE = 'Brute Force',
-  SQL_INJECTION = 'SQL Injection',
-  MALWARE = 'Malware Detected',
-  PHISHING = 'Phishing Attempt',
-  RANSOMWARE = 'Ransomware',
-  DATA_EXFILTRATION = 'Data Exfiltration',
-  UNAUTHORIZED_ACCESS = 'Unauthorized Access',
+  DDOS = "DDoS Attack",
+  PORT_SCAN = "Port Scan",
+  BRUTE_FORCE = "Brute Force",
+  SQL_INJECTION = "SQL Injection",
+  MALWARE = "Malware Detected",
+  PHISHING = "Phishing Attempt",
+  RANSOMWARE = "Ransomware",
+  DATA_EXFILTRATION = "Data Exfiltration",
+  UNAUTHORIZED_ACCESS = "Unauthorized Access",
 }
 
 export enum AlertSeverity {
-  CRITICAL = 'critical',
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low',
-  INFO = 'info',
+  CRITICAL = "critical",
+  HIGH = "high",
+  MEDIUM = "medium",
+  LOW = "low",
+  INFO = "info",
 }
 
 export enum AlertStatus {
-  ACTIVE = 'active',
-  INVESTIGATING = 'investigating',
-  BLOCKED = 'blocked',
-  RESOLVED = 'resolved',
-  FALSE_POSITIVE = 'false_positive',
+  ACTIVE = "active",
+  INVESTIGATING = "investigating",
+  BLOCKED = "blocked",
+  RESOLVED = "resolved",
+  FALSE_POSITIVE = "false_positive",
 }
 
 // Metric Types
@@ -96,7 +96,7 @@ export interface SystemMetric {
 export interface ThreatMetric {
   type: string;
   count: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
   percentage: number;
 }
 
@@ -115,34 +115,34 @@ export interface Report {
 }
 
 export enum ReportType {
-  DAILY = 'daily',
-  WEEKLY = 'weekly',
-  MONTHLY = 'monthly',
-  CUSTOM = 'custom',
-  INCIDENT = 'incident',
-  COMPLIANCE = 'compliance',
+  DAILY = "daily",
+  WEEKLY = "weekly",
+  MONTHLY = "monthly",
+  CUSTOM = "custom",
+  INCIDENT = "incident",
+  COMPLIANCE = "compliance",
 }
 
 export enum ReportStatus {
-  GENERATING = 'generating',
-  READY = 'ready',
-  FAILED = 'failed',
+  GENERATING = "generating",
+  READY = "ready",
+  FAILED = "failed",
 }
 
 export enum ReportFormat {
-  PDF = 'pdf',
-  CSV = 'csv',
-  JSON = 'json',
-  HTML = 'html',
+  PDF = "pdf",
+  CSV = "csv",
+  JSON = "json",
+  HTML = "html",
 }
 
 // Network Types
 export interface NetworkNode {
   id: string;
   label: string;
-  type: 'device' | 'server' | 'router' | 'firewall' | 'endpoint';
+  type: "device" | "server" | "router" | "firewall" | "endpoint";
   ip: string;
-  status: 'online' | 'offline' | 'warning';
+  status: "online" | "offline" | "warning";
   threats: number;
 }
 
@@ -151,7 +151,7 @@ export interface NetworkConnection {
   target: string;
   traffic: number;
   protocol: string;
-  status: 'normal' | 'suspicious' | 'blocked';
+  status: "normal" | "suspicious" | "blocked";
 }
 
 // Audit Log Types
@@ -168,14 +168,14 @@ export interface AuditLog {
 }
 
 export enum AuditAction {
-  LOGIN = 'login',
-  LOGOUT = 'logout',
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  VIEW = 'view',
-  EXPORT = 'export',
-  CONFIG_CHANGE = 'config_change',
+  LOGIN = "login",
+  LOGOUT = "logout",
+  CREATE = "create",
+  UPDATE = "update",
+  DELETE = "delete",
+  VIEW = "view",
+  EXPORT = "export",
+  CONFIG_CHANGE = "config_change",
 }
 
 // API Response Types

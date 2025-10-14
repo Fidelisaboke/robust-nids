@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Shield, Loader2, ArrowLeft } from 'lucide-react';
-import { useVerifyMfaMutation } from '@/hooks/useAuthMutations';
-import { useAuth } from '@/contexts/AuthContext';
-import { VerifyMfaRequestSchema, type VerifyMfaRequest } from '@/types/auth';
-import { normalizeError } from '@/lib/api/apiClient';
-import { toast } from 'sonner';
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Shield, Loader2, ArrowLeft } from "lucide-react";
+import { useVerifyMfaMutation } from "@/hooks/useAuthMutations";
+import { useAuth } from "@/contexts/AuthContext";
+import { VerifyMfaRequestSchema, type VerifyMfaRequest } from "@/types/auth";
+import { normalizeError } from "@/lib/api/apiClient";
+import { toast } from "sonner";
 
 export default function VerifyMfaPage() {
   const router = useRouter();
@@ -28,13 +28,13 @@ export default function VerifyMfaPage() {
     resolver: zodResolver(VerifyMfaRequestSchema),
   });
 
-  const code = watch('code');
+  const code = watch("code");
 
   useEffect(() => {
     // Check if MFA challenge token exists
     const mfaToken = getMfaChallengeToken();
     if (!mfaToken) {
-      router.push('/login');
+      router.push("/login");
     }
 
     // Auto-focus input
@@ -45,7 +45,7 @@ export default function VerifyMfaPage() {
     const mfaToken = getMfaChallengeToken();
 
     if (!mfaToken) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
@@ -58,20 +58,25 @@ export default function VerifyMfaPage() {
       if (response.access_token && response.refresh_token) {
         clearMfaChallengeToken();
         login(response.access_token, response.refresh_token);
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     } catch (error) {
       const normalizedError = normalizeError(error);
       if (normalizedError.statusCode === 400) {
         toast.error(`Verification Failed: ${normalizeError(error).message}`);
-      } else if (normalizedError.statusCode === 401 || normalizedError.statusCode === 403) {
-        toast.error('MFA challenge expired or invalid. Please log in again.');
+      } else if (
+        normalizedError.statusCode === 401 ||
+        normalizedError.statusCode === 403
+      ) {
+        toast.error("MFA challenge expired or invalid. Please log in again.");
         clearMfaChallengeToken();
-        router.push('/login');
+        router.push("/login");
       } else if (normalizedError.statusCode === 429) {
-        toast.error('Too many attempts. Please wait and try again later.');
+        toast.error("Too many attempts. Please wait and try again later.");
       } else {
-        toast.error(`An unexpected error occurred: ${normalizeError(error).message}`);
+        toast.error(
+          `An unexpected error occurred: ${normalizeError(error).message}`,
+        );
       }
     }
   };
@@ -87,7 +92,9 @@ export default function VerifyMfaPage() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
           <Shield className="w-8 h-8 text-blue-400" />
         </div>
-        <h2 className="text-3xl font-bold text-white">Two-Factor Authentication</h2>
+        <h2 className="text-3xl font-bold text-white">
+          Two-Factor Authentication
+        </h2>
         <p className="text-gray-400 mt-2">
           Enter the 6-digit code from your authenticator app
         </p>
@@ -101,7 +108,10 @@ export default function VerifyMfaPage() {
         className="space-y-6"
       >
         <div>
-          <label htmlFor="code" className="block text-sm font-medium text-gray-300 mb-3 text-center">
+          <label
+            htmlFor="code"
+            className="block text-sm font-medium text-gray-300 mb-3 text-center"
+          >
             Authentication Code
           </label>
           <input
@@ -109,10 +119,9 @@ export default function VerifyMfaPage() {
             type="text"
             inputMode="numeric"
             maxLength={6}
-            {...register('code')}
+            {...register("code")}
             ref={(e) => {
-              register('code').ref(e);
-              // @ts-ignore
+              register("code").ref(e);
               inputRef.current = e;
             }}
             className="w-full px-4 py-4 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-center text-3xl font-mono tracking-[0.5em] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -120,7 +129,9 @@ export default function VerifyMfaPage() {
             autoComplete="one-time-code"
           />
           {errors.code && (
-            <p className="mt-2 text-sm text-red-400 text-center">{errors.code.message}</p>
+            <p className="mt-2 text-sm text-red-400 text-center">
+              {errors.code.message}
+            </p>
           )}
         </div>
 
@@ -135,7 +146,7 @@ export default function VerifyMfaPage() {
               Verifying...
             </span>
           ) : (
-            'Verify & Sign In'
+            "Verify & Sign In"
           )}
         </button>
 
@@ -150,7 +161,7 @@ export default function VerifyMfaPage() {
 
       <div className="pt-4 border-t border-slate-700">
         <p className="text-sm text-gray-400 text-center">
-          Lost access to your authenticator?{' '}
+          Lost access to your authenticator?{" "}
           <Link
             href="/reset-password"
             className="text-blue-400 hover:text-blue-300 transition-colors"

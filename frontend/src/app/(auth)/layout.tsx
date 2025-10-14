@@ -1,10 +1,14 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Network, Shield } from 'lucide-react';
-import Link from 'next/link';
+import { motion } from "framer-motion";
+import { Network, Shield } from "lucide-react";
+import Link from "next/link";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       {/* Background Pattern */}
@@ -18,7 +22,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <Link href="/" className="inline-flex items-center justify-center space-x-3 mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center space-x-3 mb-4"
+          >
             <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
               <Network className="w-8 h-8 text-blue-400" />
             </div>

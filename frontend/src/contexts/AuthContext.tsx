@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-import type { User } from '@/types/auth';
-import { authApi } from '@/lib/api/authApi';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { useRouter } from "next/navigation";
+import type { User } from "@/types/auth";
+import { authApi } from "@/lib/api/authApi";
 
 interface AuthContextType {
   user: User | null;
@@ -38,7 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Fetch user profile
-    authApi.getCurrentUser()
+    authApi
+      .getCurrentUser()
       .then((data) => {
         setUser(data);
         setIsAuthenticated(true);
@@ -50,31 +57,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = (accessToken: string, refreshToken: string, userData?: User) => {
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
+  const login = (
+    accessToken: string,
+    refreshToken: string,
+    userData?: User,
+  ) => {
+    localStorage.setItem("access_token", accessToken);
+    localStorage.setItem("refresh_token", refreshToken);
     if (userData) setUser(userData);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('mfa_challenge_token');
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("mfa_challenge_token");
     setUser(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   const saveMfaChallengeToken = (token: string) => {
-    localStorage.setItem('mfa_challenge_token', token);
+    localStorage.setItem("mfa_challenge_token", token);
   };
 
   const getMfaChallengeToken = (): string | null => {
-    return localStorage.getItem('mfa_challenge_token');
+    return localStorage.getItem("mfa_challenge_token");
   };
 
   const clearMfaChallengeToken = () => {
-    localStorage.removeItem('mfa_challenge_token');
+    localStorage.removeItem("mfa_challenge_token");
   };
 
   const value: AuthContextType = {
@@ -96,7 +107,7 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
 
   return context;
