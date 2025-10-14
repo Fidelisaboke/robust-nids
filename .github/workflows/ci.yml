@@ -17,6 +17,22 @@ jobs:
       run:
         working-directory: backend
 
+    # PostgreSQL service for tests
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: nids_db_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -74,10 +90,19 @@ jobs:
       - name: Sync dependencies
         run: uv sync --extra dev --extra test
 
+      - name: Load .env.test file
+        run: |
+          if [ -f ../.env.test ]; then
+            echo "Loading environment variables from .env.test"
+            cat ../.env.test >> $GITHUB_ENV
+          else
+            echo ".env.test file not found!"
+            exit 1
+          fi
+
       - name: Run tests with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}/backend
-          SECRET_KEY: test_key
         run: uv run pytest -v --cov=. --cov-report=xml
 
       - name: Display coverage summary

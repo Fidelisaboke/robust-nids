@@ -6,14 +6,6 @@ echo "Starting development environment..."
 # Build and start containers
 docker compose -f docker-compose.yml up --build -d
 
-# Wait for backend
-echo "Waiting for backend to be ready..."
-until docker compose exec backend curl -s http://localhost:8000 >/dev/null; do
-    echo -n "."
-    sleep 2
-done
-echo "Backend is ready!"
-
 # Run database migrations
 docker compose -f docker-compose.yml exec backend alembic upgrade head
 
