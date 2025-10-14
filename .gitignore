@@ -1,6 +1,5 @@
 # Root-level ignores
 .DS_Store
-*.log
 *.env
 *.env.local
 *.env.*.local
@@ -41,3 +40,38 @@ build/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Datasets and model weights
+data/
+models/
+*.h5
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.tflite
+*.pb
+*.keras
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Databases
+*.sqlite3
+*.db
+*.db-journal
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
