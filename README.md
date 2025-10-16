@@ -88,6 +88,12 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 ./scripts/build-dev.sh
 ```
 
+- Additionally, you can use the [`Makefile`](./Makefile) to manage the containers. View the commands by running
+`make help`:
+```
+make help
+```
+
 #### Backend Setup (FastAPI)
 
 - Otherwise, follow the steps below for a local setup:
