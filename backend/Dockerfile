@@ -1,33 +1,33 @@
 FROM python:3.12-slim
 
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:0.9.2 /uv /uvx /bin/
 
 # Set working directory and venv path
 WORKDIR /app
 
-# Create a non-root user
+# Define virtual environment
+ENV UV_PROJECT_ENVIRONMENT=/home/appuser/.venv
+ENV PATH="/home/appuser/.venv/bin:$PATH"
+
+# Create non-root user
 RUN useradd -m appuser
 
-# Define virtual environment path outside of the working directory
-ENV UV_PROJECT_ENVIRONMENT=/home/appuser/.venv
-ENV VENV_PATH=/home/appuser/.venv
-ENV PATH="$VENV_PATH/bin:$PATH"
-
-# Give appuser ownership of the working directory and the new venv
-RUN chown -R appuser:appuser /app
-
-# Copy and install Python dependencies
-COPY --chown=appuser:appuser pyproject.toml uv.lock ./
-
-# Switch to non-root user
-USER appuser
-
-# Install dependencies in a virtual environment
+# Install dependencies
+COPY pyproject.toml uv.lock ./
 RUN uv sync --locked
 
 # Copy the application source code
 COPY . .
+
+# Give appuser ownership of the working directory
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose FastAPI port
 EXPOSE 8000
