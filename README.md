@@ -80,11 +80,15 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 
 - For detailed instructions, see [`docs/SETUP.md`](docs/SETUP.md).
 
-#### Backend Setup (FastAPI)
-- To quickly set up a Docker container, simply run (at project root):
+
+#### Docker Setup
+- To quickly set up project's Docker containers, simply run (at project root):
+
 ```bash
 ./scripts/build-dev.sh
 ```
+
+#### Backend Setup (FastAPI)
 
 - Otherwise, follow the steps below for a local setup:
 

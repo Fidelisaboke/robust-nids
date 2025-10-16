@@ -75,8 +75,8 @@ notebooks/
 .ipynb_checkpoints/
 
 # Frontend
-frontend/
 node_modules/
+.next
 
 # Environment files
 .env
