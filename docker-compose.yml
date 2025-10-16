@@ -11,21 +11,23 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app:cached
-      - backend-cache:/app/.venv
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       - ENVIRONMENT=${ENVIRONMENT}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - app-network
-    command: uv run uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
   postgres:
     image: postgres:16-alpine
     container_name: postgres-dev
+    restart: unless-stopped
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -45,6 +47,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis-dev
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -73,7 +76,6 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  backend-cache:
 
 networks:
   app-network:
