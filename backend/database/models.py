@@ -66,8 +66,17 @@ class User(Base):
 
     # Account verification
     email_verified = Column(Boolean, default=False)
+    email_verified_at = Column(DateTime, nullable=True)
     phone_verified = Column(Boolean, default=False)
-    verification_token = Column(String(255), nullable=True)
+    phone_verified_at = Column(DateTime, nullable=True)
+
+    # Email verification token
+    email_verification_token = Column(String(255), nullable=True)
+    email_verification_token_expires = Column(DateTime, nullable=True)
+
+    # Password reset token
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_token_expires = Column(DateTime, nullable=True)
 
     # Relationship
     roles = relationship('Role', secondary='user_roles', back_populates='users')
