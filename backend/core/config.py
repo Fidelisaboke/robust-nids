@@ -40,12 +40,29 @@ class Settings(BaseSettings):
     DB_ADMIN_USER: str
     DB_ADMIN_PASSWORD: str
 
+    # Email Settings
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_FROM_NAME: str = "NIDS System"
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
+    USE_CREDENTIALS: bool = True
+    VALIDATE_CERTS: bool = True
+    TEMPLATE_FOLDER: Path = BASE_DIR / "templates" / "email"
+    SUPPORT_EMAIL: str = "support@nids.com"
+
     # PgAdmin
     PGADMIN_DEFAULT_EMAIL: str
     PGADMIN_DEFAULT_PASSWORD: str
 
     # Redis configuration
     REDIS_URL: str
+
+    # Frontend configuration
+    FRONTEND_URL: str = 'http://localhost:3000'
 
     # CORS origins
     BACKEND_CORS_ORIGINS: list[str] = ['http://localhost', 'http://localhost:3000']
@@ -67,14 +84,18 @@ class Settings(BaseSettings):
         'privacy': {'show_online_status': True, 'share_analytics': False},
     }
 
-    # JWT
+    # JWT Settings
     JWT_ALGORITHM: str = 'HS256'
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # 30 minutes
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440  # 1 day
-    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = 5  # 5 minutes
 
-    # MFA Settings
-    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = 1  # 1 hour
+    # Token Expiration Times (in minutes)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440
+    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = 5
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 15
+    EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 15
+
+    # MFA Recovery Token Expiration (in hours)
+    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = 1
 
 
 settings = Settings()
