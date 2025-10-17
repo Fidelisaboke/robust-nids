@@ -109,15 +109,21 @@ create_user() {
     log_info "Creating or updating user '$DB_USER'"
     export PGPASSWORD="$DB_ADMIN_PASSWORD"
 
+    # Escape single quotes for SQL literals to prevent SQL injection
+    local safe_db_user
+    safe_db_user=$(printf '%s' "$DB_USER" | sed "s/'/''/g")
+    local safe_db_password
+    safe_db_password=$(printf '%s' "$DB_PASSWORD" | sed "s/'/''/g")
+
     psql -v ON_ERROR_STOP=1 -h "$DB_HOST" -p "$DB_PORT" -U "$DB_ADMIN_USER" -d "postgres" <<-EOF
         DO \$\$
         BEGIN
-           IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$DB_USER') THEN
-              RAISE NOTICE 'Role "$DB_USER" already exists. Updating password.';
-              ALTER ROLE "$DB_USER" WITH PASSWORD '$DB_PASSWORD';
+           IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$safe_db_user') THEN
+              RAISE NOTICE 'Role "$safe_db_user" already exists. Updating password.';
+              ALTER ROLE "$safe_db_user" WITH PASSWORD '$safe_db_password';
            ELSE
-              RAISE NOTICE 'Role "$DB_USER" does not exist. Creating it.';
-              CREATE ROLE "$DB_USER" WITH LOGIN PASSWORD '$DB_PASSWORD';
+              RAISE NOTICE 'Role "$safe_db_user" does not exist. Creating it.';
+              CREATE ROLE "$safe_db_user" WITH LOGIN PASSWORD '$safe_db_password';
            END IF;
         END
         \$\$;
