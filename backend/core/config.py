@@ -5,7 +5,7 @@ Configuration module for the backend application.
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import Field, PostgresDsn
+from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,38 +23,32 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding='utf-8')
 
     # Application settings
-    SECRET_KEY: str = Field('mysecretkey', validation_alias='SECRET_KEY')
-    DEBUG: bool = Field(False, validation_alias='DEBUG')
-    APP_NAME: str = Field('NIDS', validation_alias='APP_NAME')
-    ENVIRONMENT: str = Field('local', validation_alias='ENVIRONMENT')
+    ENVIRONMENT: str
+    SECRET_KEY: str
+    DEBUG: bool = False
+    APP_NAME: str = 'NIDS'
 
     # Database settings
-    DB_HOST: str = Field('localhost', validation_alias='DB_HOST')
-    DB_PORT: int = Field(5432, validation_alias='DB_PORT')
-    DB_NAME: str = Field('nids_db', validation_alias='DB_NAME')
-    DB_USER: str = Field('nids_user', validation_alias='DB_USER')
-    DB_PASSWORD: str = Field('change_this_in_production', validation_alias='DB_PASSWORD')
-    DATABASE_URL: PostgresDsn = Field(
-        'postgresql+psycopg://nids_user:change_this_in_production@localhost:5432/nids_db',
-        validation_alias='DATABASE_URL'
-    )
+    DB_HOST: str
+    DB_PORT: int = 5432
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DATABASE_URL: PostgresDsn
 
     # Database Admin credentials (for DB setup)
-    DB_ADMIN_USER: str = Field('postgres', validation_alias='DB_ADMIN_USER')
-    DB_ADMIN_PASSWORD: str = Field('admin_password', validation_alias='DB_ADMIN_PASSWORD')
+    DB_ADMIN_USER: str
+    DB_ADMIN_PASSWORD: str
 
     # PgAdmin
-    PGADMIN_DEFAULT_EMAIL: str = Field('admin@admin.com', validation_alias='PGADMIN_DEFAULT_EMAIL')
-    PGADMIN_DEFAULT_PASSWORD: str = Field('admin', validation_alias='PGADMIN_DEFAULT_PASSWORD')
+    PGADMIN_DEFAULT_EMAIL: str
+    PGADMIN_DEFAULT_PASSWORD: str
 
     # Redis configuration
-    REDIS_URL: str = Field('redis://localhost:6379/0', validation_alias='REDIS_URL')
+    REDIS_URL: str
 
     # CORS origins
-    BACKEND_CORS_ORIGINS: list[str] = Field(
-        ['http://localhost:3000'],
-        validation_alias='BACKEND_CORS_ORIGINS'
-    )
+    BACKEND_CORS_ORIGINS: list[str] = ['http://localhost', 'http://localhost:3000']
 
     # Default user preferences for the dashboard
     DEFAULT_USER_PREFERENCES: ClassVar[dict] = {
@@ -62,7 +56,7 @@ class Settings(BaseSettings):
             'default_view': 'overview',
             'refresh_interval': 300,
             'theme': 'system',
-        },  # 5 minutes
+        },
         'notifications': {
             'email': True,
             'browser': True,
@@ -73,15 +67,14 @@ class Settings(BaseSettings):
         'privacy': {'show_online_status': True, 'share_analytics': False},
     }
 
-    # JWT Settings
-    JWT_ALGORITHM: str = Field('HS256', validation_alias='JWT_ALGORITHM')
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(30, validation_alias='ACCESS_TOKEN_EXPIRE_MINUTES')  # 30 minutes
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(1440, validation_alias='REFRESH_TOKEN_EXPIRE_MINUTES')  # 1 day
-    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = Field(5, validation_alias='MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES')
+    # JWT
+    JWT_ALGORITHM: str = 'HS256'
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # 30 minutes
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440  # 1 day
+    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = 5  # 5 minutes
 
     # MFA Settings
-    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = Field(1, validation_alias='MFA_RECOVERY_TOKEN_EXPIRES_HOURS')
+    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = 1  # 1 hour
 
 
-# noinspection PyArgumentList
 settings = Settings()
