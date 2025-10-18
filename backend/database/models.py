@@ -37,16 +37,16 @@ class User(Base):
     mfa_enabled = Column(Boolean, nullable=False, default=False)
     mfa_method = Column(String(20), default='totp')  # 'totp', 'email', 'sms', 'backup_code'
     mfa_backup_codes = Column(ARRAY(Text), nullable=True)
-    mfa_configured_at = Column(DateTime, nullable=True)
+    mfa_configured_at = Column(DateTime(timezone=True), nullable=True)
     mfa_recovery_token = Column(String(255), nullable=True)
-    mfa_recovery_token_expires = Column(DateTime, nullable=True)
+    mfa_recovery_token_expires = Column(DateTime(timezone=True), nullable=True)
 
     # Security fields
     is_active = Column(Boolean, default=True)
-    last_login = Column(DateTime)
+    last_login = Column(DateTime(timezone=True))
     failed_login_attempts = Column(Integer, default=0)
-    locked_until = Column(DateTime)
-    created_at = Column(DateTime, default=func.now())
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=func.now())
 
     # Profile information
     username = Column(String(15), unique=True, index=True, nullable=False)
@@ -62,21 +62,21 @@ class User(Base):
 
     # Profile completion
     profile_completed = Column(Boolean, default=False)
-    last_profile_update = Column(DateTime, nullable=True)
+    last_profile_update = Column(DateTime(timezone=True), nullable=True)
 
     # Account verification
     email_verified = Column(Boolean, default=False)
-    email_verified_at = Column(DateTime, nullable=True)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
     phone_verified = Column(Boolean, default=False)
-    phone_verified_at = Column(DateTime, nullable=True)
+    phone_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     # Email verification token
     email_verification_token = Column(String(255), nullable=True)
-    email_verification_token_expires = Column(DateTime, nullable=True)
+    email_verification_token_expires = Column(DateTime(timezone=True), nullable=True)
 
     # Password reset token
     password_reset_token = Column(String(255), nullable=True)
-    password_reset_token_expires = Column(DateTime, nullable=True)
+    password_reset_token_expires = Column(DateTime(timezone=True), nullable=True)
 
     # Relationship
     roles = relationship('Role', secondary='user_roles', back_populates='users')
@@ -93,9 +93,9 @@ class UserSession(Base):
     device_info = Column(String(255))  # Browser/device info
     ip_address = Column(String(45))  # Support IPv6
     user_agent = Column(Text)
-    login_time = Column(DateTime, default=func.now())
-    last_activity = Column(DateTime, default=func.now())
-    expires_at = Column(DateTime, nullable=False)
+    login_time = Column(DateTime(timezone=True), default=func.now())
+    last_activity = Column(DateTime(timezone=True), default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     is_active = Column(Boolean, default=True)
 
     user = relationship('User', back_populates='sessions')
@@ -106,7 +106,7 @@ class Role(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime(timezone=True), default=func.now())
 
     users = relationship('User', secondary='user_roles', back_populates='roles')
     permissions = relationship('Permission', secondary='role_permissions', back_populates='roles')
@@ -118,7 +118,7 @@ user_roles = Table(
     Base.metadata,
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True),
-    Column('assigned_at', DateTime, default=func.now()),
+    Column('assigned_at', DateTime(timezone=True), default=func.now()),
 )
 
 
@@ -139,5 +139,5 @@ role_permissions = Table(
     Base.metadata,
     Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True),
     Column('permission_id', Integer, ForeignKey('permissions.id'), primary_key=True),
-    Column('granted_at', DateTime, default=func.now()),
+    Column('granted_at', DateTime(timezone=True), default=func.now()),
 )
