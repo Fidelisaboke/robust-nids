@@ -22,6 +22,20 @@ export const useLoginMutation = () => {
   });
 };
 
+export const useRequestEmailVerificationMutation = () => {
+  return useMutation({
+    mutationFn: (email: string) => authApi.requestEmailVerification(email),
+    retry: false,
+  });
+};
+
+export const useVerifyEmailMutation = () => {
+  return useMutation({
+    mutationFn: (token: string) => authApi.verifyEmail(token),
+    retry: false,
+  });
+};
+
 // Verify MFA mutation
 export const useVerifyMfaMutation = () => {
   return useMutation({
