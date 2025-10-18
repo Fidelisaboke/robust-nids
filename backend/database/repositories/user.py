@@ -50,6 +50,30 @@ class UserRepository(BaseRepository):
             .first()
         )
 
+    def get_by_email_verification_token(self, token: str) -> User | None:
+        """Fetch user by email verification token."""
+        return (
+            self.session.query(User)
+            .filter(
+                User.email_verification_token == token,
+                User.email_verification_token_expires.isnot(None),
+                User.email_verification_token_expires > datetime.now(timezone.utc),
+            )
+            .first()
+        )
+
+    def get_by_password_reset_token(self, token: str) -> User | None:
+        """Fetch user by password reset token."""
+        return (
+            self.session.query(User)
+            .filter(
+                User.password_reset_token == token,
+                User.password_reset_token_expires.isnot(None),
+                User.password_reset_token_expires > datetime.now(timezone.utc),
+            )
+            .first()
+        )
+
     def list_all(self, active_only: bool = False) -> list[Type[User]]:
         """Return all users, optionally filtering by active status."""
         query = self.session.query(User).options(joinedload(User.roles))

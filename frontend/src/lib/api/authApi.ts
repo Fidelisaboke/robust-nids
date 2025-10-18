@@ -2,6 +2,7 @@ import { apiClient } from "./apiClient";
 import type {
   LoginRequest,
   LoginResponse,
+  TokenResponse,
   VerifyMfaRequest,
   MfaSetupResponse,
   EnableMfaRequest,
@@ -26,12 +27,30 @@ export const authApi = {
     return response.data;
   },
 
+  // Request email verification
+  requestEmailVerification: async (
+    email: string,
+  ): Promise<{ detail: string }> => {
+    const response = await apiClient.post(`${AUTH_BASE}/verify-email/request`, {
+      email,
+    });
+    return response.data;
+  },
+
+  // Verify email with token
+  verifyEmail: async (token: string): Promise<{ detail: string }> => {
+    const response = await apiClient.post(`${AUTH_BASE}/verify-email`, {
+      token,
+    });
+    return response.data;
+  },
+
   // Verify MFA code (requires mfa_challenge_token in Authorization header)
   verifyMfa: async (
     data: VerifyMfaRequest,
     mfaChallengeToken: string,
-  ): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>(
+  ): Promise<TokenResponse> => {
+    const response = await apiClient.post<TokenResponse>(
       `${AUTH_BASE}/mfa/verify`,
       data,
       {
@@ -44,8 +63,8 @@ export const authApi = {
   },
 
   // Refresh access token
-  refreshToken: async (refreshToken: string): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>(
+  refreshToken: async (refreshToken: string): Promise<TokenResponse> => {
+    const response = await apiClient.post<TokenResponse>(
       `${AUTH_BASE}/refresh`,
       {
         refresh_token: refreshToken,

@@ -4,9 +4,10 @@ Authentication and Authorization API Endpoints.
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from api.dependencies import get_current_active_user
+from core.dependencies import get_user_repository
 from core.security import (
     create_access_token,
     create_mfa_challenge_token,
@@ -15,18 +16,27 @@ from core.security import (
 )
 from database.db import db
 from database.models import User
-from schemas.auth import LoginRequest, MFAChallengeResponse, RefreshRequest, TokenResponse
+from database.repositories.user import UserRepository
+from schemas.auth import (
+    EmailVerificationRequiredResponse,
+    LoginRequest,
+    LoginResponse,
+    MFAChallengeResponse,
+    RefreshRequest,
+    TokenResponse,
+)
+from schemas.email import EmailVerificationRequest, VerifyEmailRequest
 from schemas.users import UserOut
 from services.auth_service import AuthService
+from services.email_service import EmailService, get_email_service
+from services.token_service import URLTokenService, get_url_token_service
 
 router = APIRouter(prefix='/api/v1/auth', tags=['Authentication'])
 
-
-@router.post('/login', response_model=TokenResponse | MFAChallengeResponse)
+@router.post('/login', response_model=LoginResponse)
 def login(
-    request: LoginRequest,
-    auth_service: AuthService = Depends()
-) -> TokenResponse | MFAChallengeResponse:
+    request: LoginRequest, auth_service: AuthService = Depends()
+) -> LoginResponse:
     """User login endpoint.
 
     Args:
@@ -37,7 +47,8 @@ def login(
         HTTPException: If authentication fails.
 
     Returns:
-        TokenResponse: The token response containing access and refresh tokens.
+        LoginResponse: The login response which can be a token response,
+                       MFA challenge response, or email verification required response.
     """
     user = auth_service.authenticate(request.email, request.password)
     if not user:
@@ -45,6 +56,13 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Invalid email or password',
             headers={'WWW-Authenticate': 'Bearer'},
+        )
+
+    if not user.email_verified:
+        return EmailVerificationRequiredResponse(
+            email_verified=False,
+            email=user.email,
+            detail="Email verification is required to log in.",
         )
 
     if user.mfa_enabled:
@@ -127,7 +145,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
 
 @router.get('/users/me', response_model=UserOut)
 async def read_profile(
-        current_user: UserOut = Depends(get_current_active_user),
+    current_user: UserOut = Depends(get_current_active_user),
 ) -> UserOut:
     """Get the current user's profile.
 
@@ -138,3 +156,66 @@ async def read_profile(
         UserOut: The current user's profile.
     """
     return current_user
+
+
+@router.post('/verify-email/request')
+async def request_email_verification(
+    request: EmailVerificationRequest,
+    background_tasks: BackgroundTasks,
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_service: URLTokenService = Depends(get_url_token_service),
+    email_service: EmailService = Depends(get_email_service),
+):
+    """Request email verification for a user.
+
+    Args:
+        request (EmailVerificationRequest): The email verification request.
+        background_tasks (BackgroundTasks): The background task manager.
+        user_repo (UserRepository): The user repository. Defaults to Depends(get_user_repository).
+        token_service (URLTokenService): The URL token service. Defaults to Depends(get_url_token_service).
+        email_service (EmailService, optional): The email service. Defaults to Depends(get_email_service).
+    """
+    user = user_repo.get_by_email(request.email)
+
+    if user and not user.email_verified:
+        verification_token = token_service.create_email_verification_token(user.id)
+        await email_service.send_verification_email(
+            background_tasks=background_tasks,
+            email=user.email,
+            user_name=user.first_name or user.username,
+            verification_token=verification_token,
+        )
+
+    return {'detail': 'If the email exists, verification instructions have been sent.'}
+
+@router.post('/verify-email')
+async def verify_email(
+    request: VerifyEmailRequest,
+    token_service: URLTokenService = Depends(get_url_token_service),
+):
+    """Verify a user's email using a verification token.
+
+    Args:
+        request (VerifyEmailRequest): The email verification request containing the token.
+        token_service (URLTokenService): The URL token service. Defaults to Depends(get_url_token_service).
+
+    Raises:
+        HTTPException: If the token is invalid or the user is not found.
+
+    Returns:
+        dict: A success message upon successful verification.
+    """
+    if not request.token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Verification token is required',
+        )
+
+    # Mark email as verified
+    if not token_service.mark_email_as_verified(request.token):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Invalid or expired verification token',
+        )
+
+    return {'detail': 'Email verified successfully!'}

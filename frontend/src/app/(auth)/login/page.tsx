@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, saveMfaChallengeToken } = useAuth();
+  const { login, saveMfaChallengeToken, user } = useAuth();
   const loginMutation = useLoginMutation();
 
   const {
@@ -29,11 +29,20 @@ export default function LoginPage() {
     try {
       const response = await loginMutation.mutateAsync(data);
 
+      // Check if email is verified
+      if ("email_verified" in response && !response.email_verified) {
+        toast.info("Please verify your email before logging in.");
+        sessionStorage.setItem("unverified_email", response.email);
+        router.push(
+          `/verify-email/required?email=${encodeURIComponent(response.email)}`,
+        );
+        return;
+      }
       // Check if MFA is required
-      if (response.mfa_required && response.mfa_challenge_token) {
+      if ("mfa_required" in response && response.mfa_required) {
         saveMfaChallengeToken(response.mfa_challenge_token);
         router.push("/login/verify-mfa");
-      } else if (response.access_token && response.refresh_token) {
+      } else if ("access_token" in response && "refresh_token" in response) {
         // Login successful without MFA
         login(response.access_token, response.refresh_token);
         router.push("/dashboard");

@@ -55,13 +55,27 @@ export type MfaRecoveryComplete = z.infer<typeof MfaRecoveryCompleteSchema>;
 
 // ===== Response DTOs =====
 
-export interface LoginResponse {
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: string;
-  mfa_required?: boolean;
-  mfa_challenge_token?: string;
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
 }
+
+export interface MFARequiredResponse {
+  mfa_required: boolean;
+  mfa_challenge_token: string;
+}
+
+export interface EmailVerificationRequiredResponse {
+  email_verified: boolean;
+  email: string;
+  detail: string;
+}
+
+export type LoginResponse =
+  | TokenResponse
+  | MFARequiredResponse
+  | EmailVerificationRequiredResponse;
 
 export interface MfaSetupResponse {
   secret: string;
@@ -124,7 +138,9 @@ export interface User {
   profile_completed: boolean;
   last_profile_update: string | null;
   email_verified: boolean;
+  email_verified_at: string | null;
   phone_verified: boolean;
+  phone_verified_at: string | null;
   roles: UserRole[];
   created_at: string;
   last_login: string;

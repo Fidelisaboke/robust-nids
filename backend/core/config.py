@@ -91,11 +91,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440
     MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = 5
-    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 15
-    EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 15
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 30
 
     # MFA Recovery Token Expiration (in hours)
     MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = 1
 
-
+# noinspection PyArgumentList
 settings = Settings()
