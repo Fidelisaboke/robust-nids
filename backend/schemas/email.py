@@ -1,28 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
-from pydantic import BaseModel, EmailStr
-
-
-class EmailVerificationRequest(BaseModel):
-    email: EmailStr
-
-
-class VerifyEmailRequest(BaseModel):
-    token: str
-
-
-class PasswordResetRequest(BaseModel):
-    email: EmailStr
-
-
-class PasswordResetConfirm(BaseModel):
-    token: str
-    new_password: str
-    confirm_password: str
+from pydantic import BaseModel
 
 
 class EmailTemplateData(BaseModel):
-    recipient_name: Optional[str] = None
-    action_url: Optional[str] = None
-    support_email: Optional[str] = None
-    additional_data: Dict[str, Any] = {}
+    recipient_name: str | None = None
+    action_url: str | None = None
+    support_email: str | None = None
+    additional_data: dict[str, Any] = {}

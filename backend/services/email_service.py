@@ -107,9 +107,11 @@ class EmailService:
         """Send password reset email"""
         reset_url = f'{settings.FRONTEND_URL}/reset-password?token={reset_token}'
 
-        expiry_minutes = settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES
         template_data = {
-            'user_name': user_name, 'reset_url': reset_url, 'expiry_minutes': f'{expiry_minutes:.2f}'
+            'user_name': user_name,
+            'reset_url': reset_url,
+            'expiry_minutes': settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES,
+            'support_email': getattr(settings, 'SUPPORT_EMAIL', 'support@example.com'),
         }
 
         self.send_email_background(

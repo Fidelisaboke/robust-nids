@@ -18,24 +18,28 @@ from database.db import db
 from database.models import User
 from database.repositories.user import UserRepository
 from schemas.auth import (
+    EmailVerificationRequest,
     EmailVerificationRequiredResponse,
+    ForgotPasswordRequest,
     LoginRequest,
     LoginResponse,
     MFAChallengeResponse,
     RefreshRequest,
+    ResetPasswordRequest,
     TokenResponse,
+    VerifyEmailRequest,
 )
-from schemas.email import EmailVerificationRequest, VerifyEmailRequest
 from schemas.users import UserOut
-from services.auth_service import AuthService
+from services.auth_service import AuthService, get_auth_service
 from services.email_service import EmailService, get_email_service
 from services.token_service import URLTokenService, get_url_token_service
 
 router = APIRouter(prefix='/api/v1/auth', tags=['Authentication'])
 
+
 @router.post('/login', response_model=LoginResponse)
 def login(
-    request: LoginRequest, auth_service: AuthService = Depends()
+        request: LoginRequest, auth_service: AuthService = Depends(get_auth_service)
 ) -> LoginResponse:
     """User login endpoint.
 
@@ -145,7 +149,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
 
 @router.get('/users/me', response_model=UserOut)
 async def read_profile(
-    current_user: UserOut = Depends(get_current_active_user),
+        current_user: UserOut = Depends(get_current_active_user),
 ) -> UserOut:
     """Get the current user's profile.
 
@@ -160,11 +164,11 @@ async def read_profile(
 
 @router.post('/verify-email/request')
 async def request_email_verification(
-    request: EmailVerificationRequest,
-    background_tasks: BackgroundTasks,
-    user_repo: UserRepository = Depends(get_user_repository),
-    token_service: URLTokenService = Depends(get_url_token_service),
-    email_service: EmailService = Depends(get_email_service),
+        request: EmailVerificationRequest,
+        background_tasks: BackgroundTasks,
+        user_repo: UserRepository = Depends(get_user_repository),
+        token_service: URLTokenService = Depends(get_url_token_service),
+        email_service: EmailService = Depends(get_email_service),
 ):
     """Request email verification for a user.
 
@@ -174,6 +178,9 @@ async def request_email_verification(
         user_repo (UserRepository): The user repository. Defaults to Depends(get_user_repository).
         token_service (URLTokenService): The URL token service. Defaults to Depends(get_url_token_service).
         email_service (EmailService, optional): The email service. Defaults to Depends(get_email_service).
+
+    Returns:
+        dict: A success message upon successful request.
     """
     user = user_repo.get_by_email(request.email)
 
@@ -188,10 +195,11 @@ async def request_email_verification(
 
     return {'detail': 'If the email exists, verification instructions have been sent.'}
 
+
 @router.post('/verify-email')
 async def verify_email(
-    request: VerifyEmailRequest,
-    token_service: URLTokenService = Depends(get_url_token_service),
+        request: VerifyEmailRequest,
+        token_service: URLTokenService = Depends(get_url_token_service),
 ):
     """Verify a user's email using a verification token.
 
@@ -211,11 +219,83 @@ async def verify_email(
             detail='Verification token is required',
         )
 
-    # Mark email as verified
-    if not token_service.mark_email_as_verified(request.token):
+    try:
+        # Mark email as verified
+        if not token_service.mark_email_as_verified(request.token):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Invalid or expired verification token',
+            )
+        return {'detail': 'Email verified successfully!'}
+
+    except Exception:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Invalid or expired verification token',
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail='An error occurred while verifying email',
         )
 
-    return {'detail': 'Email verified successfully!'}
+
+@router.post("/forgot-password")
+async def forgot_password(
+        request: ForgotPasswordRequest,
+        background_tasks: BackgroundTasks,
+        user_repo: UserRepository = Depends(get_user_repository),
+        token_service: URLTokenService = Depends(get_url_token_service),
+        email_service: EmailService = Depends(get_email_service),
+):
+    """
+    Endpoint to initiate the password reset process.
+
+    Args:
+        request (ForgotPasswordRequest): The password reset request containing the user's email.
+        background_tasks (BackgroundTasks): The background task manager.
+        user_repo (UserRepository): The user repository. Defaults to Depends(get_user_repository).
+        token_service (URLTokenService): The URL token service. Defaults to Depends(get_url_token_service).
+        email_service (EmailService, optional): The email service. Defaults to Depends(get_email_service).
+
+    Returns:
+        dict: A success message upon successful verification.
+    """
+    user = user_repo.get_by_email(request.email)
+
+    if user:
+        reset_token = token_service.create_password_reset_token(user.id)
+        await email_service.send_password_reset_email(
+            background_tasks=background_tasks,
+            email=user.email,
+            user_name=user.first_name or user.username,
+            reset_token=reset_token,
+        )
+
+    return {"detail": "If the email exists, password reset instructions have been sent."}
+
+
+@router.post('/reset-password')
+async def reset_password(
+        request: ResetPasswordRequest,
+        auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Endpoint to reset the user's password using a valid reset token.
+
+    Args:
+        request (ResetPasswordRequest): The password reset request containing the token and new password.
+        auth_service (AuthService): The authentication service dependency.
+
+    Returns:
+        dict: A success message upon successful verification.
+    """
+
+    if request.new_password != request.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match.",
+        )
+
+    if not auth_service.reset_password(request.token, request.new_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset token.",
+        )
+
+    return {"detail": "Password reset successfully."}

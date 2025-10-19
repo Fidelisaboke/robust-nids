@@ -22,7 +22,26 @@ class EmailVerificationRequiredResponse(BaseModel):
     email: EmailStr
     detail: str = "Email verification is required before logging in."
 
+
 LoginResponse = TokenResponse | MFAChallengeResponse | EmailVerificationRequiredResponse
+
+
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+    confirm_password: str
 
 
 class RefreshRequest(BaseModel):
