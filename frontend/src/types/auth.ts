@@ -53,6 +53,25 @@ export const MfaRecoveryCompleteSchema = z.object({
 
 export type MfaRecoveryComplete = z.infer<typeof MfaRecoveryCompleteSchema>;
 
+export const ResetPasswordRequestSchema = z
+  .object({
+    token: z.string().min(1, "Token is required").max(500),
+    new_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128),
+    confirm_password: z
+      .string()
+      .min(8, "Confirm Password must be at least 8 characters")
+      .max(128),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match.",
+    path: ["confirm_password"],
+  });
+
+export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+
 // ===== Response DTOs =====
 
 export interface TokenResponse {

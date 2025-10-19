@@ -127,3 +127,23 @@ export const useMfaSetupQuery = () => {
     retry: false,
   });
 };
+
+// Forgot password mutation
+export const useForgotPasswordMutation = () => {
+  return useMutation({
+    mutationFn: (email: string) => authApi.forgotPassword(email),
+    retry: false,
+  });
+};
+
+// Reset password mutation
+export const useResetPasswordMutation = () => {
+  return useMutation({
+    mutationFn: (data: {
+      token: string;
+      new_password: string;
+      confirm_password: string;
+    }) => authApi.resetPassword(data),
+    retry: false,
+  });
+};

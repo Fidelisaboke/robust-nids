@@ -13,6 +13,7 @@ import type {
   MfaRecoveryComplete,
   MfaRecoveryResponse,
   User,
+  ResetPasswordRequest,
 } from "@/types/auth";
 
 const AUTH_BASE = "/api/v1/auth";
@@ -124,6 +125,22 @@ export const authApi = {
       `${AUTH_BASE}/mfa/recovery/complete`,
       data,
     );
+    return response.data;
+  },
+
+  // Forgot password
+  forgotPassword: async (email: string): Promise<{ detail: string }> => {
+    const response = await apiClient.post(`${AUTH_BASE}/forgot-password`, {
+      email,
+    });
+    return response.data;
+  },
+
+  // Reset password
+  resetPassword: async (
+    data: ResetPasswordRequest,
+  ): Promise<{ detail: string }> => {
+    const response = await apiClient.post(`${AUTH_BASE}/reset-password`, data);
     return response.data;
   },
 
