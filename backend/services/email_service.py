@@ -4,6 +4,7 @@ It uses the fastapi-mail package to handle email sending functionality.
 """
 
 import logging
+from datetime import datetime
 from typing import Any, Dict, List
 
 from fastapi import BackgroundTasks
@@ -91,6 +92,7 @@ class EmailService:
             'verification_url': verification_url,
             'expiry_minutes': settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES,
             'support_email': getattr(settings, 'SUPPORT_EMAIL', 'support@example.com'),
+            'current_year': datetime.now().year,
         }
 
         self.send_email_background(
@@ -112,6 +114,7 @@ class EmailService:
             'reset_url': reset_url,
             'expiry_minutes': settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES,
             'support_email': getattr(settings, 'SUPPORT_EMAIL', 'support@example.com'),
+            'current_year': datetime.now().year,
         }
 
         self.send_email_background(
