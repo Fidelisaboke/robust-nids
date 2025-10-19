@@ -64,6 +64,11 @@ export const ResetPasswordRequestSchema = z
       .string()
       .min(8, "Confirm Password must be at least 8 characters")
       .max(128),
+    mfa_code: z
+      .string()
+      .length(6, "Code must be 6 digits")
+      .regex(/^\d{6}$/, "Code must contain only digits")
+      .optional(),
   })
   .refine((data) => data.new_password === data.confirm_password, {
     message: "Passwords do not match.",

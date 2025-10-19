@@ -5,13 +5,21 @@ from core.dependencies import get_user_repository
 from core.security import get_password_hash, verify_password
 from database.models import User
 from database.repositories.user import UserRepository
+from services.exceptions.mfa import InvalidMFAVerificationCodeError, MFAException
+from services.mfa_service import MFAService
 from services.token_service import URLTokenService, get_url_token_service
 
 
 class AuthService:
-    def __init__(self, user_repo: UserRepository, token_service: URLTokenService) -> None:
+    def __init__(
+            self,
+            user_repo: UserRepository,
+            token_service: URLTokenService,
+            mfa_service: MFAService
+    ) -> None:
         self.user_repo = user_repo
         self.token_service = token_service
+        self.mfa_service = mfa_service
 
     def authenticate(self, email: EmailStr, password: str) -> User | None:
         """Authenticate user by email and password."""
@@ -25,8 +33,8 @@ class AuthService:
         user.password_hash = get_password_hash(new_password)
         self.user_repo.session.commit()
 
-    def reset_password(self, token: str, new_password: str) -> bool:
-        """Reset user's password and clear reset token."""
+    def reset_password(self, token: str, new_password: str, mfa_code: str | None = None) -> bool:
+        """Reset user's password. Requires MFA verification if enabled."""
         if not self.token_service.verify_password_reset_token(token):
             return False
 
@@ -34,16 +42,26 @@ class AuthService:
         if not user:
             return False
 
+        # Check if MFA is enabled and verify the provided MFA code
+        if user.mfa_enabled:
+            if not mfa_code:
+                raise MFAException("MFA verification required for password reset.")
+
+            if not self.mfa_service.verify_mfa_code(user, mfa_code):
+                raise InvalidMFAVerificationCodeError()
+
         user.password_hash = get_password_hash(new_password)
         user.password_reset_token = None
         user.password_reset_token_expires = None
         self.user_repo.session.commit()
         return True
 
+
 # Dependency injection method
 def get_auth_service(
         user_repo: UserRepository = Depends(get_user_repository),
-        token_service: URLTokenService = Depends(get_url_token_service)
+        token_service: URLTokenService = Depends(get_url_token_service),
+        mfa_service: MFAService = Depends(),
 ) -> AuthService:
     """Returns an instance of AuthService with dependencies injected."""
-    return AuthService(user_repo, token_service)
+    return AuthService(user_repo, token_service, mfa_service)

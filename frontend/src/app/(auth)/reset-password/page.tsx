@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { CheckCircle, Eye, EyeOff, Lock, Shield } from "lucide-react";
 import {
   type ResetPasswordRequest,
   ResetPasswordRequestSchema,
@@ -18,6 +18,7 @@ export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -47,9 +48,17 @@ export default function ResetPasswordPage() {
       const response = await resetPasswordMutation.mutateAsync(data);
       toast.success(response.detail);
       setIsSuccess(true);
-      setTimeout(() => router.push("/login"), 3000);
+      setTimeout(() => router.push("/login"), 2000);
     } catch (error) {
-      toast.error(normalizeError(error).message);
+      const normalized = normalizeError(error);
+      if (normalized.message.includes("MFA verification required")) {
+        setMfaRequired(true);
+        toast.error(
+          "MFA Verification Required. Please complete MFA to proceed.",
+        );
+      } else {
+        toast.error(normalizeError(error).message);
+      }
     }
   };
 
@@ -149,6 +158,30 @@ export default function ResetPasswordPage() {
             </p>
           )}
         </div>
+
+        {mfaRequired && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-400">MFA Verification Required</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-2">
+                Enter MFA Code from your authenticator app to continue.
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                {...register("mfa_code", {
+                  required: mfaRequired ? "MFA code is required" : false,
+                })}
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-center text-xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="000000"
+              />
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"

@@ -292,7 +292,7 @@ async def reset_password(
             detail="Passwords do not match.",
         )
 
-    if not auth_service.reset_password(request.token, request.new_password):
+    if not auth_service.reset_password(request.token, request.new_password, request.mfa_code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired password reset token.",

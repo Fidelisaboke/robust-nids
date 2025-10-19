@@ -42,6 +42,7 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
     confirm_password: str
+    mfa_code: str | None = None
 
 
 class RefreshRequest(BaseModel):
