@@ -127,6 +127,24 @@ class EmailService:
             template_name="password_reset.html",
         )
 
+    async def send_password_change_notification_email(
+        self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str
+    ) -> None:
+        """Send password change notification email"""
+        template_data = {
+            "user_name": user_name,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="Password Changed - NIDS",
+            recipients=[email],
+            template_body=template_data,
+            template_name="password_changed.html"
+        )
+
 
 # Email service dependency for dependency injection
 def get_email_service() -> EmailService:

@@ -50,6 +50,10 @@ class AuthService:
         user.password_hash = get_password_hash(new_password)
         user.password_reset_token = None
         user.password_reset_token_expires = None
+
+        # TODO: Invalidate all active sessions/tokens for the user
+        # self.token_service.invalidate_sessions(user)
+
         self.user_repo.session.commit()
         return True
 

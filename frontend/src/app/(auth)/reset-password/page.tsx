@@ -47,7 +47,7 @@ function ResetPasswordPageContent() {
 
   useEffect(() => {
     if (!token) {
-      toast.error("Invalid reset link");
+      toast.error("Invalid password reset link.");
       router.push("/forgot-password");
     }
   }, [token, router]);

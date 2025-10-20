@@ -11,13 +11,23 @@ import {
   User,
   Bell,
   Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   useSetupMfaMutation,
   useCurrentUser,
   useDisableMfaMutation,
+  useChangePasswordMutation,
 } from "@/hooks/useAuthMutations";
 import { normalizeError } from "@/lib/api/apiClient";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ChangePasswordRequestSchema,
+  type ChangePasswordRequest,
+} from "@/types/auth";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -25,9 +35,24 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications"
   >("security");
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    reset: resetPasswordForm,
+    formState: { errors: passwordErrors, isSubmitting: isChangingPassword },
+  } = useForm({
+    resolver: zodResolver(ChangePasswordRequestSchema),
+  });
 
   const setupMfaMutation = useSetupMfaMutation();
   const disableMfaMutation = useDisableMfaMutation();
+  const changePasswordMutation = useChangePasswordMutation();
 
   const handleEnableMfa = async () => {
     try {
@@ -38,6 +63,18 @@ export default function SettingsPage() {
   };
 
   const handleDisableMfa = async () => {};
+
+  const handleChangePassword = async (data: ChangePasswordRequest) => {
+    try {
+      const response = await changePasswordMutation.mutateAsync(data);
+      toast.success(response.detail);
+      setPasswordChanged(true);
+      setShowChangePassword(false);
+      resetPasswordForm();
+    } catch (error) {
+      toast.error(normalizeError(error).message);
+    }
+  };
 
   const tabs = [
     { id: "profile" as const, label: "Profile", icon: User },
@@ -302,9 +339,152 @@ export default function SettingsPage() {
                         Change your password regularly to keep your account
                         secure.
                       </p>
-                      <button className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-all">
-                        Change Password
-                      </button>
+
+                      {passwordChanged ? (
+                        <div className="flex items-center space-x-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                          <CheckCircle className="w-5 h-5 text-green-400" />
+                          <span className="text-green-400 text-sm">
+                            Password changed successfully!
+                          </span>
+                        </div>
+                      ) : showChangePassword ? (
+                        <form
+                          onSubmit={handlePasswordSubmit(handleChangePassword)}
+                          className="space-y-4"
+                        >
+                          {/* Current Password */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Current Password
+                            </label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                              <input
+                                type={showCurrentPassword ? "text" : "password"}
+                                {...registerPassword("current_password")}
+                                className="w-full pl-11 pr-11 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter current password"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowCurrentPassword(!showCurrentPassword)
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                              >
+                                {showCurrentPassword ? (
+                                  <EyeOff className="w-5 h-5" />
+                                ) : (
+                                  <Eye className="w-5 h-5" />
+                                )}
+                              </button>
+                            </div>
+                            {passwordErrors.current_password && (
+                              <p className="mt-1 text-sm text-red-400">
+                                {passwordErrors.current_password.message}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* New Password */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              New Password
+                            </label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                              <input
+                                type={showNewPassword ? "text" : "password"}
+                                {...registerPassword("new_password")}
+                                className="w-full pl-11 pr-11 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Enter new password"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowNewPassword(!showNewPassword)
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                              >
+                                {showNewPassword ? (
+                                  <EyeOff className="w-5 h-5" />
+                                ) : (
+                                  <Eye className="w-5 h-5" />
+                                )}
+                              </button>
+                            </div>
+                            {passwordErrors.new_password && (
+                              <p className="mt-1 text-sm text-red-400">
+                                {passwordErrors.new_password.message}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Confirm Password */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                              Confirm New Password
+                            </label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                              <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                {...registerPassword("confirm_password")}
+                                className="w-full pl-11 pr-11 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Confirm new password"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowConfirmPassword(!showConfirmPassword)
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                              >
+                                {showConfirmPassword ? (
+                                  <EyeOff className="w-5 h-5" />
+                                ) : (
+                                  <Eye className="w-5 h-5" />
+                                )}
+                              </button>
+                            </div>
+                            {passwordErrors.confirm_password && (
+                              <p className="mt-1 text-sm text-red-400">
+                                {passwordErrors.confirm_password.message}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex space-x-3 pt-2">
+                            <button
+                              type="submit"
+                              disabled={isChangingPassword}
+                              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50"
+                            >
+                              {isChangingPassword
+                                ? "Changing..."
+                                : "Change Password"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowChangePassword(false);
+                                resetPasswordForm();
+                              }}
+                              className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition-all"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          onClick={() => setShowChangePassword(true)}
+                          className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
+                        >
+                          Change Password
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

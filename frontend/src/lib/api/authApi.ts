@@ -14,6 +14,7 @@ import type {
   MfaRecoveryResponse,
   User,
   ResetPasswordRequest,
+  ChangePasswordRequest,
 } from "@/types/auth";
 
 const AUTH_BASE = "/api/v1/auth";
@@ -141,6 +142,14 @@ export const authApi = {
     data: ResetPasswordRequest,
   ): Promise<{ detail: string }> => {
     const response = await apiClient.post(`${AUTH_BASE}/reset-password`, data);
+    return response.data;
+  },
+
+  // Change password
+  changePassword: async (
+    data: ChangePasswordRequest,
+  ): Promise<{ detail: string }> => {
+    const response = await apiClient.post(`${AUTH_BASE}/change-password`, data);
     return response.data;
   },
 

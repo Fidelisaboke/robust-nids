@@ -7,6 +7,8 @@ import type {
   DisableMfaRequest,
   MfaRecoveryInitiate,
   MfaRecoveryComplete,
+  ChangePasswordRequest,
+  ResetPasswordRequest,
 } from "@/types/auth";
 
 export const AUTH_QUERY_KEYS = {
@@ -139,12 +141,15 @@ export const useForgotPasswordMutation = () => {
 // Reset password mutation
 export const useResetPasswordMutation = () => {
   return useMutation({
-    mutationFn: (data: {
-      token: string;
-      new_password: string;
-      confirm_password: string;
-      mfa_code?: string;
-    }) => authApi.resetPassword(data),
+    mutationFn: (data: ResetPasswordRequest) => authApi.resetPassword(data),
+    retry: false,
+  });
+};
+
+// Change password mutation
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: (data: ChangePasswordRequest) => authApi.changePassword(data),
     retry: false,
   });
 };

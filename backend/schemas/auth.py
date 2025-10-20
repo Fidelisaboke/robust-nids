@@ -26,6 +26,10 @@ class EmailVerificationRequiredResponse(BaseModel):
 LoginResponse = TokenResponse | MFAChallengeResponse | EmailVerificationRequiredResponse
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 class EmailVerificationRequest(BaseModel):
     email: EmailStr
 
@@ -45,5 +49,8 @@ class ResetPasswordRequest(BaseModel):
     mfa_code: str | None = None
 
 
-class RefreshRequest(BaseModel):
-    refresh_token: str
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+    mfa_code: str | None = None

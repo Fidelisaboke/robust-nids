@@ -77,6 +77,29 @@ export const ResetPasswordRequestSchema = z
 
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
 
+export const ChangePasswordRequestSchema = z
+  .object({
+    current_password: z.string(),
+    new_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128),
+    confirm_password: z
+      .string()
+      .min(8, "Confirm Password must be at least 8 characters"),
+    mfa_code: z
+      .string()
+      .length(6, "Code must be 6 digits")
+      .regex(/^\d{6}$/, "Code must contain only digits")
+      .optional(),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match.",
+    path: ["confirm_password"],
+  });
+
+export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+
 // ===== Response DTOs =====
 
 export interface TokenResponse {

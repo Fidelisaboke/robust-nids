@@ -13,11 +13,13 @@ from core.security import (
     create_mfa_challenge_token,
     create_refresh_token,
     decode_token,
+    verify_password,
 )
 from database.db import db
 from database.models import User
 from database.repositories.user import UserRepository
 from schemas.auth import (
+    ChangePasswordRequest,
     EmailVerificationRequest,
     EmailVerificationRequiredResponse,
     ForgotPasswordRequest,
@@ -311,3 +313,49 @@ async def reset_password(
         )
 
     return {"detail": "Password reset successfully."}
+
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_user),
+    auth_service: AuthService = Depends(get_auth_service),
+    email_service: EmailService = Depends(get_email_service),
+):
+    """
+    Endpoint to change the user's password.
+    Intended for users already authenticated.
+
+    Args:
+        request (ChangePasswordRequest): The change password request containing the old and new passwords.
+        auth_service (AuthService): The authentication service dependency.
+
+    Returns:
+        dict: A success message upon successful password change.
+    """
+    # Verify current password
+    if not verify_password(request.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid current password.",
+        )
+
+    if request.new_password != request.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New passwords do not match.",
+        )
+
+    # Update password
+    auth_service.update_password(current_user, request.new_password)
+
+    # Send password changed notification
+    await email_service.send_password_change_notification_email(
+        background_tasks=background_tasks,
+        email=current_user.email,
+        user_name=current_user.first_name or current_user.username
+    )
+
+    # Send password change notification email
+    return {"detail": "Password changed successfully."}
