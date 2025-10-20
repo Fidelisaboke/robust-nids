@@ -9,7 +9,7 @@ from api.main import app
 from api.routers.mfa import limiter_by_user
 from database.db import db
 from database.models import User
-from services.totp_service import totp_service
+from services.totp_service import get_totp_service
 
 client = TestClient(app)
 
@@ -138,7 +138,7 @@ def test_mfa_disable_unauthorized(mfa_user):
 
 def test_mfa_recovery_initiate_success(mfa_user):
     with patch("services.mfa_service.MFAService.initiate_mfa_recovery") as mock_recovery:
-        mock_recovery.return_value = None
+        mock_recovery.return_value = {"user": mfa_user, "recovery_link": "http://test/recovery-link"}
         resp = client.post("/api/v1/auth/mfa/recovery/initiate", json={"email": mfa_user.email})
         assert resp.status_code == 200
         assert "recovery link" in resp.json().get("detail", "")
@@ -150,6 +150,7 @@ def test_mfa_recovery_complete_success(mfa_user):
         user = session.merge(mfa_user)
         token = "valid-token-123"
 
+        totp_service = get_totp_service()
         user.mfa_recovery_token = totp_service.hash_searchable_token(token)
         user.mfa_recovery_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
         session.commit()
