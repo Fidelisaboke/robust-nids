@@ -7,6 +7,8 @@ import type {
   DisableMfaRequest,
   MfaRecoveryInitiate,
   MfaRecoveryComplete,
+  ChangePasswordRequest,
+  ResetPasswordRequest,
 } from "@/types/auth";
 
 export const AUTH_QUERY_KEYS = {
@@ -18,6 +20,20 @@ export const AUTH_QUERY_KEYS = {
 export const useLoginMutation = () => {
   return useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
+    retry: false,
+  });
+};
+
+export const useRequestEmailVerificationMutation = () => {
+  return useMutation({
+    mutationFn: (email: string) => authApi.requestEmailVerification(email),
+    retry: false,
+  });
+};
+
+export const useVerifyEmailMutation = () => {
+  return useMutation({
+    mutationFn: (token: string) => authApi.verifyEmail(token),
     retry: false,
   });
 };
@@ -110,6 +126,30 @@ export const useMfaSetupQuery = () => {
   return useQuery({
     queryKey: ["mfa-setup"],
     queryFn: () => authApi.setupMfa(),
+    retry: false,
+  });
+};
+
+// Forgot password mutation
+export const useForgotPasswordMutation = () => {
+  return useMutation({
+    mutationFn: (email: string) => authApi.forgotPassword(email),
+    retry: false,
+  });
+};
+
+// Reset password mutation
+export const useResetPasswordMutation = () => {
+  return useMutation({
+    mutationFn: (data: ResetPasswordRequest) => authApi.resetPassword(data),
+    retry: false,
+  });
+};
+
+// Change password mutation
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: (data: ChangePasswordRequest) => authApi.changePassword(data),
     retry: false,
   });
 };

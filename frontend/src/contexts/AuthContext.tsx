@@ -70,7 +70,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem("refresh_token");
     sessionStorage.removeItem("mfa_challenge_token");
     setUser(null);
-    router.push("/login");
+    setIsAuthenticated(false);
+    router.replace("/login");
   };
 
   const saveMfaChallengeToken = (token: string) => {

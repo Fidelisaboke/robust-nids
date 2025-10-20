@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrentUser } from "@/hooks/useAuthMutations";
+import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 
 export default function DashboardLayout({
   children,
@@ -34,6 +35,7 @@ export default function DashboardLayout({
   const { data: user } = useCurrentUser(isAuthenticated);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -50,6 +52,16 @@ export default function DashboardLayout({
     { name: "Reports", href: "/reports", icon: FileText },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
+
+  const handleLogout = () => {
+    setUserMenuOpen(false);
+    setLogoutDialogOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutDialogOpen(false);
+    logout();
+  };
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -150,10 +162,7 @@ export default function DashboardLayout({
                       <span className="text-sm">Profile Settings</span>
                     </Link>
                     <button
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        logout();
-                      }}
+                      onClick={handleLogout}
                       className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-slate-600 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
@@ -166,6 +175,13 @@ export default function DashboardLayout({
           </div>
         </div>
       </motion.aside>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={confirmLogout}
+      />
 
       {/* Mobile Overlay */}
       <AnimatePresence>

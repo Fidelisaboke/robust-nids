@@ -22,6 +22,7 @@ def get_db_session() -> Generator[Session, None, None]:
         except Exception:
             raise
 
+
 def get_user_repository(session: Session = Depends(get_db_session)) -> UserRepository:
     """Dependency to provide a UserRepository instance."""
     return UserRepository(session)

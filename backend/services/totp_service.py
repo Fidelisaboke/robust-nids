@@ -32,7 +32,7 @@ class TOTPService:
         qr.add_data(totp_uri)
         qr.make(fit=True)
 
-        img = qr.make_image(fill_color='black', back_color='white')
+        img = qr.make_image(fill_color="black", back_color="white")
         img_bytes = io.BytesIO()
         img.save(img_bytes)
         img_bytes.seek(0)
@@ -52,16 +52,16 @@ class TOTPService:
         backup_codes = []
         for _ in range(count):
             # Generate 8-character alphanumeric codes
-            code = secrets.token_urlsafe(8).upper().replace('_', '').replace('-', '')[:8]
+            code = secrets.token_urlsafe(8).upper().replace("_", "").replace("-", "")[:8]
             # Format as XXXX-XXXX for readability
-            formatted_code = f'{code[:4]}-{code[4:]}'
+            formatted_code = f"{code[:4]}-{code[4:]}"
             backup_codes.append(formatted_code)
         return backup_codes
 
     @staticmethod
     def hash_backup_code(code: str) -> str:
         """Hash a verification code."""
-        return bcrypt.hashpw(code.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
+        return bcrypt.hashpw(code.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
 
     @staticmethod
     def verify_backup_code(provided_code: str, stored_codes: list[str]) -> tuple[bool, list[str]]:
@@ -75,7 +75,9 @@ class TOTPService:
     @staticmethod
     def hash_searchable_token(token: str) -> str:
         """Hash a token for secure storage and searching."""
-        return hashlib.sha256(token.encode('utf-8')).hexdigest()
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-# Singleton instance
-totp_service = TOTPService()
+
+# Dependency injection
+def get_totp_service():
+    return TOTPService()

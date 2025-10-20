@@ -17,7 +17,7 @@ from services.exceptions.mfa import (
     MFAAlreadyEnabledError,
     MFANotEnabledError,
 )
-from services.totp_service import TOTPService
+from services.totp_service import TOTPService, get_totp_service
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 class MFAService:
     def __init__(
         self,
-        session: Session = Depends(get_db_session),
-        totp_service: TOTPService = Depends(),
-        user_repo: UserRepository = Depends(get_user_repository),
+        session: Session,
+        totp_service: TOTPService,
+        user_repo: UserRepository,
     ):
         self.session = session
         self.totp_service = totp_service
@@ -46,9 +46,9 @@ class MFAService:
         qr_code_b64 = self.totp_service.generate_qr_code(totp_uri)
 
         return {
-            'secret': secret,  # Temporary - for display only
-            'qr_code': f'data:image/png;base64,{qr_code_b64}',
-            'totp_uri': totp_uri,
+            "secret": secret,  # Temporary - for display only
+            "qr_code": f"data:image/png;base64,{qr_code_b64}",
+            "totp_uri": totp_uri,
         }
 
     def verify_and_enable_mfa(self, user: User, verification_code: str, temp_secret: str) -> Dict[str, Any]:
@@ -73,8 +73,8 @@ class MFAService:
         user.mfa_configured_at = datetime.now(timezone.utc)
 
         return {
-            'backup_codes': backup_codes,
-            'detail': 'MFA enabled successfully. Save your backup codes securely.',
+            "backup_codes": backup_codes,
+            "detail": "MFA enabled successfully. Save your backup codes securely.",
         }
 
     def disable_mfa(self, user: User, verification_code: str) -> None:
@@ -95,8 +95,8 @@ class MFAService:
     def admin_disable_mfa(self, user: User, performing_admin: User) -> None:
         """Disables MFA for a user, performed by an admin"""
         logger.info(
-            f'ADMIN ACTION: MFA for user {user.email} (ID: {user.id}) '
-            f'disabled by admin {performing_admin.email} (ID: {performing_admin.id})'
+            f"ADMIN ACTION: MFA for user {user.email} (ID: {user.id}) "
+            f"disabled by admin {performing_admin.email} (ID: {performing_admin.id})"
         )
         self.disable_mfa_for_user(user)
 
@@ -123,10 +123,10 @@ class MFAService:
             is_valid, updated_codes = self.totp_service.verify_backup_code(code, user.mfa_backup_codes)
             if is_valid:
                 user.mfa_backup_codes = updated_codes
-                logger.warning(f'Backup code used for user_id={user.id}. {len(updated_codes)} codes left.')
+                logger.warning(f"Backup code used for user_id={user.id}. {len(updated_codes)} codes left.")
                 return True
 
-        logger.warning(f'Failed MFA attempt for user_id={user.id}.')
+        logger.warning(f"Failed MFA attempt for user_id={user.id}.")
         return False
 
     def complete_mfa_login(self, user: User, code: str):
@@ -157,21 +157,18 @@ class MFAService:
     def get_mfa_status(user: User) -> Dict[str, Any]:
         """Get current MFA status"""
         return {
-            'mfa_enabled': user.mfa_enabled,
-            'mfa_method': user.mfa_method,
-            'mfa_configured_at': user.mfa_configured_at,
-            'backup_codes_remaining': len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
+            "mfa_enabled": user.mfa_enabled,
+            "mfa_method": user.mfa_method,
+            "mfa_configured_at": user.mfa_configured_at,
+            "backup_codes_remaining": len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
         }
 
-    def initiate_mfa_recovery(self, email: EmailStr):
-        """Initiate MFA recovery process by generating a recovery token"""
+    def initiate_mfa_recovery(self, email: EmailStr) -> dict[User | None, str | None]:
+        """Initiate MFA recovery process by generating a recovery token."""
         user = self.user_repo.get_by_email(email)
 
-        if not user:
-            return MFANotEnabledError()
-
-        if not user.mfa_enabled:
-            raise MFANotEnabledError()
+        if not user or not user.mfa_enabled:
+            return {"user": None, "recovery_token": None}
 
         # Generate a secure recovery token
         recovery_token = secrets.token_urlsafe(32)
@@ -182,10 +179,10 @@ class MFAService:
             hours=settings.MFA_RECOVERY_TOKEN_EXPIRES_HOURS
         )
 
-        # TODO: Send the recovery token to the user via email
-        # send_mfa_recovery_email(user.email, recovery_token)
+        return {"user": user, "recovery_token": recovery_token}
 
-    def complete_mfa_recovery(self, recovery_token: str):
+
+    def complete_mfa_recovery(self, recovery_token: str) -> User | None:
         """Disable MFA for a user after successful recovery."""
 
         hashed_token = self.totp_service.hash_searchable_token(recovery_token)
@@ -205,5 +202,14 @@ class MFAService:
         user.mfa_recovery_token = None
         user.mfa_recovery_token_expires = None
 
-        # TODO: Notify user that MFA has been disabled
-        # send_mfa_disabled_notification(user.email)
+        return user
+
+
+# Dependency injection
+def get_mfa_service(
+    session: Session = Depends(get_db_session),
+    totp_service: TOTPService = Depends(get_totp_service),
+    user_repo: UserRepository = Depends(get_user_repository)
+) -> MFAService:
+    """Returns MFAService instance with dependencies injected."""
+    return MFAService(session, totp_service, user_repo)

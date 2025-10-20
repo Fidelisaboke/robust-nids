@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - NIDS</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">Network Intrusion Detection System</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 20px;">Hello {{ user_name }},
+            </h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                Thank you for registering with NIDS. To complete your account setup and start monitoring your network
+                security,
+                please verify your email address by clicking the button below.
+            </p>
+
+            <!-- Primary Action Button -->
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{ verification_url }}"
+                    style="color: white; display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                    Verify Email Address
+                </a>
+            </div>
+
+            <!-- Alternative Method -->
+            <div
+                style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <span style="font-size: 14px; color: #718096; margin-bottom: 8px; display: block;">Or copy and paste
+                    this URL into your browser:</span>
+                <div
+                    style="font-family: 'Courier New', Courier, monospace; font-size: 14px; color: #2d3748; word-break: break-all; background: white; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    {{ verification_url }}
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div
+                style="background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; padding: 16px; margin: 30px 0;">
+                <div style="color: #e53e3e; font-weight: 600; margin-bottom: 8px;">⚠️ Security Notice</div>
+                <p style="color: #744210; margin: 0; font-size: 14px;">
+                    This verification link will expire in {{ expiry_minutes }} minutes. For your security, please do not share this email
+                    with anyone.
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 20px;">
+                Need help or have questions? Contact our support team at
+                <a href="mailto:{{ support_email }}" style="color: #667eea; font-weight: 600; text-decoration: none;">{{
+                    support_email }}</a>
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

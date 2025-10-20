@@ -14,4 +14,4 @@ class PredictResponse(BaseModel):
 
 class TrainRequest(BaseModel):
     epochs: Optional[int] = 10
-    adversarial_method: Optional[str] = 'FGSM'
+    adversarial_method: Optional[str] = "FGSM"

@@ -21,6 +21,6 @@ class RoleSeeder(BaseSeeder):
             if roles_to_create:
                 session.add_all(roles_to_create)
                 session.commit()
-                cls.log_seeding('Role', len(roles_to_create))
+                cls.log_seeding("Role", len(roles_to_create))
             else:
-                print('⏩ Roles already seeded, skipping...')
+                print("⏩ Roles already seeded, skipping...")

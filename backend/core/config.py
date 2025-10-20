@@ -5,11 +5,11 @@ Configuration module for the backend application.
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import Field, PostgresDsn
+from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_FILE = BASE_DIR / '.env'
+ENV_FILE = BASE_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -20,67 +20,82 @@ class Settings(BaseSettings):
     """
 
     # Load environment variables from .env file
-    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding="utf-8")
 
     # Application settings
-    SECRET_KEY: str = Field('mysecretkey', validation_alias='SECRET_KEY')
-    DEBUG: bool = Field(False, validation_alias='DEBUG')
-    APP_NAME: str = Field('NIDS', validation_alias='APP_NAME')
-    ENVIRONMENT: str = Field('local', validation_alias='ENVIRONMENT')
+    ENVIRONMENT: str
+    SECRET_KEY: str
+    DEBUG: bool = False
+    APP_NAME: str = "NIDS"
 
     # Database settings
-    DB_HOST: str = Field('localhost', validation_alias='DB_HOST')
-    DB_PORT: int = Field(5432, validation_alias='DB_PORT')
-    DB_NAME: str = Field('nids_db', validation_alias='DB_NAME')
-    DB_USER: str = Field('nids_user', validation_alias='DB_USER')
-    DB_PASSWORD: str = Field('change_this_in_production', validation_alias='DB_PASSWORD')
-    DATABASE_URL: PostgresDsn = Field(
-        'postgresql+psycopg://nids_user:change_this_in_production@localhost:5432/nids_db',
-        validation_alias='DATABASE_URL'
-    )
+    DB_HOST: str
+    DB_PORT: int = 5432
+    DB_NAME: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DATABASE_URL: PostgresDsn
 
     # Database Admin credentials (for DB setup)
-    DB_ADMIN_USER: str = Field('postgres', validation_alias='DB_ADMIN_USER')
-    DB_ADMIN_PASSWORD: str = Field('admin_password', validation_alias='DB_ADMIN_PASSWORD')
+    DB_ADMIN_USER: str
+    DB_ADMIN_PASSWORD: str
+
+    # Email Settings
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_FROM_NAME: str = "NIDS System"
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
+    USE_CREDENTIALS: bool = True
+    VALIDATE_CERTS: bool = True
+    TEMPLATE_FOLDER: Path = BASE_DIR / "templates" / "email"
+    SUPPORT_EMAIL: str = "support@nids.com"
 
     # PgAdmin
-    PGADMIN_DEFAULT_EMAIL: str = Field('admin@admin.com', validation_alias='PGADMIN_DEFAULT_EMAIL')
-    PGADMIN_DEFAULT_PASSWORD: str = Field('admin', validation_alias='PGADMIN_DEFAULT_PASSWORD')
+    PGADMIN_DEFAULT_EMAIL: str
+    PGADMIN_DEFAULT_PASSWORD: str
 
     # Redis configuration
-    REDIS_URL: str = Field('redis://localhost:6379/0', validation_alias='REDIS_URL')
+    REDIS_URL: str
+
+    # Frontend configuration
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # CORS origins
-    BACKEND_CORS_ORIGINS: list[str] = Field(
-        ['http://localhost:3000'],
-        validation_alias='BACKEND_CORS_ORIGINS'
-    )
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost", "http://localhost:3000"]
 
     # Default user preferences for the dashboard
     DEFAULT_USER_PREFERENCES: ClassVar[dict] = {
-        'dashboard': {
-            'default_view': 'overview',
-            'refresh_interval': 300,
-            'theme': 'system',
-        },  # 5 minutes
-        'notifications': {
-            'email': True,
-            'browser': True,
-            'critical_alerts': True,
-            'high_priority': True,
-            'medium_priority': False,
+        "dashboard": {
+            "default_view": "overview",
+            "refresh_interval": 300,
+            "theme": "system",
         },
-        'privacy': {'show_online_status': True, 'share_analytics': False},
+        "notifications": {
+            "email": True,
+            "browser": True,
+            "critical_alerts": True,
+            "high_priority": True,
+            "medium_priority": False,
+        },
+        "privacy": {"show_online_status": True, "share_analytics": False},
     }
 
     # JWT Settings
-    JWT_ALGORITHM: str = Field('HS256', validation_alias='JWT_ALGORITHM')
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(30, validation_alias='ACCESS_TOKEN_EXPIRE_MINUTES')  # 30 minutes
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(1440, validation_alias='REFRESH_TOKEN_EXPIRE_MINUTES')  # 1 day
-    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = Field(5, validation_alias='MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES')
+    JWT_ALGORITHM: str = "HS256"
 
-    # MFA Settings
-    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = Field(1, validation_alias='MFA_RECOVERY_TOKEN_EXPIRES_HOURS')
+    # Token Expiration Times (in minutes)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440
+    MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES: int = 5
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = 30
+    PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 15
+
+    # MFA Recovery Token Expiration (in hours)
+    MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = 1
 
 
 # noinspection PyArgumentList

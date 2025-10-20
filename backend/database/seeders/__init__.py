@@ -5,9 +5,9 @@ from .roles import RoleSeeder
 from .users import UserSeeder
 
 __all__ = [
-    'BaseSeeder',
-    'SeederManager',
-    'RoleSeeder',
-    'PermissionSeeder',
-    'UserSeeder',
+    "BaseSeeder",
+    "SeederManager",
+    "RoleSeeder",
+    "PermissionSeeder",
+    "UserSeeder",
 ]

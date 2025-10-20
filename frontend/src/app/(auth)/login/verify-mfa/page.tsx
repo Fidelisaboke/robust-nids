@@ -163,7 +163,7 @@ export default function VerifyMfaPage() {
         <p className="text-sm text-gray-400 text-center">
           Lost access to your authenticator?{" "}
           <Link
-            href="/reset-password"
+            href="/mfa-recovery/request"
             className="text-blue-400 hover:text-blue-300 transition-colors"
           >
             Use recovery options

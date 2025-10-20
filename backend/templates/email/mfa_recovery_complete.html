@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFA Disabled - NIDS</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">MFA Successfully Disabled</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 20px;">Hello {{ user_name }},
+            </h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                Two-factor authentication (MFA) has been successfully disabled for your NIDS account as part of a recovery process.
+            </p>
+
+            <!-- Success Confirmation -->
+            <div
+                style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+                <div style="color: #16a34a; font-weight: 600; margin-bottom: 8px;">✅ MFA Successfully Disabled</div>
+                <p style="color: #166534; margin: 0; font-size: 14px;">
+                    You can now access your account using just your password.
+                </p>
+            </div>
+
+            <!-- Next Steps -->
+            <div
+                style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <div style="color: #1e40af; font-weight: 600; margin-bottom: 12px;">🔄 Recommended Next Steps</div>
+                <ul style="color: #1e40af; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.5;">
+                    <li>Log in to your account with your password</li>
+                    <li>Consider re-enabling MFA for enhanced security</li>
+                    <li>Set up a new authenticator app if needed</li>
+                    <li>Save your new backup codes securely</li>
+                </ul>
+            </div>
+
+            <!-- Security Reminder -->
+            <div
+                style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <div style="color: #d97706; font-weight: 600; margin-bottom: 8px;">🔒 Security Reminder</div>
+                <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.5;">
+                    <strong>Your account is now less secure without MFA.</strong><br>
+                    We strongly recommend re-enabling two-factor authentication as soon as possible to protect your account from unauthorized access.
+                </p>
+            </div>
+
+            <!-- Action Required Section -->
+            <div
+                style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <div style="color: #dc2626; font-weight: 600; margin-bottom: 12px;">⚠️ Important Security Notice</div>
+                <p style="color: #991b1b; margin: 0; font-size: 14px; line-height: 1.5;">
+                    <strong>If you did not initiate this MFA recovery:</strong><br>
+                    Your account may have been compromised. Please contact our support team immediately and change your password.
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 20px;">
+                For security assistance or to re-enable MFA, contact our support team at
+                <a href="mailto:{{ support_email }}" style="color: #667eea; font-weight: 600; text-decoration: none;">{{
+                    support_email }}</a>
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px; line-height: 1.4;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.<br>
+                <span style="font-size: 11px;">This is an automated security message. Please do not reply to this email.</span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

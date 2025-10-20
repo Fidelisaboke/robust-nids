@@ -43,7 +43,8 @@ repos:
             \.secrets\.baseline|
             node_modules|
             dist|
-            build
+            build|
+            backend/tests/
           )
 
   # --- Frontend linting (custom) ---

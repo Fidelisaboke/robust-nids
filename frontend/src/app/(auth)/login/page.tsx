@@ -29,11 +29,20 @@ export default function LoginPage() {
     try {
       const response = await loginMutation.mutateAsync(data);
 
+      // Check if email is verified
+      if ("email_verified" in response && !response.email_verified) {
+        toast.info("Please verify your email before logging in.");
+        sessionStorage.setItem("unverified_email", response.email);
+        router.push(
+          `/verify-email/required?email=${encodeURIComponent(response.email)}`,
+        );
+        return;
+      }
       // Check if MFA is required
-      if (response.mfa_required && response.mfa_challenge_token) {
+      if ("mfa_required" in response && response.mfa_required) {
         saveMfaChallengeToken(response.mfa_challenge_token);
         router.push("/login/verify-mfa");
-      } else if (response.access_token && response.refresh_token) {
+      } else if ("access_token" in response && "refresh_token" in response) {
         // Login successful without MFA
         login(response.access_token, response.refresh_token);
         router.push("/dashboard");
@@ -119,7 +128,7 @@ export default function LoginPage() {
           </label>
 
           <Link
-            href="/reset-password"
+            href="/forgot-password"
             className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
             Forgot password?
@@ -146,7 +155,7 @@ export default function LoginPage() {
         <p className="text-sm text-gray-400 text-center">
           Need help accessing your account?{" "}
           <Link
-            href="/verify-email"
+            href="/contact"
             className="text-blue-400 hover:text-blue-300 transition-colors"
           >
             Contact Support

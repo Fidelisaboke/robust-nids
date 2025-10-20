@@ -53,15 +53,76 @@ export const MfaRecoveryCompleteSchema = z.object({
 
 export type MfaRecoveryComplete = z.infer<typeof MfaRecoveryCompleteSchema>;
 
+export const ResetPasswordRequestSchema = z
+  .object({
+    token: z.string().min(1, "Token is required").max(500),
+    new_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128),
+    confirm_password: z
+      .string()
+      .min(8, "Confirm Password must be at least 8 characters")
+      .max(128),
+    mfa_code: z
+      .string()
+      .length(6, "Code must be 6 digits")
+      .regex(/^\d{6}$/, "Code must contain only digits")
+      .optional(),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match.",
+    path: ["confirm_password"],
+  });
+
+export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+
+export const ChangePasswordRequestSchema = z
+  .object({
+    current_password: z.string(),
+    new_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128),
+    confirm_password: z
+      .string()
+      .min(8, "Confirm Password must be at least 8 characters"),
+    mfa_code: z
+      .string()
+      .length(6, "Code must be 6 digits")
+      .regex(/^\d{6}$/, "Code must contain only digits")
+      .optional(),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match.",
+    path: ["confirm_password"],
+  });
+
+export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+
 // ===== Response DTOs =====
 
-export interface LoginResponse {
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: string;
-  mfa_required?: boolean;
-  mfa_challenge_token?: string;
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
 }
+
+export interface MFARequiredResponse {
+  mfa_required: boolean;
+  mfa_challenge_token: string;
+}
+
+export interface EmailVerificationRequiredResponse {
+  email_verified: boolean;
+  email: string;
+  detail: string;
+}
+
+export type LoginResponse =
+  | TokenResponse
+  | MFARequiredResponse
+  | EmailVerificationRequiredResponse;
 
 export interface MfaSetupResponse {
   secret: string;
@@ -124,7 +185,9 @@ export interface User {
   profile_completed: boolean;
   last_profile_update: string | null;
   email_verified: boolean;
+  email_verified_at: string | null;
   phone_verified: boolean;
+  phone_verified_at: string | null;
   roles: UserRole[];
   created_at: string;
   last_login: string;
