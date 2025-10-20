@@ -39,6 +39,15 @@ class UserRepository(BaseRepository):
             .first()
         )
 
+
+    def get_existing_user(self, email: EmailStr, username: str) -> User | None:
+        """Check for existing user by email or username (for uniqueness checks)."""
+        return (
+            self.session.query(User)
+            .filter((User.email == email) | (User.username == username))
+            .first()
+        )
+
     def get_by_mfa_recovery_token(self, token: str) -> User | None:
         """Fetch user by MFA recovery token."""
         return (

@@ -9,6 +9,7 @@ import type {
   MfaRecoveryComplete,
   ChangePasswordRequest,
   ResetPasswordRequest,
+  UserRegisterRequest,
 } from "@/types/auth";
 
 export const AUTH_QUERY_KEYS = {
@@ -20,6 +21,14 @@ export const AUTH_QUERY_KEYS = {
 export const useLoginMutation = () => {
   return useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
+    retry: false,
+  });
+};
+
+// Register mutation
+export const useRegisterMutation = () => {
+  return useMutation({
+    mutationFn: (data: UserRegisterRequest) => authApi.registerUser(data),
     retry: false,
   });
 };

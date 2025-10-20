@@ -29,6 +29,8 @@ from schemas.auth import (
     RefreshRequest,
     ResetPasswordRequest,
     TokenResponse,
+    UserRegistrationRequest,
+    UserRegistrationResponse,
     VerifyEmailRequest,
 )
 from schemas.users import UserOut
@@ -55,12 +57,19 @@ def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_se
         LoginResponse: The login response which can be a token response,
                        MFA challenge response, or email verification required response.
     """
+
     user = auth_service.authenticate(request.email, request.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is inactive. Please contact administrators to activate your account."
         )
 
     if not user.email_verified:
@@ -84,6 +93,49 @@ def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_se
         session.commit()
 
     return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token)
+
+
+@router.post("/register", response_model=UserRegistrationResponse)
+async def register_user(
+    user_data: UserRegistrationRequest,
+    background_tasks: BackgroundTasks,
+    email_service: EmailService = Depends(get_email_service),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> UserRegistrationResponse:
+    """Register a new user.
+
+    Args:
+        user_data (UserRegistrationRequest): The user registration data.
+        background_tasks (BackgroundTasks): Background tasks for sending emails.
+        email_service (EmailService, optional): The email service dependency.
+        auth_service (AuthService, optional): The authentication service dependency.
+
+    Returns:
+        The response containing the registration status.
+    """
+    try:
+        result = auth_service.register_user(user_data)
+        full_name = f"{user_data.first_name} {user_data.last_name}".strip()
+
+        # Notify user about registration
+        await email_service.send_user_registration_confirmation_email(
+            background_tasks=background_tasks,
+            user_email=user_data.email,
+            user_name=full_name or user_data.username,
+        )
+
+        # Notify admins about new registration
+        await email_service.send_admin_user_registered_notification_email(
+            background_tasks=background_tasks,
+            user_email=user_data.email,
+            user_name=full_name or user_data.username,
+        )
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve),
+        )
+    return result
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -202,7 +254,7 @@ async def verify_email(
     request: VerifyEmailRequest,
     background_tasks: BackgroundTasks,
     token_service: URLTokenService = Depends(get_url_token_service),
-    email_service: EmailService = Depends(get_email_service)
+    email_service: EmailService = Depends(get_email_service),
 ):
     """Verify a user's email using a verification token.
 
@@ -362,7 +414,7 @@ async def change_password(
     await email_service.send_password_change_notification_email(
         background_tasks=background_tasks,
         email=current_user.email,
-        user_name=current_user.first_name or current_user.username
+        user_name=current_user.first_name or current_user.username,
     )
 
     # Send password change notification email

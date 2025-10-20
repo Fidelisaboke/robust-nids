@@ -7,7 +7,7 @@ from api.middleware import ServiceExceptionHandlerMiddleware
 from api.routers import auth, mfa, nids, users
 from core.config import settings
 
-app = FastAPI(title="Robust NIDS API", version="1.0.0")
+app = FastAPI(title=f"{settings.APP_NAME} API", version="0.1.0")
 
 # Origins (Frontend URLs)
 origins = settings.BACKEND_CORS_ORIGINS
@@ -66,7 +66,7 @@ async def root():
     return {
         "message": "API is running smoothly!",
         "app_name": settings.APP_NAME,
-        "version": "1.0.0",
+        "version": app.version,
         "debug": settings.DEBUG,
     }
 

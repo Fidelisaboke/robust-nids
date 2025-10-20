@@ -9,6 +9,34 @@ export const LoginRequestSchema = z.object({
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
+export const UserRegisterRequestSchema = z
+  .object({
+    email: z.email("Invalid email address").max(255),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .max(50),
+    first_name: z.string().min(2, "First name is required").max(100),
+    last_name: z.string().min(2, "Last name is required").max(100),
+    phone: z.string().max(20).optional(),
+    department: z.string().max(100).optional(),
+    job_title: z.string().max(100).optional(),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128),
+    confirm_password: z
+      .string()
+      .min(8, "Confirm Password must be at least 8 characters")
+      .max(128),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match.",
+    path: ["confirm_password"],
+  });
+
+export type UserRegisterRequest = z.infer<typeof UserRegisterRequestSchema>;
+
 export const VerifyMfaRequestSchema = z.object({
   code: z
     .string()
@@ -101,6 +129,13 @@ export const ChangePasswordRequestSchema = z
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
 
 // ===== Response DTOs =====
+
+export interface UserRegisterResponse {
+  id: number;
+  email: string;
+  username: string;
+  detail: string;
+}
 
 export interface TokenResponse {
   access_token: string;

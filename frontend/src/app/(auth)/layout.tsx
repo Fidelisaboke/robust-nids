@@ -14,7 +14,7 @@ export default function AuthLayout({
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-lg relative z-10">
         {/* Logo/Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
