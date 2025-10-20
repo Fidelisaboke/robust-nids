@@ -32,6 +32,7 @@ from schemas.auth import (
 from schemas.users import UserOut
 from services.auth_service import AuthService, get_auth_service
 from services.email_service import EmailService, get_email_service
+from services.exceptions.mfa import InvalidMFAVerificationCodeError, MFAException
 from services.token_service import URLTokenService, get_url_token_service
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
@@ -292,10 +293,21 @@ async def reset_password(
             detail="Passwords do not match.",
         )
 
-    if not auth_service.reset_password(request.token, request.new_password, request.mfa_code):
+    try:
+        if not auth_service.reset_password(request.token, request.new_password, request.mfa_code):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired password reset token.",
+            )
+    except MFAException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired password reset token.",
+            detail="MFA verification required for password reset.",
+        )
+    except InvalidMFAVerificationCodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid MFA verification code.",
         )
 
     return {"detail": "Password reset successfully."}
