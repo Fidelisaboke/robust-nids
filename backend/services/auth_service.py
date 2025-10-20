@@ -1,5 +1,6 @@
 from fastapi import Depends
 from pydantic import EmailStr
+from sqlalchemy.exc import IntegrityError
 
 from core.dependencies import get_user_repository
 from core.security import get_password_hash, verify_password
@@ -32,8 +33,7 @@ class AuthService:
 
     def register_user(self, user_data: UserRegistrationRequest) -> UserRegistrationResponse:
         """Register a new user."""
-        existing_user = self.user_repo.get_existing_user(user_data.email, user_data.username)
-        if existing_user:
+        if self.user_repo.get_existing_user(user_data.email, user_data.username):
             raise UserAlreadyExistsError("A user with this email or username already exists.")
 
         if user_data.password != user_data.confirm_password:
@@ -55,7 +55,13 @@ class AuthService:
             email_verified=False,
         )
         self.user_repo.session.add(new_user)
-        self.user_repo.session.commit()
+
+        # Prevent race conditions on unique constraints
+        try:
+            self.user_repo.session.commit()
+        except IntegrityError:
+            self.user_repo.session.rollback()
+            raise UserAlreadyExistsError("A user with this email or username already exists.")
 
         return UserRegistrationResponse(
             id=new_user.id,
