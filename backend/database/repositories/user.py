@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from hmac import compare_digest
 from typing import Type
 
 from pydantic import EmailStr
@@ -52,15 +53,21 @@ class UserRepository(BaseRepository):
 
     def get_by_email_verification_token(self, token: str) -> User | None:
         """Fetch user by email verification token."""
-        return (
+        users = (
             self.session.query(User)
             .filter(
-                User.email_verification_token == token,
                 User.email_verification_token_expires.isnot(None),
                 User.email_verification_token_expires > datetime.now(timezone.utc),
             )
-            .first()
+            .all()
         )
+
+        # Use constant-time comparison
+        for user in users:
+            if user.email_verification_token and compare_digest(user.email_verification_token, token):
+                return user
+
+        return None
 
     def get_by_password_reset_token(self, token: str) -> User | None:
         """Fetch user by password reset token."""
