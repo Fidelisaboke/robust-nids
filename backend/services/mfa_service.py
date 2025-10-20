@@ -17,7 +17,7 @@ from services.exceptions.mfa import (
     MFAAlreadyEnabledError,
     MFANotEnabledError,
 )
-from services.totp_service import TOTPService
+from services.totp_service import TOTPService, get_totp_service
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 class MFAService:
     def __init__(
         self,
-        session: Session = Depends(get_db_session),
-        totp_service: TOTPService = Depends(),
-        user_repo: UserRepository = Depends(get_user_repository),
+        session: Session,
+        totp_service: TOTPService,
+        user_repo: UserRepository,
     ):
         self.session = session
         self.totp_service = totp_service
@@ -163,15 +163,12 @@ class MFAService:
             "backup_codes_remaining": len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
         }
 
-    def initiate_mfa_recovery(self, email: EmailStr):
-        """Initiate MFA recovery process by generating a recovery token"""
+    def initiate_mfa_recovery(self, email: EmailStr) -> dict[User | None, str | None]:
+        """Initiate MFA recovery process by generating a recovery token."""
         user = self.user_repo.get_by_email(email)
 
-        if not user:
-            return MFANotEnabledError()
-
-        if not user.mfa_enabled:
-            raise MFANotEnabledError()
+        if not user or not user.mfa_enabled:
+            return {"user": None, "recovery_token": None}
 
         # Generate a secure recovery token
         recovery_token = secrets.token_urlsafe(32)
@@ -182,10 +179,10 @@ class MFAService:
             hours=settings.MFA_RECOVERY_TOKEN_EXPIRES_HOURS
         )
 
-        # TODO: Send the recovery token to the user via email
-        # send_mfa_recovery_email(user.email, recovery_token)
+        return {"user": user, "recovery_token": recovery_token}
 
-    def complete_mfa_recovery(self, recovery_token: str):
+
+    def complete_mfa_recovery(self, recovery_token: str) -> User | None:
         """Disable MFA for a user after successful recovery."""
 
         hashed_token = self.totp_service.hash_searchable_token(recovery_token)
@@ -205,5 +202,14 @@ class MFAService:
         user.mfa_recovery_token = None
         user.mfa_recovery_token_expires = None
 
-        # TODO: Notify user that MFA has been disabled
-        # send_mfa_disabled_notification(user.email)
+        return user
+
+
+# Dependency injection
+def get_mfa_service(
+    session: Session = Depends(get_db_session),
+    totp_service: TOTPService = Depends(get_totp_service),
+    user_repo: UserRepository = Depends(get_user_repository)
+) -> MFAService:
+    """Returns MFAService instance with dependencies injected."""
+    return MFAService(session, totp_service, user_repo)

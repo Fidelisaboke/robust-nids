@@ -6,7 +6,7 @@ from core.security import get_password_hash, verify_password
 from database.models import User
 from database.repositories.user import UserRepository
 from services.exceptions.mfa import InvalidMFAVerificationCodeError, MFAException
-from services.mfa_service import MFAService
+from services.mfa_service import MFAService, get_mfa_service
 from services.token_service import URLTokenService, get_url_token_service
 
 
@@ -62,7 +62,7 @@ class AuthService:
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repository),
     token_service: URLTokenService = Depends(get_url_token_service),
-    mfa_service: MFAService = Depends(),
+    mfa_service: MFAService = Depends(get_mfa_service),
 ) -> AuthService:
     """Returns an instance of AuthService with dependencies injected."""
     return AuthService(user_repo, token_service, mfa_service)

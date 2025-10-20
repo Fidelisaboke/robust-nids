@@ -78,5 +78,6 @@ class TOTPService:
         return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-# Singleton instance
-totp_service = TOTPService()
+# Dependency injection
+def get_totp_service():
+    return TOTPService()

@@ -17,7 +17,7 @@ from services.exceptions.user import (
     UsernameAlreadyExistsError,
     UserNotFoundError,
 )
-from services.mfa_service import MFAService
+from services.mfa_service import MFAService, get_mfa_service
 
 
 class UserService:
@@ -25,9 +25,9 @@ class UserService:
 
     def __init__(
         self,
-        user_repo: UserRepository = Depends(get_user_repository),
-        role_repo: RoleRepository = Depends(get_role_repository),
-        mfa_service: MFAService = Depends(),
+        user_repo: UserRepository,
+        role_repo: RoleRepository,
+        mfa_service: MFAService,
     ):
         self.user_repo = user_repo
         self.role_repo = role_repo
@@ -128,3 +128,13 @@ class UserService:
                 raise RoleNotFoundError(role_id)
             role_objects.append(role)
         return role_objects
+
+
+# Dependency injection
+def get_user_service(
+    user_repo: UserRepository = Depends(get_user_repository),
+    role_repo: RoleRepository = Depends(get_role_repository),
+    mfa_service: MFAService = Depends(get_mfa_service),
+) -> UserService:
+    """Returns an instance of UserService with dependencies injected."""
+    return UserService(user_repo, role_repo, mfa_service)

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from core.config import settings
 from core.dependencies import get_db_session, get_user_repository
+from database.models import User
 from database.repositories.user import UserRepository
 
 
@@ -66,16 +67,7 @@ class URLTokenService:
     def verify_email_verification_token(self, token: str) -> bool:
         """Verify email verification token"""
         user = self.user_repo.get_by_email_verification_token(token)
-
-        if not user:
-            return False
-
-        # Check expiration
-        if user.email_verification_token_expires < datetime.now(timezone.utc):
-            return False
-
-        # Token is valid
-        return True
+        return user is not None
 
     def verify_password_reset_token(self, token: str) -> bool:
         """Verify password reset token"""
@@ -99,13 +91,13 @@ class URLTokenService:
         """Get user from password reset token"""
         return self.user_repo.get_by_password_reset_token(token)
 
-    def mark_email_as_verified(self, token: str) -> bool:
+    def mark_email_as_verified(self, token: str) -> User | None:
         """Mark user's email as verified"""
-        if not self.verify_email_verification_token(token):
-            return False
+        user = self.user_repo.get_by_email_verification_token(token)
+        if not user:
+            return None
 
-        user = self.get_user_from_email_token(token)
-        if user and not user.email_verified:
+        if not user.email_verified:
             # Mark email as verified
             user.email_verified = True
             user.email_verified_at = datetime.now(timezone.utc)
@@ -115,9 +107,9 @@ class URLTokenService:
             user.email_verification_token_expires = None
 
             self.session.commit()
-            return True
+            return user
 
-        return False
+        return None
 
     def revoke_email_token(self, user_id: int):
         """Revoke email verification token after use"""
