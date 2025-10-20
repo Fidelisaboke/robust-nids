@@ -3,13 +3,22 @@
 import { motion } from "framer-motion";
 import { Mail, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { toast } from "sonner";
 import { useRequestEmailVerificationMutation } from "@/hooks/useAuthMutations";
 import { normalizeError } from "@/lib/api/apiClient";
 import { useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function VerificationRequiredPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+      <VerificationRequiredPageContent />
+    </Suspense>
+  );
+}
+
+function VerificationRequiredPageContent() {
   const searchParams = useSearchParams();
   const emailFromParams = searchParams.get("email");
   const email =
@@ -18,20 +27,24 @@ export default function VerificationRequiredPage() {
   const requestEmailVerificationMutation =
     useRequestEmailVerificationMutation();
 
-  const handleResendVerification = async (data: string) => {
-    if (!email) return;
+  const handleResendVerification = useCallback(
+    async (data: string) => {
+      if (!email) return;
 
-    setIsResending(true);
-    try {
-      const response = await requestEmailVerificationMutation.mutateAsync(data);
-      toast.success(response.detail);
-    } catch (error) {
-      const normalizedError = normalizeError(error);
-      toast.error(normalizedError.message);
-    } finally {
-      setIsResending(false);
-    }
-  };
+      setIsResending(true);
+      try {
+        const response =
+          await requestEmailVerificationMutation.mutateAsync(data);
+        toast.success(response.detail);
+      } catch (error) {
+        const normalizedError = normalizeError(error);
+        toast.error(normalizedError.message);
+      } finally {
+        setIsResending(false);
+      }
+    },
+    [email, requestEmailVerificationMutation],
+  );
 
   // Send email verification request when first landing on the page
   useEffect(() => {

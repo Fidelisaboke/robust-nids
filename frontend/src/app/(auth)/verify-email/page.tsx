@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
@@ -8,10 +8,19 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useVerifyEmailMutation } from "@/hooks/useAuthMutations";
 import { normalizeError } from "@/lib/api/apiClient";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type VerificationState = "verifying" | "success" | "error";
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+      <VerifyEmailPageContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -52,7 +61,7 @@ export default function VerifyEmailPage() {
     };
 
     void verifyEmail();
-  }, [token, router]);
+  }, [token, router, verifyEmailMutation]);
 
   const renderContent = () => {
     switch (verificationState) {

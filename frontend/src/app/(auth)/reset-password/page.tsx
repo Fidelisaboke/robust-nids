@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -13,8 +13,17 @@ import { toast } from "sonner";
 import { normalizeError } from "@/lib/api/apiClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useResetPasswordMutation } from "@/hooks/useAuthMutations";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
+      <ResetPasswordPageContent />
+    </Suspense>
+  );
+}
+
+function ResetPasswordPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
