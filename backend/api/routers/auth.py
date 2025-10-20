@@ -187,7 +187,7 @@ async def request_email_verification(
 
     if user and not user.email_verified:
         verification_token = token_service.create_email_verification_token(user.id)
-        await email_service.send_verification_email(
+        await email_service.send_email_verification_email(
             background_tasks=background_tasks,
             email=user.email,
             user_name=user.first_name or user.username,
@@ -200,7 +200,9 @@ async def request_email_verification(
 @router.post("/verify-email")
 async def verify_email(
     request: VerifyEmailRequest,
+    background_tasks: BackgroundTasks,
     token_service: URLTokenService = Depends(get_url_token_service),
+    email_service: EmailService = Depends(get_email_service)
 ):
     """Verify a user's email using a verification token.
 
@@ -221,11 +223,17 @@ async def verify_email(
         )
 
     try:
-        if not token_service.mark_email_as_verified(request.token):
+        user = token_service.mark_email_as_verified(request.token)
+        if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired verification token",
             )
+        await email_service.send_email_verification_complete_email(
+            background_tasks=background_tasks,
+            email=user.email,
+            user_name=user.first_name or user.username,
+        )
         return {"detail": "Email verified successfully!"}
     except HTTPException as e:
         # Pass through expected HTTP errors

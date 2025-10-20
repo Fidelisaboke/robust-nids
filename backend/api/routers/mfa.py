@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from slowapi import Limiter
 
 from api.dependencies import get_current_active_user, get_user_from_mfa_challenge_token
@@ -21,7 +21,8 @@ from schemas.mfa import (
     MFASetupResponse,
     MFAVerifyPayload,
 )
-from services.mfa_service import MFAService
+from services.email_service import EmailService, get_email_service
+from services.mfa_service import MFAService, get_mfa_service
 
 
 def get_key_from_request_state(request: Request) -> str:
@@ -44,7 +45,9 @@ limiter_by_user = Limiter(key_func=get_key_from_request_state)
 
 
 @router.get("/setup", response_model=MFASetupResponse)
-def setup_mfa(current_user: User = Depends(get_current_active_user), mfa_service: MFAService = Depends()):
+def setup_mfa(
+    current_user: User = Depends(get_current_active_user), mfa_service: MFAService = Depends(get_mfa_service)
+):
     """Begin MFA setup for logged-in user."""
     return mfa_service.setup_mfa(current_user)
 
@@ -53,7 +56,7 @@ def setup_mfa(current_user: User = Depends(get_current_active_user), mfa_service
 def enable_mfa(
     payload: MFAEnablePayload,
     current_user: User = Depends(get_current_active_user),
-    mfa_service: MFAService = Depends(),
+    mfa_service: MFAService = Depends(get_mfa_service),
 ):
     """Verify code and enable MFA."""
     return mfa_service.verify_and_enable_mfa(current_user, payload.verification_code, payload.temp_secret)
@@ -65,7 +68,7 @@ def verify_mfa(
     request: Request,
     payload: MFAVerifyPayload,
     user: User = Depends(get_user_from_mfa_challenge_token),
-    mfa_service: MFAService = Depends(),
+    mfa_service: MFAService = Depends(get_mfa_service),
 ):
     """Verify TOTP code during login (Step 2 of two-factor login)."""
     mfa_service.complete_mfa_login(user, payload.code)
@@ -78,7 +81,7 @@ def verify_mfa(
 def disable_mfa(
     payload: MFAVerifyPayload,
     current_user: User = Depends(get_current_active_user),
-    mfa_service: MFAService = Depends(),
+    mfa_service: MFAService = Depends(get_mfa_service),
 ):
     """Disable MFA for the current user after verifying their TOTP code."""
     mfa_service.disable_mfa(current_user, payload.code)
@@ -88,18 +91,44 @@ def disable_mfa(
 
 @router.post("/recovery/initiate", response_model=MFARecoveryInitiateResponse)
 @limiter_by_user.limit("5/hour")
-def initiate_mfa_recovery(
-    request: Request, payload: MFARecoveryInitiateRequest, mfa_service: MFAService = Depends()
+async def initiate_mfa_recovery(
+    request: Request,
+    payload: MFARecoveryInitiateRequest,
+    background_tasks: BackgroundTasks,
+    mfa_service: MFAService = Depends(get_mfa_service),
+    email_service: EmailService = Depends(get_email_service),
 ):
     """Initiate MFA recovery process by sending a recovery email."""
-    mfa_service.initiate_mfa_recovery(payload.email)
+    result = mfa_service.initiate_mfa_recovery(payload.email)
+    user = result.get("user")
+    recovery_token = result.get("recovery_token")
+
+    if user and recovery_token:
+        await email_service.send_mfa_recovery_email(
+            background_tasks=background_tasks,
+            email=user.email,
+            user_name=user.first_name or user.username,
+            recovery_token=recovery_token,
+        )
 
     return {"detail": "If the email is registered, a recovery link has been sent."}
 
 
 @router.post("/recovery/complete", response_model=MFARecoveryCompleteResponse)
-def complete_mfa_recovery(request: MFARecoveryCompleteRequest, mfa_service: MFAService = Depends()):
+async def complete_mfa_recovery(
+    request: MFARecoveryCompleteRequest,
+    background_tasks: BackgroundTasks,
+    mfa_service: MFAService = Depends(get_mfa_service),
+    email_service: EmailService = Depends(get_email_service)
+):
     """Complete MFA recovery using a valid recovery token."""
-    mfa_service.complete_mfa_recovery(request.mfa_recovery_token)
+    user = mfa_service.complete_mfa_recovery(request.mfa_recovery_token)
+    if user:
+        await email_service.send_mfa_recovery_complete_email(
+            background_tasks=background_tasks,
+            email=user.email,
+            user_name=user.first_name or user.username
+        )
+
 
     return {"detail": "MFA has been disabled. Please log in and set up MFA again if desired."}

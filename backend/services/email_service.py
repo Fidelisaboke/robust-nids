@@ -83,7 +83,47 @@ class EmailService:
         background_tasks.add_task(self.fm.send_message, message, template_name=template_name)
         logger.info(f"Background email task added for {recipients}")
 
-    async def send_verification_email(
+    async def send_mfa_recovery_email(
+        self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str, recovery_token: str
+    ) -> None:
+        """Send MFA recovery email"""
+        recovery_url = f"{settings.FRONTEND_URL}/mfa-recovery?token={recovery_token}"
+
+        template_data = {
+            "user_name": user_name,
+            "recovery_url": recovery_url,
+            "expiry_hours": settings.MFA_RECOVERY_TOKEN_EXPIRES_HOURS,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="MFA Recovery - NIDS",
+            recipients=[email],
+            template_body=template_data,
+            template_name="mfa_recovery.html",
+        )
+
+    async def send_mfa_recovery_complete_email(
+        self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str
+    ) -> None:
+        """Send MFA recovery completion notification"""
+        template_data = {
+            "user_name": user_name,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="MFA Disabled - NIDS",
+            recipients=[email],
+            template_body=template_data,
+            template_name="mfa_recovery_complete.html",
+        )
+
+    async def send_email_verification_email(
         self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str, verification_token: str
     ) -> None:
         """Send email verification email"""
@@ -103,6 +143,24 @@ class EmailService:
             recipients=[email],
             template_body=template_data,
             template_name="email_verification.html",
+        )
+
+    async def send_email_verification_complete_email(
+            self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str
+    ):
+        """Send email verification complete email"""
+        template_data = {
+            "user_name": user_name,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="Email Verification Complete - NIDS",
+            recipients=[email],
+            template_body=template_data,
+            template_name="email_verification_complete.html",
         )
 
     async def send_password_reset_email(
