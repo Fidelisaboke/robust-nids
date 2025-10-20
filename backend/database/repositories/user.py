@@ -64,7 +64,7 @@ class UserRepository(BaseRepository):
 
         # Use constant-time comparison
         for user in users:
-            if user.email_verification_token and compare_digest(user.email_verification_token, token):
+            if (user.email_verification_token and compare_digest(user.email_verification_token, token)):
                 return user
 
         return None
