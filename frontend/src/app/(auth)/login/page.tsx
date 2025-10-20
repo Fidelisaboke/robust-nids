@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, saveMfaChallengeToken, user } = useAuth();
+  const { login, saveMfaChallengeToken } = useAuth();
   const loginMutation = useLoginMutation();
 
   const {
@@ -155,7 +155,7 @@ export default function LoginPage() {
         <p className="text-sm text-gray-400 text-center">
           Need help accessing your account?{" "}
           <Link
-            href="/verify-email"
+            href="/contact"
             className="text-blue-400 hover:text-blue-300 transition-colors"
           >
             Contact Support
