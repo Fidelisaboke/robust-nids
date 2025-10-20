@@ -2,6 +2,8 @@ import { apiClient } from "./apiClient";
 import type {
   LoginRequest,
   LoginResponse,
+  UserRegisterRequest,
+  UserRegisterResponse,
   TokenResponse,
   VerifyMfaRequest,
   MfaSetupResponse,
@@ -24,6 +26,17 @@ export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>(
       `${AUTH_BASE}/login`,
+      data,
+    );
+    return response.data;
+  },
+
+  // Register a new user
+  registerUser: async (
+    data: UserRegisterRequest,
+  ): Promise<UserRegisterResponse> => {
+    const response = await apiClient.post<UserRegisterResponse>(
+      `${AUTH_BASE}/register`,
       data,
     );
     return response.data;

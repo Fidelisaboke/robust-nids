@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, UserPlus } from "lucide-react";
 import { useLoginMutation } from "@/hooks/useAuthMutations";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoginRequestSchema, type LoginRequest } from "@/types/auth";
@@ -151,17 +151,47 @@ export default function LoginPage() {
         </button>
       </motion.form>
 
-      <div className="pt-4 border-t border-slate-700">
-        <p className="text-sm text-gray-400 text-center">
-          Need help accessing your account?{" "}
+      {/* Combined Footer Section */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="pt-4 border-t border-slate-700 space-y-4"
+      >
+        {/* Registration Section */}
+        <div className="text-center space-y-3">
+          <p className="text-sm text-gray-400">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
+            >
+              Create one now
+            </Link>
+          </p>
+
           <Link
-            href="/contact"
-            className="text-blue-400 hover:text-blue-300 transition-colors"
+            href="/register"
+            className="inline-flex items-center justify-center w-full py-2 px-4 border border-slate-600 text-slate-300 font-medium rounded-lg hover:bg-slate-700/50 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all"
           >
-            Contact Support
+            <UserPlus className="w-4 h-4 mr-2" />
+            Create New Account
           </Link>
-        </p>
-      </div>
+        </div>
+
+        {/* Support Section */}
+        <div className="text-center pt-3 border-t border-slate-700">
+          <p className="text-sm text-gray-400">
+            Need help accessing your account?{" "}
+            <Link
+              href="/contact"
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Contact Support
+            </Link>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
