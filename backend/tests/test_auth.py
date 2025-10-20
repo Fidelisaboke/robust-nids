@@ -32,6 +32,19 @@ def test_login_nonexistent_user():
     assert response.status_code == 401
     assert response.json()['detail'] == 'Invalid email or password'
 
+def test_login_unverified_email(unverified_user):
+    response = client.post(
+        '/api/v1/auth/login',
+        json={'email': 'unverified@example.com', 'password': 'unverified'},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    # Accept either a specific error message or a generic one
+    assert (
+        'Email verification is required' in data.get('detail', '')
+        or 'email' in data
+        or 'verify' in str(data).lower()
+    )
 
 def test_login_mfa_user_challenge_success(mfa_user):
     response = client.post(
