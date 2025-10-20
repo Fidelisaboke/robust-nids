@@ -38,9 +38,7 @@ router = APIRouter(prefix='/api/v1/auth', tags=['Authentication'])
 
 
 @router.post('/login', response_model=LoginResponse)
-def login(
-        request: LoginRequest, auth_service: AuthService = Depends(get_auth_service)
-) -> LoginResponse:
+def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_service)) -> LoginResponse:
     """User login endpoint.
 
     Args:
@@ -66,7 +64,7 @@ def login(
         return EmailVerificationRequiredResponse(
             email_verified=False,
             email=user.email,
-            detail="Email verification is required to log in.",
+            detail='Email verification is required to log in.',
         )
 
     if user.mfa_enabled:
@@ -149,7 +147,7 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
 
 @router.get('/users/me', response_model=UserOut)
 async def read_profile(
-        current_user: UserOut = Depends(get_current_active_user),
+    current_user: UserOut = Depends(get_current_active_user),
 ) -> UserOut:
     """Get the current user's profile.
 
@@ -164,11 +162,11 @@ async def read_profile(
 
 @router.post('/verify-email/request')
 async def request_email_verification(
-        request: EmailVerificationRequest,
-        background_tasks: BackgroundTasks,
-        user_repo: UserRepository = Depends(get_user_repository),
-        token_service: URLTokenService = Depends(get_url_token_service),
-        email_service: EmailService = Depends(get_email_service),
+    request: EmailVerificationRequest,
+    background_tasks: BackgroundTasks,
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_service: URLTokenService = Depends(get_url_token_service),
+    email_service: EmailService = Depends(get_email_service),
 ):
     """Request email verification for a user.
 
@@ -198,8 +196,8 @@ async def request_email_verification(
 
 @router.post('/verify-email')
 async def verify_email(
-        request: VerifyEmailRequest,
-        token_service: URLTokenService = Depends(get_url_token_service),
+    request: VerifyEmailRequest,
+    token_service: URLTokenService = Depends(get_url_token_service),
 ):
     """Verify a user's email using a verification token.
 
@@ -220,28 +218,30 @@ async def verify_email(
         )
 
     try:
-        # Mark email as verified
         if not token_service.mark_email_as_verified(request.token):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Invalid or expired verification token',
             )
         return {'detail': 'Email verified successfully!'}
-
+    except HTTPException as e:
+        # Pass through expected HTTP errors
+        raise e
     except Exception:
+        # Unexpected errors
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail='An error occurred while verifying email',
         )
 
 
-@router.post("/forgot-password")
+@router.post('/forgot-password')
 async def forgot_password(
-        request: ForgotPasswordRequest,
-        background_tasks: BackgroundTasks,
-        user_repo: UserRepository = Depends(get_user_repository),
-        token_service: URLTokenService = Depends(get_url_token_service),
-        email_service: EmailService = Depends(get_email_service),
+    request: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_service: URLTokenService = Depends(get_url_token_service),
+    email_service: EmailService = Depends(get_email_service),
 ):
     """
     Endpoint to initiate the password reset process.
@@ -267,13 +267,13 @@ async def forgot_password(
             reset_token=reset_token,
         )
 
-    return {"detail": "If the email exists, password reset instructions have been sent."}
+    return {'detail': 'If the email exists, password reset instructions have been sent.'}
 
 
 @router.post('/reset-password')
 async def reset_password(
-        request: ResetPasswordRequest,
-        auth_service: AuthService = Depends(get_auth_service),
+    request: ResetPasswordRequest,
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """
     Endpoint to reset the user's password using a valid reset token.
@@ -289,13 +289,13 @@ async def reset_password(
     if request.new_password != request.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Passwords do not match.",
+            detail='Passwords do not match.',
         )
 
     if not auth_service.reset_password(request.token, request.new_password, request.mfa_code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired password reset token.",
+            detail='Invalid or expired password reset token.',
         )
 
-    return {"detail": "Password reset successfully."}
+    return {'detail': 'Password reset successfully.'}
