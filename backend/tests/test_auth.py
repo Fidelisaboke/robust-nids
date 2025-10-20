@@ -40,12 +40,12 @@ def test_login_unverified_email(unverified_user):
     )
     assert response.status_code == 200
     data = response.json()
-    # Accept either a specific error message or a generic one
-    assert (
-        "Email verification is required" in data.get("detail", "")
-        or "email" in data
-        or "verify" in str(data).lower()
-    )
+
+    # Check for the specific structure expected for unverified emails
+    assert "email_verified" in data
+    assert data["email_verified"] is False
+    assert "email" in data
+    assert data["email"] == "unverified@example.com"
 
 
 def test_login_mfa_user_challenge_success(mfa_user):
