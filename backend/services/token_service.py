@@ -28,7 +28,7 @@ class URLTokenService:
         user = self.user_repo.get_by_id(user_id)
 
         if not user:
-            raise ValueError('User not found')
+            raise ValueError("User not found")
 
         # Generate token
         token = self.generate_token()
@@ -48,7 +48,7 @@ class URLTokenService:
         user = self.user_repo.get_by_id(user_id)
 
         if not user:
-            raise ValueError('User not found')
+            raise ValueError("User not found")
 
         # Generate token
         token = self.generate_token()

@@ -6,13 +6,13 @@ from schemas.users import UserCreate, UserOut, UserUpdate
 from services.user_service import UserService
 from utils.enums import SystemPermissions
 
-router = APIRouter(prefix='/api/v1/users', tags=['Users'])
+router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 
 MANAGE_USERS_PERMISSION = SystemPermissions.MANAGE_USERS
 
 
 @router.post(
-    '/',
+    "/",
     response_model=UserOut,
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_201_CREATED,
@@ -32,7 +32,7 @@ async def create_user(user_data: UserCreate, user_service: UserService = Depends
 
 
 @router.get(
-    '/',
+    "/",
     response_model=list[UserOut],
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
@@ -49,7 +49,7 @@ async def list_users(user_service: UserService = Depends()):
 
 
 @router.get(
-    '/{user_id}',
+    "/{user_id}",
     response_model=UserOut,
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
@@ -69,7 +69,7 @@ async def get_user(user_id: int, user_service: UserService = Depends()):
 
 
 @router.put(
-    '/{user_id}',
+    "/{user_id}",
     response_model=UserOut,
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
@@ -90,7 +90,7 @@ async def update_user(user_id: int, user_data: UserUpdate, user_service: UserSer
 
 
 @router.delete(
-    '/{user_id}',
+    "/{user_id}",
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -109,7 +109,7 @@ async def delete_user(user_id: int, user_service: UserService = Depends()):
 
 
 @router.post(
-    '/{user_id}/reset-mfa',
+    "/{user_id}/reset-mfa",
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
 )
 def admin_reset_user_mfa(
@@ -127,4 +127,4 @@ def admin_reset_user_mfa(
 
     """
     user_service.admin_reset_mfa_for_user(user_id, admin_user)
-    return {'detail': 'MFA has been reset for the user.'}
+    return {"detail": "MFA has been reset for the user."}

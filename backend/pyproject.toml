@@ -64,7 +64,7 @@ select = ["E", "F", "W", "I", "C90"]
 ignore = ["E203"]
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 

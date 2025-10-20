@@ -18,35 +18,35 @@ from services.email_service import EmailService, get_email_service
 from utils.enums import SystemPermissions, SystemRoles
 
 test_mail_conf = ConnectionConfig(
-    MAIL_USERNAME='test@example.com',
-    MAIL_PASSWORD='password',
-    MAIL_FROM='test@example.com',
+    MAIL_USERNAME="test@example.com",
+    MAIL_PASSWORD="password",
+    MAIL_FROM="test@example.com",
     MAIL_PORT=1025,
-    MAIL_SERVER='localhost',
+    MAIL_SERVER="localhost",
     MAIL_STARTTLS=False,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=False,
-    MAIL_FROM_NAME='Test',
+    MAIL_FROM_NAME="Test",
     SUPPRESS_SEND=1,
     MAIL_DEBUG=1,
     TEMPLATE_FOLDER=settings.TEMPLATE_FOLDER,
 )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def test_client():
     app.dependency_overrides[get_email_service] = lambda: EmailService(test_mail_conf)
     return TestClient(app)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def test_user():
     with db.get_session() as session:
         user = User(
-            email='verifyme@example.com',
-            password_hash='hashedpass',
+            email="verifyme@example.com",
+            password_hash="hashedpass",
             is_active=True,
-            username='verifyme',
+            username="verifyme",
             email_verified=False,
         )
         session.add(user)
@@ -56,17 +56,17 @@ def test_user():
         session.commit()
 
 
-@pytest.fixture(autouse=True, scope='function')
+@pytest.fixture(autouse=True, scope="function")
 def patch_email_service(monkeypatch):
     monkeypatch.setattr(
-        'services.email_service.get_email_service', lambda conf=None: get_email_service(test_mail_conf)
+        "services.email_service.get_email_service", lambda conf=None: get_email_service(test_mail_conf)
     )
 
 
 # Global fixture for FastAPI-Mail test directory
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def setup_mail_dir():
-    MAIL_PATH = 'test_emails'
+    MAIL_PATH = "test_emails"
     os.makedirs(MAIL_PATH, exist_ok=True)
     yield
     # Clean up after tests
@@ -77,19 +77,19 @@ def setup_mail_dir():
 client = TestClient(app)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def non_mfa_user():
-    password = 'nomfa'
+    password = "nomfa"
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     with db.get_session() as session:
         user = User(
-            email='nomfa@example.com',
+            email="nomfa@example.com",
             password_hash=hashed,
             is_active=True,
-            username='nomfauser',
+            username="nomfauser",
             mfa_enabled=False,
             mfa_secret=None,
-            mfa_method='totp',
+            mfa_method="totp",
             mfa_backup_codes=None,
             email_verified=True,
         )
@@ -100,22 +100,22 @@ def non_mfa_user():
         session.commit()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def mfa_user():
-    password = 'mfapass'
+    password = "mfapass"
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     # Use formatted backup codes and hash them as backend expects
-    backup_codes = ['CODE1-CODE2', 'CODE3-CODE4']
+    backup_codes = ["CODE1-CODE2", "CODE3-CODE4"]
     hashed_backup_codes = [bcrypt.hashpw(code.encode(), bcrypt.gensalt()).decode() for code in backup_codes]
     with db.get_session() as session:
         user = User(
-            email='mfa@example.com',
+            email="mfa@example.com",
             password_hash=hashed,
             is_active=True,
-            username='mfauser',
+            username="mfauser",
             mfa_enabled=True,
-            mfa_secret='JBSWY3DPEHPK3PXP',  # Known TOTP secret for tests
-            mfa_method='totp',
+            mfa_secret="JBSWY3DPEHPK3PXP",  # Known TOTP secret for tests
+            mfa_method="totp",
             mfa_backup_codes=hashed_backup_codes,
             email_verified=True,
         )
@@ -126,9 +126,9 @@ def mfa_user():
         session.commit()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def admin_user():
-    password = 'adminpass'
+    password = "adminpass"
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     with db.get_session() as session:
         role_repo = RoleRepository(session)
@@ -137,23 +137,23 @@ def admin_user():
         # Ensure manage_users permission exists
         manage_users_perm = perm_repo.get_by_name(SystemPermissions.MANAGE_USERS)
         if not manage_users_perm:
-            permission_data = {'name': SystemPermissions.MANAGE_USERS}
+            permission_data = {"name": SystemPermissions.MANAGE_USERS}
             manage_users_perm = perm_repo.create(permission_data)
 
         # Ensure admin role exists and has permission
         admin_role = role_repo.get_by_name(SystemRoles.ADMIN)
         if not admin_role:
-            role_data = {'name': SystemRoles.ADMIN}
+            role_data = {"name": SystemRoles.ADMIN}
             admin_role = role_repo.create(role_data)
         if manage_users_perm not in admin_role.permissions:
             role_repo.add_permission(admin_role, manage_users_perm)
             session.commit()
 
         user = User(
-            email='mock_admin_test@example.com',
+            email="mock_admin_test@example.com",
             password_hash=hashed,
             is_active=True,
-            username='mockadminuser',
+            username="mockadminuser",
             roles=[admin_role],
             email_verified=True,
         )
@@ -165,19 +165,19 @@ def admin_user():
 
 
 # Fixture for an unverified user (for negative tests)
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def unverified_user():
-    password = 'unverified'
+    password = "unverified"
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     with db.get_session() as session:
         user = User(
-            email='unverified@example.com',
+            email="unverified@example.com",
             password_hash=hashed,
             is_active=True,
-            username='unverifieduser',
+            username="unverifieduser",
             mfa_enabled=False,
             mfa_secret=None,
-            mfa_method='totp',
+            mfa_method="totp",
             mfa_backup_codes=None,
             email_verified=False,
         )

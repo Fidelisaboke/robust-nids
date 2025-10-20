@@ -20,5 +20,5 @@ async def mfa_bad_request_handler(
 ):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content={'detail': exc.detail},
+        content={"detail": exc.detail},
     )

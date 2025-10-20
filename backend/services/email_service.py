@@ -41,7 +41,7 @@ class EmailService:
         subject: str,
         recipients: List[EmailStr],
         template_body: Dict[str, Any],
-        template_name: str = 'email.html',
+        template_name: str = "email.html",
     ) -> None:
         """
         Send email asynchronously and wait for completion.
@@ -56,10 +56,10 @@ class EmailService:
             )
 
             await self.fm.send_message(message, template_name=template_name)
-            logger.info(f'Email sent successfully to {recipients}')
+            logger.info(f"Email sent successfully to {recipients}")
         except Exception as e:
-            logger.error(f'Failed to send email to {recipients}: {str(e)}')
-            raise EmailDeliveryException(f'Failed to send email: {str(e)}')
+            logger.error(f"Failed to send email to {recipients}: {str(e)}")
+            raise EmailDeliveryException(f"Failed to send email: {str(e)}")
 
     def send_email_background(
         self,
@@ -67,7 +67,7 @@ class EmailService:
         subject: str,
         recipients: List[EmailStr],
         template_body: Dict[str, Any],
-        template_name: str = 'email.html',
+        template_name: str = "email.html",
     ) -> None:
         """
         Send email in the background using FastAPI's BackgroundTasks.
@@ -81,50 +81,50 @@ class EmailService:
         )
 
         background_tasks.add_task(self.fm.send_message, message, template_name=template_name)
-        logger.info(f'Background email task added for {recipients}')
+        logger.info(f"Background email task added for {recipients}")
 
     async def send_verification_email(
         self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str, verification_token: str
     ) -> None:
         """Send email verification email"""
-        verification_url = f'{settings.FRONTEND_URL}/verify-email?token={verification_token}'
+        verification_url = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
 
         template_data = {
-            'user_name': user_name,
-            'verification_url': verification_url,
-            'expiry_minutes': settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES,
-            'support_email': getattr(settings, 'SUPPORT_EMAIL', 'support@example.com'),
-            'current_year': datetime.now().year,
+            "user_name": user_name,
+            "verification_url": verification_url,
+            "expiry_minutes": settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
         }
 
         self.send_email_background(
             background_tasks=background_tasks,
-            subject='Verify Your Email Address - NIDS',
+            subject="Verify Your Email Address - NIDS",
             recipients=[email],
             template_body=template_data,
-            template_name='email_verification.html',
+            template_name="email_verification.html",
         )
 
     async def send_password_reset_email(
         self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str, reset_token: str
     ) -> None:
         """Send password reset email"""
-        reset_url = f'{settings.FRONTEND_URL}/reset-password?token={reset_token}'
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
 
         template_data = {
-            'user_name': user_name,
-            'reset_url': reset_url,
-            'expiry_minutes': settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES,
-            'support_email': getattr(settings, 'SUPPORT_EMAIL', 'support@example.com'),
-            'current_year': datetime.now().year,
+            "user_name": user_name,
+            "reset_url": reset_url,
+            "expiry_minutes": settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
         }
 
         self.send_email_background(
             background_tasks=background_tasks,
-            subject='Reset Your Password - NIDS',
+            subject="Reset Your Password - NIDS",
             recipients=[email],
             template_body=template_data,
-            template_name='password_reset.html',
+            template_name="password_reset.html",
         )
 
 

@@ -34,10 +34,10 @@ from services.auth_service import AuthService, get_auth_service
 from services.email_service import EmailService, get_email_service
 from services.token_service import URLTokenService, get_url_token_service
 
-router = APIRouter(prefix='/api/v1/auth', tags=['Authentication'])
+router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 
-@router.post('/login', response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_service)) -> LoginResponse:
     """User login endpoint.
 
@@ -56,15 +56,15 @@ def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_se
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid email or password',
-            headers={'WWW-Authenticate': 'Bearer'},
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     if not user.email_verified:
         return EmailVerificationRequiredResponse(
             email_verified=False,
             email=user.email,
-            detail='Email verification is required to log in.',
+            detail="Email verification is required to log in.",
         )
 
     if user.mfa_enabled:
@@ -83,7 +83,7 @@ def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_se
     return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token)
 
 
-@router.post('/refresh', response_model=TokenResponse)
+@router.post("/refresh", response_model=TokenResponse)
 def refresh_token(request: RefreshRequest) -> TokenResponse:
     """Refresh access token using refresh token.
 
@@ -98,8 +98,8 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
     """
     refresh_token_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='Refresh token is invalid or expired',
-        headers={'WWW-Authenticate': 'Bearer'},
+        detail="Refresh token is invalid or expired",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
     payload = decode_token(request.refresh_token)
@@ -107,16 +107,16 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
         raise refresh_token_exception
 
     # Check if token provided is a refresh token
-    if payload.get('token_type') != 'refresh':
+    if payload.get("token_type") != "refresh":
         raise refresh_token_exception
 
     # Check token expiration
-    exp = payload.get('exp')
+    exp = payload.get("exp")
     if exp is None or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
         raise refresh_token_exception
 
     # Get user ID from token payload
-    sub = payload.get('sub')
+    sub = payload.get("sub")
     if sub is None:
         raise refresh_token_exception
     try:
@@ -130,22 +130,22 @@ def refresh_token(request: RefreshRequest) -> TokenResponse:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found',
-                headers={'WWW-Authenticate': 'Bearer'},
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail='User is inactive',
-                headers={'WWW-Authenticate': 'Bearer'},
+                detail="User is inactive",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
     new_access_token = create_access_token(user.id)
     return TokenResponse(access_token=new_access_token, refresh_token=request.refresh_token)
 
 
-@router.get('/users/me', response_model=UserOut)
+@router.get("/users/me", response_model=UserOut)
 async def read_profile(
     current_user: UserOut = Depends(get_current_active_user),
 ) -> UserOut:
@@ -160,7 +160,7 @@ async def read_profile(
     return current_user
 
 
-@router.post('/verify-email/request')
+@router.post("/verify-email/request")
 async def request_email_verification(
     request: EmailVerificationRequest,
     background_tasks: BackgroundTasks,
@@ -191,10 +191,10 @@ async def request_email_verification(
             verification_token=verification_token,
         )
 
-    return {'detail': 'If the email exists, verification instructions have been sent.'}
+    return {"detail": "If the email exists, verification instructions have been sent."}
 
 
-@router.post('/verify-email')
+@router.post("/verify-email")
 async def verify_email(
     request: VerifyEmailRequest,
     token_service: URLTokenService = Depends(get_url_token_service),
@@ -214,16 +214,16 @@ async def verify_email(
     if not request.token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Verification token is required',
+            detail="Verification token is required",
         )
 
     try:
         if not token_service.mark_email_as_verified(request.token):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Invalid or expired verification token',
+                detail="Invalid or expired verification token",
             )
-        return {'detail': 'Email verified successfully!'}
+        return {"detail": "Email verified successfully!"}
     except HTTPException as e:
         # Pass through expected HTTP errors
         raise e
@@ -231,11 +231,11 @@ async def verify_email(
         # Unexpected errors
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail='An error occurred while verifying email',
+            detail="An error occurred while verifying email",
         )
 
 
-@router.post('/forgot-password')
+@router.post("/forgot-password")
 async def forgot_password(
     request: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
@@ -267,10 +267,10 @@ async def forgot_password(
             reset_token=reset_token,
         )
 
-    return {'detail': 'If the email exists, password reset instructions have been sent.'}
+    return {"detail": "If the email exists, password reset instructions have been sent."}
 
 
-@router.post('/reset-password')
+@router.post("/reset-password")
 async def reset_password(
     request: ResetPasswordRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -289,13 +289,13 @@ async def reset_password(
     if request.new_password != request.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Passwords do not match.',
+            detail="Passwords do not match.",
         )
 
     if not auth_service.reset_password(request.token, request.new_password, request.mfa_code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Invalid or expired password reset token.',
+            detail="Invalid or expired password reset token.",
         )
 
-    return {'detail': 'Password reset successfully.'}
+    return {"detail": "Password reset successfully."}

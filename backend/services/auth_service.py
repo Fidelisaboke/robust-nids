@@ -12,10 +12,7 @@ from services.token_service import URLTokenService, get_url_token_service
 
 class AuthService:
     def __init__(
-            self,
-            user_repo: UserRepository,
-            token_service: URLTokenService,
-            mfa_service: MFAService
+        self, user_repo: UserRepository, token_service: URLTokenService, mfa_service: MFAService
     ) -> None:
         self.user_repo = user_repo
         self.token_service = token_service
@@ -59,9 +56,9 @@ class AuthService:
 
 # Dependency injection method
 def get_auth_service(
-        user_repo: UserRepository = Depends(get_user_repository),
-        token_service: URLTokenService = Depends(get_url_token_service),
-        mfa_service: MFAService = Depends(),
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_service: URLTokenService = Depends(get_url_token_service),
+    mfa_service: MFAService = Depends(),
 ) -> AuthService:
     """Returns an instance of AuthService with dependencies injected."""
     return AuthService(user_repo, token_service, mfa_service)

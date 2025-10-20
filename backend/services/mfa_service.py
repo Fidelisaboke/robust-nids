@@ -46,9 +46,9 @@ class MFAService:
         qr_code_b64 = self.totp_service.generate_qr_code(totp_uri)
 
         return {
-            'secret': secret,  # Temporary - for display only
-            'qr_code': f'data:image/png;base64,{qr_code_b64}',
-            'totp_uri': totp_uri,
+            "secret": secret,  # Temporary - for display only
+            "qr_code": f"data:image/png;base64,{qr_code_b64}",
+            "totp_uri": totp_uri,
         }
 
     def verify_and_enable_mfa(self, user: User, verification_code: str, temp_secret: str) -> Dict[str, Any]:
@@ -73,8 +73,8 @@ class MFAService:
         user.mfa_configured_at = datetime.now(timezone.utc)
 
         return {
-            'backup_codes': backup_codes,
-            'detail': 'MFA enabled successfully. Save your backup codes securely.',
+            "backup_codes": backup_codes,
+            "detail": "MFA enabled successfully. Save your backup codes securely.",
         }
 
     def disable_mfa(self, user: User, verification_code: str) -> None:
@@ -95,8 +95,8 @@ class MFAService:
     def admin_disable_mfa(self, user: User, performing_admin: User) -> None:
         """Disables MFA for a user, performed by an admin"""
         logger.info(
-            f'ADMIN ACTION: MFA for user {user.email} (ID: {user.id}) '
-            f'disabled by admin {performing_admin.email} (ID: {performing_admin.id})'
+            f"ADMIN ACTION: MFA for user {user.email} (ID: {user.id}) "
+            f"disabled by admin {performing_admin.email} (ID: {performing_admin.id})"
         )
         self.disable_mfa_for_user(user)
 
@@ -123,10 +123,10 @@ class MFAService:
             is_valid, updated_codes = self.totp_service.verify_backup_code(code, user.mfa_backup_codes)
             if is_valid:
                 user.mfa_backup_codes = updated_codes
-                logger.warning(f'Backup code used for user_id={user.id}. {len(updated_codes)} codes left.')
+                logger.warning(f"Backup code used for user_id={user.id}. {len(updated_codes)} codes left.")
                 return True
 
-        logger.warning(f'Failed MFA attempt for user_id={user.id}.')
+        logger.warning(f"Failed MFA attempt for user_id={user.id}.")
         return False
 
     def complete_mfa_login(self, user: User, code: str):
@@ -157,10 +157,10 @@ class MFAService:
     def get_mfa_status(user: User) -> Dict[str, Any]:
         """Get current MFA status"""
         return {
-            'mfa_enabled': user.mfa_enabled,
-            'mfa_method': user.mfa_method,
-            'mfa_configured_at': user.mfa_configured_at,
-            'backup_codes_remaining': len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
+            "mfa_enabled": user.mfa_enabled,
+            "mfa_method": user.mfa_method,
+            "mfa_configured_at": user.mfa_configured_at,
+            "backup_codes_remaining": len(user.mfa_backup_codes) if user.mfa_backup_codes else 0,
         }
 
     def initiate_mfa_recovery(self, email: EmailStr):

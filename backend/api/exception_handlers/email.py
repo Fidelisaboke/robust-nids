@@ -12,9 +12,4 @@ def email_delivery_exception_handler(request: Request, exc: EmailDeliveryExcepti
     """
     Handles EmailDeliveryException and returns a JSON error response.
     """
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": str(exc) or "Email delivery failed."
-        }
-    )
+    return JSONResponse(status_code=500, content={"detail": str(exc) or "Email delivery failed."})

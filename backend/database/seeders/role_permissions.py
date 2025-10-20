@@ -47,7 +47,7 @@ class RolePermissionSeeder(BaseSeeder):
             # Build permission sets for each role
             role_permission_sets = {}
             for role_name in role_dict.keys():
-                if role_name == 'viewer':
+                if role_name == "viewer":
                     role_permission_sets[role_name] = cls.BASE_PERMISSIONS
                 else:
                     role_permission_sets[role_name] = cls.BASE_PERMISSIONS | cls.ROLE_EXTRA_PERMISSIONS.get(
@@ -69,6 +69,6 @@ class RolePermissionSeeder(BaseSeeder):
 
             if assignments_made > 0:
                 session.commit()
-                cls.log_seeding('Role-Permission', assignments_made)
+                cls.log_seeding("Role-Permission", assignments_made)
             else:
-                print('⏩ Role permissions already assigned, skipping...')
+                print("⏩ Role permissions already assigned, skipping...")

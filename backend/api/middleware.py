@@ -39,7 +39,4 @@ class ServiceExceptionHandlerMiddleware(BaseHTTPMiddleware):
                 f"Detail='{exc.detail}', Path={request.url.path}"
             )
 
-            return JSONResponse(
-                status_code=status_code,
-                content={"detail": exc.detail}
-            )
+            return JSONResponse(status_code=status_code, content={"detail": exc.detail})

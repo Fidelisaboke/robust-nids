@@ -20,11 +20,11 @@ class MFAEnablePayload(BaseModel):
 
 class MFAEnableResponse(BaseModel):
     backup_codes: list[str]
-    detail: str = 'MFA has been enabled successfully.'
+    detail: str = "MFA has been enabled successfully."
 
 
 class MFADisableResponse(BaseModel):
-    detail: str = 'MFA has been disabled successfully.'
+    detail: str = "MFA has been disabled successfully."
 
 
 class MFARecoveryInitiateRequest(BaseModel):
@@ -32,7 +32,7 @@ class MFARecoveryInitiateRequest(BaseModel):
 
 
 class MFARecoveryInitiateResponse(BaseModel):
-    detail: str = 'If the email is registered, a recovery link has been sent.'
+    detail: str = "If the email is registered, a recovery link has been sent."
 
 
 class MFARecoveryCompleteRequest(BaseModel):
@@ -40,4 +40,4 @@ class MFARecoveryCompleteRequest(BaseModel):
 
 
 class MFARecoveryCompleteResponse(BaseModel):
-    detail: str = 'MFA recovery successful. Please log in and set up MFA again.'
+    detail: str = "MFA recovery successful. Please log in and set up MFA again."

@@ -9,7 +9,7 @@ from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_FILE = BASE_DIR / '.env'
+ENV_FILE = BASE_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -20,13 +20,13 @@ class Settings(BaseSettings):
     """
 
     # Load environment variables from .env file
-    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding="utf-8")
 
     # Application settings
     ENVIRONMENT: str
     SECRET_KEY: str
     DEBUG: bool = False
-    APP_NAME: str = 'NIDS'
+    APP_NAME: str = "NIDS"
 
     # Database settings
     DB_HOST: str
@@ -62,30 +62,30 @@ class Settings(BaseSettings):
     REDIS_URL: str
 
     # Frontend configuration
-    FRONTEND_URL: str = 'http://localhost:3000'
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # CORS origins
-    BACKEND_CORS_ORIGINS: list[str] = ['http://localhost', 'http://localhost:3000']
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost", "http://localhost:3000"]
 
     # Default user preferences for the dashboard
     DEFAULT_USER_PREFERENCES: ClassVar[dict] = {
-        'dashboard': {
-            'default_view': 'overview',
-            'refresh_interval': 300,
-            'theme': 'system',
+        "dashboard": {
+            "default_view": "overview",
+            "refresh_interval": 300,
+            "theme": "system",
         },
-        'notifications': {
-            'email': True,
-            'browser': True,
-            'critical_alerts': True,
-            'high_priority': True,
-            'medium_priority': False,
+        "notifications": {
+            "email": True,
+            "browser": True,
+            "critical_alerts": True,
+            "high_priority": True,
+            "medium_priority": False,
         },
-        'privacy': {'show_online_status': True, 'share_analytics': False},
+        "privacy": {"show_online_status": True, "share_analytics": False},
     }
 
     # JWT Settings
-    JWT_ALGORITHM: str = 'HS256'
+    JWT_ALGORITHM: str = "HS256"
 
     # Token Expiration Times (in minutes)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -96,6 +96,7 @@ class Settings(BaseSettings):
 
     # MFA Recovery Token Expiration (in hours)
     MFA_RECOVERY_TOKEN_EXPIRES_HOURS: int = 1
+
 
 # noinspection PyArgumentList
 settings = Settings()
