@@ -28,6 +28,10 @@ class UsernameAlreadyExistsError(UserException):
     def __init__(self, detail: str = "Username is already taken."):
         super().__init__(detail)
 
+class UserAlreadyExistsError(UserException):
+    """Exception raised when a user already exists."""
+    def __init__(self, detail: str = "A user with the given email or username already exists."):
+        super().__init__(detail)
 
 class RoleNotFoundError(UserException):
     """Raised when trying to assign a role that does not exist."""

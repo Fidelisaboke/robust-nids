@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
     TEMPLATE_FOLDER: Path = BASE_DIR / "templates" / "email"
-    SUPPORT_EMAIL: str = "support@nids.com"
+    SUPPORT_EMAIL: str
 
     # PgAdmin
     PGADMIN_DEFAULT_EMAIL: str

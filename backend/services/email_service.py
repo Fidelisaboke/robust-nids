@@ -4,7 +4,7 @@ It uses the fastapi-mail package to handle email sending functionality.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from fastapi import BackgroundTasks
@@ -146,7 +146,7 @@ class EmailService:
         )
 
     async def send_email_verification_complete_email(
-            self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str
+        self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str
     ):
         """Send email verification complete email"""
         template_data = {
@@ -200,7 +200,47 @@ class EmailService:
             subject="Password Changed - NIDS",
             recipients=[email],
             template_body=template_data,
-            template_name="password_changed.html"
+            template_name="password_changed.html",
+        )
+
+    async def send_user_registration_confirmation_email(
+        self, background_tasks: BackgroundTasks, user_email: str, user_name: str
+    ):
+        """Send confirmation email to user about their registration."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="Your NIDS Account Registration - Pending Approval",
+            recipients=[user_email],
+            template_body=template_data,
+            template_name="user_registration_confirmation.html",
+        )
+
+    async def send_admin_user_registered_notification_email(
+        self, background_tasks: BackgroundTasks, user_email: str, user_name: str
+    ):
+        """Send notification to admins about new user registration."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="New User Registration - NIDS",
+            recipients=[settings.SUPPORT_EMAIL],
+            template_body=template_data,
+            template_name="new_user_registration.html",
         )
 
 

@@ -26,6 +26,25 @@ class EmailVerificationRequiredResponse(BaseModel):
 LoginResponse = TokenResponse | MFAChallengeResponse | EmailVerificationRequiredResponse
 
 
+class UserRegistrationRequest(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    confirm_password: str
+    first_name: str
+    last_name: str
+    phone: str | None = None
+    department: str | None = None
+    job_title: str | None = None
+
+
+class UserRegistrationResponse(BaseModel):
+    id: int
+    email: EmailStr
+    username: str
+    detail: str
+
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 
