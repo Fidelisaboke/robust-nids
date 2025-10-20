@@ -63,7 +63,7 @@ def test_login_mfa_user_challenge_success(mfa_user):
 
 
 @pytest.mark.usefixtures("setup_mail_dir")
-def test_register_user_success():
+def test_register_user_success(test_client):
     # Ensure no user with this email exists before test
     with db.get_session() as session:
         existing = session.query(User).filter_by(email="testregister@example.com").first()
@@ -83,14 +83,13 @@ def test_register_user_success():
     }
     email_service = EmailService()
     with email_service.fm.record_messages() as outbox:
-        resp = client.post("/api/v1/auth/register", json=payload)
+        resp = test_client.post("/api/v1/auth/register", json=payload)
         assert resp.status_code == 200
         data = resp.json()
         assert data["email"] == payload["email"]
         assert data["username"] == payload["username"]
         # Should send two emails: user confirmation and admin notification
         assert len(outbox) == 2
-    # Confirm user exists in DB
     with db.get_session() as session:
         user = session.query(User).filter_by(email=payload["email"]).first()
         assert user is not None
