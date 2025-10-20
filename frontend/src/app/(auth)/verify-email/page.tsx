@@ -29,10 +29,10 @@ function VerifyEmailPageContent() {
   const [errorMessage, setErrorMessage] = useState<string>(
     "An unknown error occurred during verification.",
   );
-  const verifyEmailMutation = useVerifyEmailMutation();
+  const { mutateAsync: verifyEmail } = useVerifyEmailMutation();
 
   useEffect(() => {
-    const verifyEmail = async () => {
+    const runEmailVerification = async () => {
       if (!token) {
         setVerificationState("error");
         toast.error("Invalid verification link.");
@@ -43,7 +43,7 @@ function VerifyEmailPageContent() {
       }
 
       try {
-        const response = await verifyEmailMutation.mutateAsync(token);
+        const response = await verifyEmail(token);
         setVerificationState("success");
         toast.success(response.detail);
         sessionStorage.removeItem("unverified_email");
@@ -60,8 +60,8 @@ function VerifyEmailPageContent() {
       }
     };
 
-    void verifyEmail();
-  }, [token, router, verifyEmailMutation]);
+    void runEmailVerification();
+  }, [token, router, verifyEmail]);
 
   const renderContent = () => {
     switch (verificationState) {

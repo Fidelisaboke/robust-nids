@@ -24,17 +24,17 @@ function VerificationRequiredPageContent() {
   const email =
     emailFromParams || sessionStorage.getItem("unverified_email") || "";
   const [isResending, setIsResending] = useState(false);
-  const requestEmailVerificationMutation =
+  const { mutateAsync: requestEmailVerification } =
     useRequestEmailVerificationMutation();
 
   const handleResendVerification = useCallback(
-    async (data: string) => {
-      if (!email) return;
+    async (data?: string) => {
+      const emailToUse = data || email;
+      if (!emailToUse) return;
 
       setIsResending(true);
       try {
-        const response =
-          await requestEmailVerificationMutation.mutateAsync(data);
+        const response = await requestEmailVerification(emailToUse);
         toast.success(response.detail);
       } catch (error) {
         const normalizedError = normalizeError(error);
@@ -43,13 +43,13 @@ function VerificationRequiredPageContent() {
         setIsResending(false);
       }
     },
-    [email, requestEmailVerificationMutation],
+    [email, requestEmailVerification],
   );
 
   // Send email verification request when first landing on the page
   useEffect(() => {
-    void handleResendVerification(email);
-  }, [handleResendVerification, email]);
+    void handleResendVerification();
+  }, [handleResendVerification]);
 
   return (
     <motion.div
