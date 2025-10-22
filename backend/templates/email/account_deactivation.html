@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Account Deactivated - NIDS</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">Network Intrusion Detection System</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 20px;">User Account Deactivated</h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                A user account has been deactivated in the NIDS platform. Access privileges have been revoked.
+            </p>
+
+            <!-- User Information -->
+            <div
+                style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #92400e; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    👤 Deactivated User Details
+                </h3>
+                <table style="width: 100%; color: #78350f; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600; width: 100px;">Username:</td>
+                        <td style="padding: 8px 0;">{{ user_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Email:</td>
+                        <td style="padding: 8px 0;">{{ user_email }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Deactivated:</td>
+                        <td style="padding: 8px 0;">{{ timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Status:</td>
+                        <td style="padding: 8px 0;">
+                            <span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                🔒 Deactivated
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Security Implications -->
+            <div
+                style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #dc2626; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    🔐 Security Impact
+                </h3>
+                <ul style="color: #7f1d1d; margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li style="margin-bottom: 8px;">User can no longer access the NIDS platform</li>
+                    <li style="margin-bottom: 8px;">All active sessions have been terminated</li>
+                    <li style="margin-bottom: 8px;">API access tokens have been revoked</li>
+                    <li>Monitoring alerts for this user have been disabled</li>
+                </ul>
+            </div>
+
+            <!-- Action Confirmation -->
+            <div style="text-align: center; margin: 30px 0; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 8px;">
+                    Deactivation completed successfully
+                </div>
+                <div style="font-size: 16px; color: #334155; font-weight: 600;">
+                    User access has been revoked
+                </div>
+            </div>
+
+            <!-- Admin Actions -->
+            <div
+                style="background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #0369a1; font-weight: 600; margin-bottom: 12px; font-size: 14px;">
+                    🔧 Available Actions
+                </h4>
+                <ul style="color: #1e3a8a; margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li style="margin-bottom: 6px;">
+                        <strong>Reactivate:</strong> Restore user access if needed
+                    </li>
+                    <li style="margin-bottom: 6px;">
+                        <strong>Review Logs:</strong> Check user activity before deactivation
+                    </li>
+                    <li>
+                        <strong>Data Retention:</strong> User data will be maintained per policy
+                    </li>
+                </ul>
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="{{ admin_panel_url }}"
+                        style="color: white; display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 10px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);">
+                        Manage Users
+                    </a>
+                </div>
+            </div>
+
+            <!-- Audit Trail Note -->
+            <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <p style="color: #64748b; font-size: 12px; margin: 0; text-align: center;">
+                    📋 This action has been logged in the admin audit trail for compliance purposes.
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 16px;">
+                This is an automated security notification from the NIDS user management system.
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px; text-align: center;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

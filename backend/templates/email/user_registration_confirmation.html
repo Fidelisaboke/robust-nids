@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Confirmation - NIDS</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">Network Intrusion Detection System</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 20px;">Welcome to NIDS, {{ user_name }}!</h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                Thank you for registering with the Network Intrusion Detection System.
+                We have received your registration request and it is currently under review.
+            </p>
+
+            <!-- Status Card -->
+            <div
+                style="background: #faf5ff; border: 1px solid #d8b4fe; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #7c3aed; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    📋 Registration Status
+                </h3>
+                <table style="width: 100%; color: #5b21b6; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600; width: 100px;">Username:</td>
+                        <td style="padding: 8px 0;">{{ user_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Email:</td>
+                        <td style="padding: 8px 0;">{{ user_email }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Registered:</td>
+                        <td style="padding: 8px 0;">{{ timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Status:</td>
+                        <td style="padding: 8px 0;">
+                            <span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                ⏳ Pending Admin Approval
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- What's Next -->
+            <div
+                style="background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #0369a1; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    🔄 What Happens Next?
+                </h3>
+                <ul style="color: #1e3a8a; margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li style="margin-bottom: 8px;">Our admin team will review your registration</li>
+                    <li style="margin-bottom: 8px;">You'll receive an email once your account is activated</li>
+                    <li style="margin-bottom: 8px;">After activation, you can login and set up your profile</li>
+                    <li>You'll have access to all NIDS security monitoring features</li>
+                </ul>
+            </div>
+
+            <!-- Estimated Time -->
+            <div style="text-align: center; margin: 30px 0; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                <div style="font-size: 14px; color: #64748b; margin-bottom: 8px;">
+                    Typical approval time
+                </div>
+                <div style="font-size: 16px; color: #334155; font-weight: 600;">
+                    1-2 Business Days
+                </div>
+            </div>
+
+            <!-- Support Info -->
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #475569; font-weight: 600; margin-bottom: 12px; font-size: 14px;">
+                    💬 Need Help?
+                </h4>
+                <p style="color: #64748b; font-size: 14px; margin: 0;">
+                    If you have questions about your registration or need to update your information,
+                    please contact our support team at
+                    <a href="mailto:{{ support_email }}"
+                       style="color: #8b5cf6; font-weight: 600; text-decoration: none;">
+                        {{ support_email }}
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 16px;">
+                This is an automated message regarding your NIDS account registration.
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px; text-align: center;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
