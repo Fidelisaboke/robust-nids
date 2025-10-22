@@ -243,6 +243,86 @@ class EmailService:
             template_name="new_user_registration.html",
         )
 
+    async def send_user_account_activated_email(
+        self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
+    ):
+        """Send an email to user about their account being activated."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="Account Activated - NIDS",
+            recipients=[user_email],
+            template_body=template_data,
+            template_name="user_account_activated.html",
+        )
+
+    async def send_admin_user_account_activated_email(
+        self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
+    ):
+        """Send notification to admins about user account activation."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="User Account Activated - NIDS",
+            recipients=[settings.SUPPORT_EMAIL],
+            template_body=template_data,
+            template_name="account_activation.html",
+        )
+
+    async def send_user_account_deactivated_email(
+        self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
+    ):
+        """Send an email to user about their account being deactivated."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="Account Deactivated - NIDS",
+            recipients=[user_email],
+            template_body=template_data,
+            template_name="user_account_deactivated.html",
+        )
+
+    async def send_admin_user_account_deactivated_email(
+        self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
+    ):
+        """Send notification to admins about user account deactivation."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="User Account Deactivated - NIDS",
+            recipients=[settings.SUPPORT_EMAIL],
+            template_body=template_data,
+            template_name="account_deactivation.html",
+        )
+
 
 # Email service dependency for dependency injection
 def get_email_service() -> EmailService:
