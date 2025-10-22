@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from api.dependencies import get_current_active_user, require_permissions
 from database.models import User
 from schemas.users import UserCreate, UserOut, UserUpdate
+from services.email_service import EmailService, get_email_service
+from services.exceptions.user import UserNotFoundError
 from services.user_service import UserService, get_user_service
 from utils.enums import SystemPermissions
 
@@ -75,9 +77,7 @@ async def get_user(user_id: int, user_service: UserService = Depends(get_user_se
     status_code=status.HTTP_200_OK,
 )
 async def update_user(
-    user_id: int,
-    user_data: UserUpdate,
-    user_service: UserService = Depends(get_user_service)
+    user_id: int, user_data: UserUpdate, user_service: UserService = Depends(get_user_service)
 ):
     """
     Update a user's information.
@@ -132,3 +132,102 @@ def admin_reset_user_mfa(
     """
     user_service.admin_reset_mfa_for_user(user_id, admin_user)
     return {"detail": "MFA has been reset for the user."}
+
+
+# Activate user account
+@router.post("/{user_id}/activate", dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))])
+async def activate_user(
+    user_id: int,
+    background_tasks: BackgroundTasks,
+    user_service: UserService = Depends(get_user_service),
+    email_service: EmailService = Depends(get_email_service),
+):
+    """
+    Activate a user account.
+
+    Args:
+        user_id (int): The ID of the user to activate.
+        user_service (UserService): The user service dependency.
+
+    Returns:
+        dict: A message indicating the activation status.
+    """
+    try:
+        user = user_service.activate_user(user_id)
+
+        # Send activation notification email to user
+        await email_service.send_user_account_activated_email(
+            background_tasks=background_tasks,
+            user_email=user.email,
+            user_name=user.first_name or user.username,
+        )
+
+        # Send activation notification email to admins
+        await email_service.send_admin_user_account_activated_email(
+            background_tasks=background_tasks,
+            user_email=user.email,
+            user_name=user.first_name or user.username,
+        )
+        return {"detail": "User account activated successfully."}
+    except UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/{user_id}/deactivate", dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))])
+async def deactivate_user(
+    user_id: int,
+    background_tasks: BackgroundTasks,
+    admin_user: User = Depends(get_current_active_user),
+    user_service: UserService = Depends(get_user_service),
+    email_service: EmailService = Depends(get_email_service),
+):
+    """
+    Deactivate a user account.
+
+    Args:
+        user_id (int): The ID of the user to deactivate.
+        user_service (UserService): The user service dependency.
+
+    Returns:
+        dict: A message indicating the deactivation status.
+    """
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot deactivate your own account.",
+        )
+    try:
+        user = user_service.deactivate_user(user_id)
+
+        # Send deactivation notification email to user
+        await email_service.send_user_account_deactivated_email(
+            background_tasks=background_tasks,
+            user_email=user.email,
+            user_name=user.first_name or user.username,
+        )
+
+        # Send deactivation notification email to admins
+        await email_service.send_admin_user_account_deactivated_email(
+            background_tasks=background_tasks,
+            user_email=user.email,
+            user_name=user.first_name or user.username,
+        )
+        return {"detail": "User account deactivated successfully."}
+    except UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )

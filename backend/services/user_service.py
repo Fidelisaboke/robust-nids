@@ -115,6 +115,30 @@ class UserService:
 
         self.user_repo.delete(user)
 
+    def activate_user(self, user_id: int) -> User | None:
+        """Activate a user account."""
+        user = self.get_user(user_id)
+
+        if user.is_active:
+            raise ValueError("User account is already active.")
+
+        updated_user = self.user_repo.update(user, {"is_active": True})
+        self.user_repo.session.flush()
+        self.user_repo.session.refresh(updated_user)
+        return updated_user
+
+    def deactivate_user(self, user_id: int) -> User | None:
+        """Deactivate a user account."""
+        user = self.get_user(user_id)
+
+        if not user.is_active:
+            raise ValueError("User account is already deactivated.")
+
+        updated_user = self.user_repo.update(user, {"is_active": False})
+        self.user_repo.session.flush()
+        self.user_repo.session.refresh(updated_user)
+        return updated_user
+
     def admin_reset_mfa_for_user(self, user_id: int, admin_user: User):
         user_to_reset = self.get_user(user_id)
         self.mfa_service.admin_disable_mfa(user_to_reset, admin_user)
