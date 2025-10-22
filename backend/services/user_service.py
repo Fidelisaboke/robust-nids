@@ -118,8 +118,6 @@ class UserService:
     def activate_user(self, user_id: int) -> User | None:
         """Activate a user account."""
         user = self.get_user(user_id)
-        if not user:
-            raise UserNotFoundError()
 
         if user.is_active:
             raise ValueError("User account is already active.")
@@ -132,8 +130,6 @@ class UserService:
     def deactivate_user(self, user_id: int) -> User | None:
         """Deactivate a user account."""
         user = self.get_user(user_id)
-        if not user:
-            raise UserNotFoundError()
 
         if not user.is_active:
             raise ValueError("User account is already deactivated.")
