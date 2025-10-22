@@ -149,8 +149,11 @@ class EmailService:
         self, background_tasks: BackgroundTasks, email: EmailStr, user_name: str
     ):
         """Send email verification complete email"""
+        login_url = f"{settings.FRONTEND_URL}/login"
+
         template_data = {
             "user_name": user_name,
+            "login_url": login_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -227,10 +230,13 @@ class EmailService:
         self, background_tasks: BackgroundTasks, user_email: str, user_name: str
     ):
         """Send notification to admins about new user registration."""
+        admin_panel_url = f"{settings.FRONTEND_URL}/admin"
+
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "admin_panel_url": admin_panel_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -267,10 +273,13 @@ class EmailService:
         self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
     ):
         """Send notification to admins about user account activation."""
+        admin_panel_url = f"{settings.FRONTEND_URL}/admin"
+
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "admin_panel_url": admin_panel_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -307,10 +316,13 @@ class EmailService:
         self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
     ):
         """Send notification to admins about user account deactivation."""
+        admin_panel_url = f"{settings.FRONTEND_URL}/admin"
+
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "admin_panel_url": admin_panel_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
