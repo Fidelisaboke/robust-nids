@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from api.dependencies import get_current_active_user, require_permissions
 from database.models import User
@@ -170,15 +170,22 @@ async def activate_user(
         )
         return {"detail": "User account activated successfully."}
     except UserNotFoundError:
-        return {"detail": "User not found."}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
     except ValueError as e:
-        return {"detail": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.post("/{user_id}/deactivate", dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))])
 async def deactivate_user(
     user_id: int,
     background_tasks: BackgroundTasks,
+    admin_user: User = Depends(get_current_active_user),
     user_service: UserService = Depends(get_user_service),
     email_service: EmailService = Depends(get_email_service),
 ):
@@ -192,6 +199,11 @@ async def deactivate_user(
     Returns:
         dict: A message indicating the deactivation status.
     """
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot deactivate your own account.",
+        )
     try:
         user = user_service.deactivate_user(user_id)
 
@@ -210,6 +222,12 @@ async def deactivate_user(
         )
         return {"detail": "User account deactivated successfully."}
     except UserNotFoundError:
-        return {"detail": "User not found."}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
     except ValueError as e:
-        return {"detail": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )

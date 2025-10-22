@@ -1,3 +1,7 @@
+from unittest.mock import patch
+
+from database.db import db
+from database.models import User
 from services.email_service import EmailService
 
 
@@ -13,6 +17,12 @@ def auth_headers(token):
 
 def test_create_user(test_client, admin_user):
     token = get_access_token(test_client, admin_user.email, "adminpass")
+    # Ensure no user with this email exists before test
+    with db.get_session() as session:
+        existing = session.query(User).filter_by(email="newusertest@example.com").first()
+        if existing:
+            session.delete(existing)
+            session.commit()
     payload = {
         "email": "newusertest@example.com",
         "username": "newusertest",
@@ -72,8 +82,6 @@ def test_delete_user(test_client, admin_user):
         "job_title": "Engineer",
     }
     test_client.post("/api/v1/auth/register", json=payload)
-    from database.db import db
-    from database.models import User
 
     with db.get_session() as session:
         user = session.query(User).filter_by(email=payload["email"]).first()
@@ -94,13 +102,19 @@ def test_admin_reset_user_mfa(test_client, admin_user, test_user):
 
 def test_activate_user(test_client, admin_user, test_user):
     token = get_access_token(test_client, admin_user.email, "adminpass")
-    from unittest.mock import patch
+
+    # Ensure the user is deactivated before activation test
+    with db.get_session() as session:
+        user = session.get(User, test_user.id)
+        user.is_active = False
+        session.commit()
 
     with (
         patch.object(EmailService, "send_user_account_activated_email"),
         patch.object(EmailService, "send_admin_user_account_activated_email"),
     ):
         resp = test_client.post(f"/api/v1/users/{test_user.id}/activate", headers=auth_headers(token))
+        print(resp.json())
         assert resp.status_code == 200
         detail = resp.json()["detail"]
         assert "activated successfully" in detail or "already active" in detail
@@ -108,7 +122,6 @@ def test_activate_user(test_client, admin_user, test_user):
 
 def test_deactivate_user(test_client, admin_user, test_user):
     token = get_access_token(test_client, admin_user.email, "adminpass")
-    from unittest.mock import patch
 
     with (
         patch.object(EmailService, "send_user_account_deactivated_email"),
@@ -117,3 +130,10 @@ def test_deactivate_user(test_client, admin_user, test_user):
         resp = test_client.post(f"/api/v1/users/{test_user.id}/deactivate", headers=auth_headers(token))
         assert resp.status_code == 200
         assert "deactivated successfully" in resp.json()["detail"]
+
+def test_admin_cannot_deactivate_self(test_client, admin_user):
+    token = get_access_token(test_client, admin_user.email, "adminpass")
+
+    resp = test_client.post(f"/api/v1/users/{admin_user.id}/deactivate", headers=auth_headers(token))
+    assert resp.status_code == 400
+    assert "cannot deactivate your own account" in resp.json()["detail"]
