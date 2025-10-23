@@ -1,4 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 
 from api.dependencies import get_current_active_user, require_permissions
 from database.models import User
@@ -35,19 +37,19 @@ async def create_user(user_data: UserCreate, user_service: UserService = Depends
 
 @router.get(
     "/",
-    response_model=list[UserOut],
+    response_model=Page[UserOut],
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
 )
-async def list_users(user_service: UserService = Depends(get_user_service)):
+async def list_users(user_service: UserService = Depends(get_user_service)) -> Page[UserOut]:
     """
     List all users in the system.
 
     Returns:
-        list[UserOut]: A list of user objects.
+        Page[UserOut]: A paginated list of user objects.
         user_service (UserService): The user service dependency.
     """
-    return user_service.list_users()
+    return paginate(user_service.list_users())
 
 
 @router.get(
@@ -134,7 +136,6 @@ def admin_reset_user_mfa(
     return {"detail": "MFA has been reset for the user."}
 
 
-# Activate user account
 @router.post("/{user_id}/activate", dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))])
 async def activate_user(
     user_id: int,

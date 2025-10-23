@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from typing import Type
 
 from fastapi import Depends
+from sqlalchemy.orm import Query
 
 from core.config import settings
 from core.dependencies import get_role_repository, get_user_repository
@@ -67,7 +67,7 @@ class UserService:
             raise UserNotFoundError()
         return user
 
-    def list_users(self, active_only: bool = False) -> list[Type[User]]:
+    def list_users(self, active_only: bool = False) -> Query:
         """List all users, optionally filtering by active status."""
         return self.user_repo.list_all(active_only=active_only)
 

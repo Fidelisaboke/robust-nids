@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_pagination import add_pagination
 
 from api.exception_handlers import exc_handlers
 from api.middleware import ServiceExceptionHandlerMiddleware
@@ -9,11 +10,15 @@ from core.config import settings
 
 app = FastAPI(title=f"{settings.APP_NAME} API", version="0.1.0")
 
+
 # Origins (Frontend URLs)
 origins = settings.BACKEND_CORS_ORIGINS
 
 # Service exception handling middleware
 app.add_middleware(ServiceExceptionHandlerMiddleware)  # noqa
+
+# Pagination support
+add_pagination(app)
 
 # Add CORS middleware
 app.add_middleware(

@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
 from hmac import compare_digest
-from typing import Type
 
 from pydantic import EmailStr
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Query, joinedload
 
 from database.models import Role, User
 from database.repositories.base import BaseRepository
@@ -90,12 +89,12 @@ class UserRepository(BaseRepository):
             .first()
         )
 
-    def list_all(self, active_only: bool = False) -> list[Type[User]]:
-        """Return all users, optionally filtering by active status."""
+    def list_all(self, active_only: bool = False) -> Query:
+        """Return a query for all users, optionally filtering by active status."""
         query = self.session.query(User).options(joinedload(User.roles))
         if active_only:
             query = query.filter(User.is_active.is_(True))
-        return query.all()
+        return query
 
     def create(self, data: dict) -> User:
         """Create a new user."""
