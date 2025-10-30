@@ -92,7 +92,7 @@ def login(request: LoginRequest, auth_service: AuthService = Depends(get_auth_se
         user_in_session.last_login = datetime.now(timezone.utc)
         session.commit()
 
-    return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token)
+    return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token, user=user)
 
 
 @router.post("/register", response_model=UserRegistrationResponse)
