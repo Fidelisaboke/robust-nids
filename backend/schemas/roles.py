@@ -1,10 +1,13 @@
 from pydantic import BaseModel, ConfigDict
 
+from schemas.permissions import PermissionOut
+
 
 class RoleOut(BaseModel):
     id: int
     name: str
     description: str | None = None
+    permissions: list[PermissionOut] = []
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -1,5 +1,5 @@
-from typing import Type
 
+from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from database.models import Permission, Role
@@ -21,9 +21,9 @@ class RoleRepository(BaseRepository):
             self.session.query(Role).options(joinedload(Role.permissions)).filter(Role.name == name).first()
         )
 
-    def list_all(self) -> list[Type[Role]]:
+    def list_all(self):
         """Return all roles."""
-        return self.session.query(Role).options(joinedload(Role.permissions)).all()
+        return select(Role).options(joinedload(Role.permissions))
 
     def create(self, data: dict) -> Role:
         """Create a new role."""

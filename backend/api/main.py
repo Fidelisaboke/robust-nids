@@ -5,7 +5,7 @@ from fastapi_pagination import add_pagination
 
 from api.exception_handlers import exc_handlers
 from api.middleware import ServiceExceptionHandlerMiddleware
-from api.routers import auth, mfa, nids, users
+from api.routers import auth, mfa, nids, roles, users
 from core.config import settings
 
 app = FastAPI(title=f"{settings.APP_NAME} API", version="0.1.0")
@@ -48,6 +48,7 @@ async def add_body_to_state(request: Request, call_next):
 app.include_router(auth.router)
 app.include_router(mfa.router)
 app.include_router(users.router)
+app.include_router(roles.router)
 app.include_router(nids.router)
 
 
