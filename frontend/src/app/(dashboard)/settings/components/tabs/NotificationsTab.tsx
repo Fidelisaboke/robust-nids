@@ -1,7 +1,7 @@
 import { User } from "@/types/auth";
 
 interface NotificationsTabProps {
-  user: User | undefined;
+  user: User | null;
 }
 
 export function NotificationsTab({ user }: NotificationsTabProps) {

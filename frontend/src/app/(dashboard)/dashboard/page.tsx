@@ -9,10 +9,10 @@ import {
   Users,
   Server,
 } from "lucide-react";
-import { useCurrentUser } from "@/hooks/useAuthMutations";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardPage() {
-  const { data: user } = useCurrentUser();
+  const { user } = useAuth();
 
   const stats = [
     {

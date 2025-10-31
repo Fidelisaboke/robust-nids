@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useCurrentUser } from "@/hooks/useAuthMutations";
 import { SettingsLayout } from "./components/SettingsLayout";
 import { SettingsTabs } from "./components/SettingsTabs";
 import { ProfileTab } from "./components/tabs/ProfileTab";
@@ -10,6 +9,7 @@ import { NotificationsTab } from "./components/tabs/NotificationsTab";
 import { DisableMfaDialog } from "./components/DisableMfaDialog";
 import { User, Bell, Lock } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -20,7 +20,7 @@ const tabs = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("security");
   const [disableMfaDialogOpen, setDisableMfaDialogOpen] = useState(false);
-  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { user, isLoading: userLoading } = useAuth();
 
   if (userLoading) {
     return (

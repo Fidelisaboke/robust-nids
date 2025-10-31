@@ -8,7 +8,7 @@ import { SessionsSection } from "./security/SessionsSection";
 import { DisableMfaDialog } from "../DisableMfaDialog";
 
 interface SecurityTabProps {
-  user: User | undefined;
+  user: User | null;
 }
 
 export function SecurityTab({ user }: SecurityTabProps) {

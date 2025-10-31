@@ -7,7 +7,7 @@ import { normalizeError } from "@/lib/api/apiClient";
 import { useRouter } from "next/navigation";
 
 interface MfaSectionProps {
-  user: User | undefined;
+  user: User | null;
   onDisableMfa: () => void;
 }
 

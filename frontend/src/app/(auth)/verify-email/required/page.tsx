@@ -20,37 +20,66 @@ export default function VerificationRequiredPage() {
 
 function VerificationRequiredPageContent() {
   const searchParams = useSearchParams();
-  const emailFromParams = searchParams.get("email");
-  const email =
-    emailFromParams || sessionStorage.getItem("unverified_email") || "";
+  const email = searchParams.get("email");
   const [isResending, setIsResending] = useState(false);
   const { mutateAsync: requestEmailVerification } =
     useRequestEmailVerificationMutation();
 
-  const handleResendVerification = useCallback(
-    async (data?: string) => {
-      const emailToUse = data || email;
-      if (!emailToUse) return;
+  const handleResendVerification = useCallback(async () => {
+    if (!email) return;
 
-      setIsResending(true);
-      try {
-        const response = await requestEmailVerification(emailToUse);
-        toast.success(response.detail);
-      } catch (error) {
-        const normalizedError = normalizeError(error);
-        toast.error(normalizedError.message);
-      } finally {
-        setIsResending(false);
-      }
-    },
-    [email, requestEmailVerification],
-  );
+    setIsResending(true);
+    try {
+      const response = await requestEmailVerification(email);
+      toast.success(response.detail);
+    } catch (error) {
+      const normalizedError = normalizeError(error);
+      toast.error(normalizedError.message);
+    } finally {
+      setIsResending(false);
+    }
+  }, [email, requestEmailVerification]);
 
   // Send email verification request when first landing on the page
   useEffect(() => {
     void handleResendVerification();
   }, [handleResendVerification]);
 
+  // Invalid state if no email is provided
+  if (!email) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6 text-center"
+      >
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
+          <AlertCircle className="w-10 h-10 text-red-400" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-white">Invalid Page</h1>
+          <p className="text-gray-400 text-lg">No email address was found.</p>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4 text-left">
+          <p className="text-gray-300">
+            Please return to the login page and try signing in again.
+          </p>
+        </div>
+        <div className="space-y-4 pt-4">
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center w-full py-3 px-4 border border-slate-700 text-slate-300 font-medium rounded-lg hover:bg-slate-800 hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Login
+          </Link>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Main verified email required state
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
