@@ -53,7 +53,7 @@ class UserService:
         # Assign roles
         if not user_dict.get("roles"):
             raise RoleNotAssignedError()
-        user_dict["roles"] = self._handle_role_updates(user_dict)
+        user_dict["roles"] = self._handle_role_updates(user_dict["roles"])
 
         new_user = self.user_repo.create(user_dict)
         self.user_repo.session.flush()
@@ -143,10 +143,26 @@ class UserService:
         user_to_reset = self.get_user(user_id)
         self.mfa_service.admin_disable_mfa(user_to_reset, admin_user)
 
-    def _handle_role_updates(self, data: dict):
+    def update_user_roles(self, user_id: int, roles: list[int] | None = None):
+        user = self.get_user(user_id)
+
+        # Return early if roles have not been provided
+        if not roles:
+            return user
+
+        # Get role objects
+        role_objects = self._handle_role_updates(roles)
+
+        # Update user roles
+        updated_user = self.user_repo.update(user, {"roles": role_objects})
+        self.user_repo.session.flush()
+        self.user_repo.session.refresh(updated_user)
+        return updated_user
+
+    def _handle_role_updates(self, roles: list):
         """Replace role IDs with actual Role objects."""
         role_objects = []
-        for role_id in data["roles"]:
+        for role_id in roles:
             role = self.role_repo.get_by_id(role_id)
             if not role:
                 raise RoleNotFoundError(role_id)

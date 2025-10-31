@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from hmac import compare_digest
 
 from pydantic import EmailStr
-from sqlalchemy.orm import Query, joinedload
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from database.models import Role, User
 from database.repositories.base import BaseRepository
@@ -38,14 +39,9 @@ class UserRepository(BaseRepository):
             .first()
         )
 
-
     def get_existing_user(self, email: EmailStr, username: str) -> User | None:
         """Check for existing user by email or username (for uniqueness checks)."""
-        return (
-            self.session.query(User)
-            .filter((User.email == email) | (User.username == username))
-            .first()
-        )
+        return self.session.query(User).filter((User.email == email) | (User.username == username)).first()
 
     def get_by_mfa_recovery_token(self, token: str) -> User | None:
         """Fetch user by MFA recovery token."""
@@ -72,7 +68,7 @@ class UserRepository(BaseRepository):
 
         # Use constant-time comparison
         for user in users:
-            if (user.email_verification_token and compare_digest(user.email_verification_token, token)):
+            if user.email_verification_token and compare_digest(user.email_verification_token, token):
                 return user
 
         return None
@@ -89,12 +85,12 @@ class UserRepository(BaseRepository):
             .first()
         )
 
-    def list_all(self, active_only: bool = False) -> Query:
-        """Return a query for all users, optionally filtering by active status."""
-        query = self.session.query(User).options(joinedload(User.roles))
+    def list_all(self, active_only: bool = False):
+        """Return a SQLAlchemy Select for all users, optionally filtering by active status."""
+        stmt = select(User).options(joinedload(User.roles))
         if active_only:
-            query = query.filter(User.is_active.is_(True))
-        return query
+            stmt = stmt.where(User.is_active.is_(True))
+        return stmt
 
     def create(self, data: dict) -> User:
         """Create a new user."""

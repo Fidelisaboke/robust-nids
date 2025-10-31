@@ -4,9 +4,9 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 
 from api.dependencies import get_current_active_user, require_permissions
 from database.models import User
-from schemas.users import UserCreate, UserOut, UserUpdate
+from schemas.users import UserCreate, UserOut, UserRoleUpdateRequest, UserRoleUpdateResponse, UserUpdate
 from services.email_service import EmailService, get_email_service
-from services.exceptions.user import UserNotFoundError
+from services.exceptions.user import RoleNotFoundError, UserNotFoundError
 from services.user_service import UserService, get_user_service
 from utils.enums import SystemPermissions
 
@@ -49,7 +49,7 @@ async def list_users(user_service: UserService = Depends(get_user_service)) -> P
         Page[UserOut]: A paginated list of user objects.
         user_service (UserService): The user service dependency.
     """
-    return paginate(user_service.list_users())
+    return paginate(user_service.user_repo.session, user_service.list_users())
 
 
 @router.get(
@@ -230,5 +230,52 @@ async def deactivate_user(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.put(
+    "/{user_id}/roles",
+    response_model=UserRoleUpdateResponse,
+    dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
+)
+async def update_user_roles(
+    request: UserRoleUpdateRequest,
+    user_id: int,
+    admin_user: User = Depends(get_current_active_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    """
+    Assign or update a user's roles.
+
+    Args:
+        request (UserRoleUpdateRequest): The new list of role IDs to assign to the user.
+        user_id (int): The ID of the user whose roles are being updated.
+        admin_user (User, optional): The currently authenticated admin user (injected).
+        user_service (UserService, optional): The user service dependency (injected).
+
+    Raises:
+        HTTPException: 400 if the admin attempts to change their own roles.
+        HTTPException: 404 if the user or any role is not found.
+
+    Returns:
+        UserRoleUpdateResponse: Details of the update and the updated user object.
+    """
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot change your own role.",
+        )
+    try:
+        user = user_service.update_user_roles(user_id, request.roles)
+        return UserRoleUpdateResponse(detail="User role(s) updated successfully.", user=user)
+    except UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    except RoleNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
