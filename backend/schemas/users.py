@@ -60,3 +60,11 @@ class UserUpdate(BaseModel):
     roles: Optional[List[int]] = None  # List of role IDs
     preferences: Optional[dict] = {}
     is_active: Optional[bool] = None
+
+class UserRoleUpdateRequest(BaseModel):
+    roles: list[int] | None = None
+
+
+class UserRoleUpdateResponse(BaseModel):
+    detail: str
+    user: UserOut
