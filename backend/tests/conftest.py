@@ -7,6 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 from fastapi_mail import ConnectionConfig
 
+# Add FastAPI pagination for tests
+from fastapi_pagination import add_pagination
+
 # Local application imports
 from api.main import app
 from core.config import settings
@@ -16,6 +19,8 @@ from database.repositories.permission import PermissionRepository
 from database.repositories.role import RoleRepository
 from services.email_service import EmailService, get_email_service
 from utils.enums import SystemPermissions, SystemRoles
+
+add_pagination(app)
 
 test_mail_conf = ConnectionConfig(
     MAIL_USERNAME="test@example.com",
@@ -186,3 +191,19 @@ def unverified_user():
         yield user
         session.delete(user)
         session.commit()
+
+
+# Fixture for a test role
+@pytest.fixture(scope="function")
+def test_role():
+    with db.get_session() as session:
+        role_repo = RoleRepository(session)
+        role_data = {"name": "test_role"}
+        role = role_repo.create(role_data)
+        session.commit()
+        yield role
+        # Only delete if still present
+        refreshed_role = session.query(type(role)).filter_by(id=role.id).first()
+        if refreshed_role is not None:
+            session.delete(refreshed_role)
+            session.commit()
