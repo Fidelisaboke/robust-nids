@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
+from schemas.users import UserOut
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -10,6 +12,7 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user: UserOut | None = None
 
 
 class MFAChallengeResponse(BaseModel):

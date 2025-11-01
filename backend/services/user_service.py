@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from typing import Type
 
 from fastapi import Depends
+from sqlalchemy.orm import Query
 
 from core.config import settings
 from core.dependencies import get_role_repository, get_user_repository
@@ -50,10 +50,11 @@ class UserService:
         # Default preferences
         user_dict["preferences"] = settings.DEFAULT_USER_PREFERENCES
 
-        # Assign roles
-        if not user_dict.get("roles"):
+        # Map role_ids to roles for DB
+        role_ids = user_dict.pop("role_ids", None)
+        if not role_ids:
             raise RoleNotAssignedError()
-        user_dict["roles"] = self._handle_role_updates(user_dict)
+        user_dict["roles"] = self._handle_role_updates(role_ids)
 
         new_user = self.user_repo.create(user_dict)
         self.user_repo.session.flush()
@@ -67,9 +68,9 @@ class UserService:
             raise UserNotFoundError()
         return user
 
-    def list_users(self, active_only: bool = False) -> list[Type[User]]:
-        """List all users, optionally filtering by active status."""
-        return self.user_repo.list_all(active_only=active_only)
+    def list_users(self, active_only: bool = False, created_after: datetime | None = None) -> Query:
+        """List all users, optionally filtering by active status and creation date."""
+        return self.user_repo.list_all(active_only=active_only, created_after=created_after)
 
     def update_user(self, user_id: int, update_data: UserUpdate) -> User:
         """Handles updating an existing user."""
@@ -92,8 +93,9 @@ class UserService:
             update_dict["password_hash"] = get_password_hash(update_dict.pop("password"))
 
         # Handle role updates
-        if "roles" in update_dict:
-            update_dict["roles"] = self._handle_role_updates(update_dict)
+        if "role_ids" in update_dict:
+            role_ids = update_dict.pop("role_ids", None)
+            update_dict["roles"] = self._handle_role_updates(role_ids)
 
         # Merge preferences
         if "preferences" in update_dict:
@@ -143,10 +145,26 @@ class UserService:
         user_to_reset = self.get_user(user_id)
         self.mfa_service.admin_disable_mfa(user_to_reset, admin_user)
 
-    def _handle_role_updates(self, data: dict):
+    def update_user_roles(self, user_id: int, roles: list[int] | None = None):
+        user = self.get_user(user_id)
+
+        # Return early if roles have not been provided
+        if not roles:
+            return user
+
+        # Get role objects
+        role_objects = self._handle_role_updates(roles)
+
+        # Update user roles
+        updated_user = self.user_repo.update(user, {"roles": role_objects})
+        self.user_repo.session.flush()
+        self.user_repo.session.refresh(updated_user)
+        return updated_user
+
+    def _handle_role_updates(self, roles: list):
         """Replace role IDs with actual Role objects."""
         role_objects = []
-        for role_id in data["roles"]:
+        for role_id in roles:
             role = self.role_repo.get_by_id(role_id)
             if not role:
                 raise RoleNotFoundError(role_id)

@@ -1,11 +1,17 @@
 # Standard library imports
 import os
 
+# Force test environment for test DB isolation
+os.environ["ENVIRONMENT"] = "test"
+
 # Third-party imports
 import bcrypt
 import pytest
 from fastapi.testclient import TestClient
 from fastapi_mail import ConnectionConfig
+
+# Add FastAPI pagination for tests
+from fastapi_pagination import add_pagination
 
 # Local application imports
 from api.main import app
@@ -16,6 +22,8 @@ from database.repositories.permission import PermissionRepository
 from database.repositories.role import RoleRepository
 from services.email_service import EmailService, get_email_service
 from utils.enums import SystemPermissions, SystemRoles
+
+add_pagination(app)
 
 test_mail_conf = ConnectionConfig(
     MAIL_USERNAME="test@example.com",
@@ -134,20 +142,22 @@ def admin_user():
         role_repo = RoleRepository(session)
         perm_repo = PermissionRepository(session)
 
-        # Ensure manage_users permission exists
-        manage_users_perm = perm_repo.get_by_name(SystemPermissions.MANAGE_USERS)
-        if not manage_users_perm:
-            permission_data = {"name": SystemPermissions.MANAGE_USERS}
-            manage_users_perm = perm_repo.create(permission_data)
+        # Ensure all system permissions exist and are assigned to admin role
+        all_permissions = []
+        for perm in SystemPermissions:
+            p = perm_repo.get_by_name(perm)
+            if not p:
+                p = perm_repo.create({"name": perm})
+            all_permissions.append(p)
 
-        # Ensure admin role exists and has permission
+        # Ensure admin role exists and has all permissions
         admin_role = role_repo.get_by_name(SystemRoles.ADMIN)
         if not admin_role:
-            role_data = {"name": SystemRoles.ADMIN}
-            admin_role = role_repo.create(role_data)
-        if manage_users_perm not in admin_role.permissions:
-            role_repo.add_permission(admin_role, manage_users_perm)
-            session.commit()
+            admin_role = role_repo.create({"name": SystemRoles.ADMIN})
+        for perm in all_permissions:
+            if perm not in admin_role.permissions:
+                role_repo.add_permission(admin_role, perm)
+        session.commit()
 
         user = User(
             email="mock_admin_test@example.com",
@@ -186,3 +196,19 @@ def unverified_user():
         yield user
         session.delete(user)
         session.commit()
+
+
+# Fixture for a test role
+@pytest.fixture(scope="function")
+def test_role():
+    with db.get_session() as session:
+        role_repo = RoleRepository(session)
+        role_data = {"name": "test_role"}
+        role = role_repo.create(role_data)
+        session.commit()
+        yield role
+        # Only delete if still present
+        refreshed_role = session.query(type(role)).filter_by(id=role.id).first()
+        if refreshed_role is not None:
+            session.delete(refreshed_role)
+            session.commit()

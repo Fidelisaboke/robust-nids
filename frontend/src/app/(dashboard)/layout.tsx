@@ -19,9 +19,9 @@ import {
   ChevronDown,
   User,
   Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCurrentUser } from "@/hooks/useAuthMutations";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 
 export default function DashboardLayout({
@@ -31,8 +31,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout, isAuthenticated, isLoading } = useAuth();
-  const { data: user } = useCurrentUser(isAuthenticated);
+  const { user, isAdmin, logout, isAuthenticated, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -153,6 +152,16 @@ export default function DashboardLayout({
                     exit={{ opacity: 0, y: -10 }}
                     className="absolute bottom-full left-0 right-0 mb-2 bg-slate-700 border border-slate-600 rounded-lg shadow-xl overflow-hidden"
                   >
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center space-x-3 px-4 py-3 text-emerald-400 hover:bg-slate-600 hover:text-emerald-300 transition-colors"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span className="text-sm">Admin Panel</span>
+                      </Link>
+                    )}
                     <Link
                       href="/settings"
                       onClick={() => setUserMenuOpen(false)}

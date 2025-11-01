@@ -12,7 +12,7 @@ import { User } from "@/types/auth";
 const DEFAULT_LOCATION = "Unknown";
 
 interface SessionsSectionProps {
-  user: User | undefined;
+  user: User | null;
 }
 
 export function SessionsSection({ user }: SessionsSectionProps) {

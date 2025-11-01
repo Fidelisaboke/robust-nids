@@ -1,19 +1,24 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_pagination import add_pagination
 
 from api.exception_handlers import exc_handlers
 from api.middleware import ServiceExceptionHandlerMiddleware
-from api.routers import auth, mfa, nids, users
+from api.routers import auth, mfa, nids, roles, users
 from core.config import settings
 
 app = FastAPI(title=f"{settings.APP_NAME} API", version="0.1.0")
+
 
 # Origins (Frontend URLs)
 origins = settings.BACKEND_CORS_ORIGINS
 
 # Service exception handling middleware
 app.add_middleware(ServiceExceptionHandlerMiddleware)  # noqa
+
+# Pagination support
+add_pagination(app)
 
 # Add CORS middleware
 app.add_middleware(
@@ -43,6 +48,7 @@ async def add_body_to_state(request: Request, call_next):
 app.include_router(auth.router)
 app.include_router(mfa.router)
 app.include_router(users.router)
+app.include_router(roles.router)
 app.include_router(nids.router)
 
 

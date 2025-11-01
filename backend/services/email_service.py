@@ -335,6 +335,26 @@ class EmailService:
             template_name="account_deactivation.html",
         )
 
+    async def send_user_account_updated_email(
+        self, background_tasks: BackgroundTasks, user_email: EmailStr, user_name: str
+    ):
+        """Send an email to user about their account being updated."""
+        template_data = {
+            "user_email": user_email,
+            "user_name": user_name,
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject="Account Updated - NIDS",
+            recipients=[user_email],
+            template_body=template_data,
+            template_name="user_account_updated.html",
+        )
+
 
 # Email service dependency for dependency injection
 def get_email_service() -> EmailService:

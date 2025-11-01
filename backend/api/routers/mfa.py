@@ -74,7 +74,7 @@ def verify_mfa(
     mfa_service.complete_mfa_login(user, payload.code)
     access = create_access_token(user.id)
     refresh = create_refresh_token(user.id)
-    return TokenResponse(access_token=access, refresh_token=refresh)
+    return TokenResponse(access_token=access, refresh_token=refresh, user=user)
 
 
 @router.post("/disable", response_model=MFADisableResponse)

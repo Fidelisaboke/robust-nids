@@ -1,7 +1,7 @@
 import { User } from "@/types/auth";
 
 interface ProfileTabProps {
-  user: User | undefined;
+  user: User | null;
 }
 
 export function ProfileTab({ user }: ProfileTabProps) {

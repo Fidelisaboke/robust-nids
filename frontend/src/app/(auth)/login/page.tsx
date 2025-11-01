@@ -44,7 +44,13 @@ export default function LoginPage() {
         router.push("/login/verify-mfa");
       } else if ("access_token" in response && "refresh_token" in response) {
         // Login successful without MFA
-        login(response.access_token, response.refresh_token);
+        login(response.access_token, response.refresh_token, response.user);
+        const isAdmin =
+          response.user?.roles.some((role) => role.name === "admin") ?? false;
+        if (isAdmin) {
+          router.push("/admin");
+          return;
+        }
         router.push("/dashboard");
       }
     } catch (error) {

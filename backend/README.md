@@ -178,8 +178,38 @@ pre-commit run --all-files
 | `pytest`                                  | Run tests                  |
 | `pytest --cov`                            | Run tests with coverage    |
 | `ruff check .`                            | Lint code                  |
+
 | `ruff format .`                           | Format code                |
 | `detect-secrets scan > .secrets.baseline` | Generate secret baseline   |
+
+## Test Database Isolation
+
+To ensure tests do not leak data into your local development database, tests use a separate test database (`nids_test_db`).
+
+### How it works
+
+- Test configuration is loaded from `.env.test` (see file for details).
+- When running tests, the environment variable `ENVIRONMENT=test` is set automatically.
+- Alembic migrations must be applied to the test database before running tests.
+
+### Initial Setup
+
+1. **Run the setup script**
+	```
+    ./scripts/setup_test_db
+    ```
+2. **Run Alembic Migrations**
+    ```
+    ENVIRONMENT=test alembic upgrade head
+    ```
+3. **Run tests:**
+	```bash
+	uv run pytest -v
+	```
+
+### Notes
+- All test data is isolated from your local/dev database.
+- You can customize `.env.test` for your environment.
 
 ## Dataset Configuration
 

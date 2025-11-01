@@ -141,6 +141,7 @@ export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
+  user?: User;
 }
 
 export interface MFARequiredResponse {
@@ -178,7 +179,14 @@ export interface MfaRecoveryResponse {
   detail: string;
 }
 
-export interface UserRole {
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  permissions: Permission[];
+}
+
+export interface Permission {
   id: number;
   name: string;
   description: string | null;
@@ -223,7 +231,7 @@ export interface User {
   email_verified_at: string | null;
   phone_verified: boolean;
   phone_verified_at: string | null;
-  roles: UserRole[];
+  roles: Role[];
   created_at: string;
   last_login: string;
   is_active: boolean;

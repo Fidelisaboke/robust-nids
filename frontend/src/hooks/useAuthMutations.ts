@@ -10,7 +10,9 @@ import type {
   ChangePasswordRequest,
   ResetPasswordRequest,
   UserRegisterRequest,
+  LoginResponse,
 } from "@/types/auth";
+import { AxiosError } from "axios";
 
 export const AUTH_QUERY_KEYS = {
   currentUser: ["auth", "currentUser"] as const,
@@ -19,7 +21,7 @@ export const AUTH_QUERY_KEYS = {
 
 // Login mutation
 export const useLoginMutation = () => {
-  return useMutation({
+  return useMutation<LoginResponse, AxiosError, LoginRequest>({
     mutationFn: (data: LoginRequest) => authApi.login(data),
     retry: false,
   });

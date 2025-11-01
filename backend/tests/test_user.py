@@ -23,6 +23,15 @@ def test_create_user(test_client, admin_user):
         if existing:
             session.delete(existing)
             session.commit()
+        # Create a test role to assign
+        from database.repositories.role import RoleRepository
+
+        role_repo = RoleRepository(session)
+        test_role = role_repo.get_by_name("test_create_user_role")
+        if not test_role:
+            test_role = role_repo.create({"name": "test_create_user_role"})
+        session.commit()
+        test_role_id = test_role.id
     payload = {
         "email": "newusertest@example.com",
         "username": "newusertest",
@@ -33,10 +42,10 @@ def test_create_user(test_client, admin_user):
         "department": "IT",
         "job_title": "Engineer",
         "is_active": True,
-        "roles": [admin_user.roles[0].id] if admin_user.roles else [],
+        "role_ids": [test_role_id],
     }
     resp = test_client.post("/api/v1/users/", json=payload, headers=auth_headers(token))
-    assert resp.status_code == 201
+    assert resp.status_code == 201, f"Response: {resp.status_code}, {resp.text}"
     data = resp.json()
     assert data["email"] == payload["email"]
     assert data["username"] == payload["username"]
@@ -46,7 +55,9 @@ def test_list_users(test_client, admin_user):
     token = get_access_token(test_client, admin_user.email, "adminpass")
     resp = test_client.get("/api/v1/users/", headers=auth_headers(token))
     assert resp.status_code == 200
-    assert isinstance(resp.json(), list)
+    data = resp.json()
+    assert "items" in data
+    assert isinstance(data["items"], list)
 
 
 def test_get_user(test_client, admin_user, test_user):
@@ -131,9 +142,60 @@ def test_deactivate_user(test_client, admin_user, test_user):
         assert resp.status_code == 200
         assert "deactivated successfully" in resp.json()["detail"]
 
+
 def test_admin_cannot_deactivate_self(test_client, admin_user):
     token = get_access_token(test_client, admin_user.email, "adminpass")
 
     resp = test_client.post(f"/api/v1/users/{admin_user.id}/deactivate", headers=auth_headers(token))
     assert resp.status_code == 400
     assert "cannot deactivate your own account" in resp.json()["detail"]
+
+
+def test_update_user_roles_success(test_client, admin_user, test_user, test_role):
+    token = get_access_token(test_client, admin_user.email, "adminpass")
+    # Ensure test_user and test_role are in the same session and visible
+    with db.get_session() as session:
+        user = session.get(User, test_user.id)
+        role = session.get(type(test_role), test_role.id)
+        assert user is not None, "Test user not found in DB"
+        assert role is not None, "Test role not found in DB"
+    # Assign test_role to test_user
+    payload = {"role_ids": [test_role.id]}
+    resp = test_client.put(
+        f"/api/v1/users/{test_user.id}/roles",
+        json=payload,
+        headers=auth_headers(token),
+    )
+    assert resp.status_code == 200, f"Response: {resp.status_code}, {resp.text}"
+    data = resp.json()
+    # The response should have roles under data["user"]["roles"]
+    assert any(role["id"] == test_role.id for role in data["user"]["roles"])
+    # Confirm in DB
+    with db.get_session() as session:
+        user = session.get(User, test_user.id)
+        assert any(role.id == test_role.id for role in user.roles)
+
+
+def test_update_user_roles_self_change_forbidden(test_client, admin_user, test_role):
+    token = get_access_token(test_client, admin_user.email, "adminpass")
+    payload = {"role_ids": [test_role.id]}
+    resp = test_client.put(
+        f"/api/v1/users/{admin_user.id}/roles",
+        json=payload,
+        headers=auth_headers(token),
+    )
+    assert resp.status_code == 400
+    assert "cannot change your own role" in resp.json()["detail"].lower()
+
+
+def test_update_user_roles_invalid_role_id(test_client, admin_user, test_user):
+    token = get_access_token(test_client, admin_user.email, "adminpass")
+    invalid_role_id = 999999  # unlikely to exist
+    payload = {"role_ids": [invalid_role_id]}
+    resp = test_client.put(
+        f"/api/v1/users/{test_user.id}/roles",
+        json=payload,
+        headers=auth_headers(token),
+    )
+    assert resp.status_code == 404
+    assert "not found" in resp.json()["detail"].lower()

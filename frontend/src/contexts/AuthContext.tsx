@@ -13,6 +13,7 @@ import { authApi } from "@/lib/api/authApi";
 
 interface AuthContextType {
   user: User | null;
+  isAdmin: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
@@ -86,10 +87,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem("mfa_challenge_token");
   };
 
+  const isAdmin = user?.roles.some((role) => role.name === "admin") ?? false;
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
     isLoading,
+    isAdmin,
     setUser,
     login,
     logout,
