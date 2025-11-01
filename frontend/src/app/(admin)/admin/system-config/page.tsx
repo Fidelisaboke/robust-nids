@@ -169,9 +169,10 @@ export default function SystemConfigPage() {
               <input
                 type="number"
                 value={config.sessionTimeout}
-                onChange={(e) =>
-                  handleChange("sessionTimeout", parseInt(e.target.value))
-                }
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  handleChange("sessionTimeout", isNaN(value) ? 0 : value);
+                }}
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>

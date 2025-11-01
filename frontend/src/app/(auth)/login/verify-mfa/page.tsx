@@ -58,7 +58,6 @@ export default function VerifyMfaPage() {
       if (response.access_token && response.refresh_token) {
         clearMfaChallengeToken();
         login(response.access_token, response.refresh_token, response.user);
-        console.log(response.user);
         const isAdmin =
           response.user?.roles.some((role) => role.name === "admin") ?? false;
         if (isAdmin) {

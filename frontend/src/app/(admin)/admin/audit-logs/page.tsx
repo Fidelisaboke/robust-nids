@@ -16,7 +16,9 @@ export default function AuditLogsPage() {
     (log) =>
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.admin_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.target_user_email?.toLowerCase().includes(searchTerm.toLowerCase()),
+      (log.target_user_email || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
   );
 
   const getActionColor = (action: string) => {

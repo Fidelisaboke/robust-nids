@@ -29,6 +29,18 @@ export const useUsers = (params?: UserListParams) => {
   });
 };
 
+// Get recent users
+export const useRecentUsers = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  const created_after = date.toISOString().split("T")[0];
+
+  return useQuery({
+    queryKey: userKeys.recent(days),
+    queryFn: () => usersApi.getUsers({ created_after }),
+  });
+};
+
 // Get single user
 export const useUser = (id: number) => {
   return useQuery({

@@ -119,7 +119,7 @@ function VerificationRequiredPageContent() {
       {/* Action Buttons */}
       <div className="space-y-4 pt-4">
         <button
-          onClick={() => handleResendVerification(email)}
+          onClick={() => handleResendVerification()}
           disabled={isResending || !email}
           className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >

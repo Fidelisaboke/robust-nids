@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
@@ -21,11 +20,11 @@ import {
   useUsers,
   usePendingRegistrations,
   useAuditLogs,
+  useRecentUsers,
 } from "@/hooks/useUserManagement";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { getRecentUsers } from "@/lib/utils";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -33,17 +32,13 @@ export default function AdminDashboardPage() {
   const { data: usersData } = useUsers({ size: 100 });
   const { data: pendingData } = usePendingRegistrations(1, 10);
   const { data: auditData } = useAuditLogs(1, 10);
-
-  const recentUsers = useMemo(
-    () => getRecentUsers(usersData?.items, 7),
-    [usersData],
-  );
+  const { data: recentUsers } = useRecentUsers(7);
 
   const stats = [
     {
       name: "Total Users",
       value: usersData?.total || 0,
-      change: recentUsers.length || 0,
+      change: recentUsers?.items?.length || 0,
       changeText: "new this week",
       changeType: "increase",
       icon: Users,
@@ -327,8 +322,8 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
           <div className="space-y-3">
-            {recentUsers && recentUsers.length > 0 ? (
-              recentUsers.slice(0, 5).map((recentUser) => (
+            {recentUsers && recentUsers?.items.length > 0 ? (
+              recentUsers.items.slice(0, 5).map((recentUser) => (
                 <div
                   key={recentUser.id}
                   onClick={() => router.push(`/admin/users/${recentUser.id}`)}

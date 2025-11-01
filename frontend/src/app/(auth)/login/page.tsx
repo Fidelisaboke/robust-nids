@@ -8,13 +8,13 @@ import Link from "next/link";
 import { Mail, Lock, Loader2, UserPlus } from "lucide-react";
 import { useLoginMutation } from "@/hooks/useAuthMutations";
 import { useAuth } from "@/contexts/AuthContext";
-import { LoginRequestSchema, User, type LoginRequest } from "@/types/auth";
+import { LoginRequestSchema, type LoginRequest } from "@/types/auth";
 import { normalizeError } from "@/lib/api/apiClient";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, saveMfaChallengeToken } = useAuth();
+  const { login, saveMfaChallengeToken } = useAuth();
   const loginMutation = useLoginMutation();
 
   const {

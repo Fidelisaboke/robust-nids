@@ -85,11 +85,13 @@ class UserRepository(BaseRepository):
             .first()
         )
 
-    def list_all(self, active_only: bool = False):
+    def list_all(self, active_only: bool = False, created_after: datetime | None = None):
         """Return a SQLAlchemy Select for all users, optionally filtering by active status."""
         stmt = select(User).options(joinedload(User.roles))
         if active_only:
             stmt = stmt.where(User.is_active.is_(True))
+        if created_after:
+            stmt = stmt.where(User.created_at > created_after)
         return stmt
 
     def create(self, data: dict) -> User:

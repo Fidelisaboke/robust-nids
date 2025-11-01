@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Users as UsersIcon, UserPlus, Clock, TrendingUp } from "lucide-react";
@@ -8,11 +8,11 @@ import {
   useUsers,
   useExportUsers,
   useCreateUser,
+  useRecentUsers,
 } from "@/hooks/useUserManagement";
 import { UserTable } from "@/components/admin/UserTable";
 import { UserFilters } from "@/components/admin/UserFilters";
 import { UserListParams } from "@/lib/api/usersApi";
-import { getRecentUsers } from "@/lib/utils";
 import Link from "next/link";
 import { useRoles } from "@/hooks/useRoleManagement";
 import { toast } from "sonner";
@@ -32,14 +32,16 @@ export default function UsersPage() {
     size: 20,
   });
 
+  // Get recent users
+  const {
+    data: recentUsers,
+    isLoading: isRecentUsersLoading,
+    error: recentUsersError,
+  } = useRecentUsers(7);
+
   const { data: availableRoles } = useRoles();
   const createUserMutation = useCreateUser();
   const exportMutation = useExportUsers();
-
-  const recentUsers = useMemo(
-    () => getRecentUsers(usersData?.items, 7),
-    [usersData],
-  );
 
   const handleFilterChange = (newFilters: UserListParams) => {
     setFilters(newFilters);
@@ -76,7 +78,7 @@ export default function UsersPage() {
     },
     {
       name: "New This Week",
-      value: recentUsers?.length || 0,
+      value: recentUsers?.items?.length || 0,
       icon: TrendingUp,
       color: "text-blue-400",
       bgColor: "bg-blue-500/10",
@@ -191,7 +193,15 @@ export default function UsersPage() {
       />
 
       {/* Recent Registrations */}
-      {recentUsers && recentUsers.length > 0 && (
+      {isRecentUsersLoading ? (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="animate-pulse">...</div>
+        </div>
+      ) : recentUsersError ? (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+          <p className="text-red-400 text-sm">Error loading recent users.</p>
+        </div>
+      ) : recentUsers && recentUsers?.items?.length > 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -210,7 +220,7 @@ export default function UsersPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentUsers.slice(0, 6).map((user) => (
+            {recentUsers?.items?.slice(0, 6).map((user) => (
               <div
                 key={user.id}
                 onClick={() => handleUserClick(user.id)}
@@ -238,6 +248,10 @@ export default function UsersPage() {
             ))}
           </div>
         </motion.div>
+      ) : (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center text-gray-400">
+          No recent user registrations.
+        </div>
       )}
     </div>
   );

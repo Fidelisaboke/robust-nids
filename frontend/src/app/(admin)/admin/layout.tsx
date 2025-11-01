@@ -35,16 +35,15 @@ export default function AdminLayout({
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/login");
+    if (isLoading) {
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && !isAdmin) {
+    if (!isAuthenticated) {
+      router.replace("/login");
+    } else if (!isAdmin) {
       router.replace("/dashboard");
     }
-  }, [isAdmin, isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isAdmin, isLoading, router]);
 
   const navigation = [
     { name: "Overview", href: "/admin", icon: LayoutDashboard },

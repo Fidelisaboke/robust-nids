@@ -159,14 +159,14 @@ export default function PendingRegistrationsPage() {
       </motion.div>
 
       {/* Registrations List */}
-      {registrationsData && registrationsData.registrations.length > 0 ? (
+      {registrationsData && registrationsData?.items.length > 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="space-y-4"
         >
-          {registrationsData.registrations.map((registration) => (
+          {registrationsData.items.map((registration) => (
             <div
               key={registration.id}
               className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-emerald-500/30 transition-colors"
@@ -260,7 +260,7 @@ export default function PendingRegistrationsPage() {
       )}
 
       {/* Pagination */}
-      {registrationsData && registrationsData.total_pages > 1 && (
+      {registrationsData && registrationsData.pages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -270,15 +270,13 @@ export default function PendingRegistrationsPage() {
             Previous
           </button>
           <span className="text-gray-400">
-            Page {currentPage} of {registrationsData.total_pages}
+            Page {currentPage} of {registrationsData.pages}
           </span>
           <button
             onClick={() =>
-              setCurrentPage((p) =>
-                Math.min(registrationsData.total_pages, p + 1),
-              )
+              setCurrentPage((p) => Math.min(registrationsData.pages, p + 1))
             }
-            disabled={currentPage === registrationsData.total_pages}
+            disabled={currentPage === registrationsData.pages}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
             Next

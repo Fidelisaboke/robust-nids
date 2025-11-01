@@ -7,6 +7,7 @@ export interface UserListParams {
   page?: number;
   size?: number;
   search?: string;
+  created_after?: string;
   role?: string;
   is_active?: boolean;
   email_verified?: boolean;

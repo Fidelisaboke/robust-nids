@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -41,7 +43,10 @@ async def create_user(user_data: UserCreate, user_service: UserService = Depends
     dependencies=[Depends(require_permissions(MANAGE_USERS_PERMISSION))],
     status_code=status.HTTP_200_OK,
 )
-async def list_users(user_service: UserService = Depends(get_user_service)) -> Page[UserOut]:
+async def list_users(
+    created_after: datetime | None = None,
+    user_service: UserService = Depends(get_user_service)
+) -> Page[UserOut]:
     """
     List all users in the system.
 
@@ -49,7 +54,8 @@ async def list_users(user_service: UserService = Depends(get_user_service)) -> P
         Page[UserOut]: A paginated list of user objects.
         user_service (UserService): The user service dependency.
     """
-    return paginate(user_service.user_repo.session, user_service.list_users())
+    query = user_service.list_users(created_after=created_after)
+    return paginate(user_service.user_repo.session, query)
 
 
 @router.get(
