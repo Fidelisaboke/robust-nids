@@ -2,6 +2,7 @@
 Configuration module for the backend application.
 """
 
+import os
 from pathlib import Path
 from typing import ClassVar
 
@@ -9,7 +10,13 @@ from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_FILE = BASE_DIR / ".env"
+
+# Dynamically select .env or .env.test based on ENVIRONMENT
+_env = os.environ.get("ENVIRONMENT", None)
+if _env == "test":
+    ENV_FILE = BASE_DIR / ".env.test"
+else:
+    ENV_FILE = BASE_DIR / ".env"
 
 
 class Settings(BaseSettings):

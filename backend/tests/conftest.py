@@ -1,6 +1,9 @@
 # Standard library imports
 import os
 
+# Force test environment for test DB isolation
+os.environ["ENVIRONMENT"] = "test"
+
 # Third-party imports
 import bcrypt
 import pytest
@@ -139,20 +142,22 @@ def admin_user():
         role_repo = RoleRepository(session)
         perm_repo = PermissionRepository(session)
 
-        # Ensure manage_users permission exists
-        manage_users_perm = perm_repo.get_by_name(SystemPermissions.MANAGE_USERS)
-        if not manage_users_perm:
-            permission_data = {"name": SystemPermissions.MANAGE_USERS}
-            manage_users_perm = perm_repo.create(permission_data)
+        # Ensure all system permissions exist and are assigned to admin role
+        all_permissions = []
+        for perm in SystemPermissions:
+            p = perm_repo.get_by_name(perm)
+            if not p:
+                p = perm_repo.create({"name": perm})
+            all_permissions.append(p)
 
-        # Ensure admin role exists and has permission
+        # Ensure admin role exists and has all permissions
         admin_role = role_repo.get_by_name(SystemRoles.ADMIN)
         if not admin_role:
-            role_data = {"name": SystemRoles.ADMIN}
-            admin_role = role_repo.create(role_data)
-        if manage_users_perm not in admin_role.permissions:
-            role_repo.add_permission(admin_role, manage_users_perm)
-            session.commit()
+            admin_role = role_repo.create({"name": SystemRoles.ADMIN})
+        for perm in all_permissions:
+            if perm not in admin_role.permissions:
+                role_repo.add_permission(admin_role, perm)
+        session.commit()
 
         user = User(
             email="mock_admin_test@example.com",

@@ -23,6 +23,15 @@ def test_create_user(test_client, admin_user):
         if existing:
             session.delete(existing)
             session.commit()
+        # Create a test role to assign
+        from database.repositories.role import RoleRepository
+
+        role_repo = RoleRepository(session)
+        test_role = role_repo.get_by_name("test_create_user_role")
+        if not test_role:
+            test_role = role_repo.create({"name": "test_create_user_role"})
+        session.commit()
+        test_role_id = test_role.id
     payload = {
         "email": "newusertest@example.com",
         "username": "newusertest",
@@ -33,10 +42,10 @@ def test_create_user(test_client, admin_user):
         "department": "IT",
         "job_title": "Engineer",
         "is_active": True,
-        "roles": [admin_user.roles[0].id] if admin_user.roles else [],
+        "role_ids": [test_role_id],
     }
     resp = test_client.post("/api/v1/users/", json=payload, headers=auth_headers(token))
-    assert resp.status_code == 201
+    assert resp.status_code == 201, f"Response: {resp.status_code}, {resp.text}"
     data = resp.json()
     assert data["email"] == payload["email"]
     assert data["username"] == payload["username"]
@@ -151,7 +160,7 @@ def test_update_user_roles_success(test_client, admin_user, test_user, test_role
         assert user is not None, "Test user not found in DB"
         assert role is not None, "Test role not found in DB"
     # Assign test_role to test_user
-    payload = {"roles": [test_role.id]}
+    payload = {"role_ids": [test_role.id]}
     resp = test_client.put(
         f"/api/v1/users/{test_user.id}/roles",
         json=payload,
@@ -159,6 +168,7 @@ def test_update_user_roles_success(test_client, admin_user, test_user, test_role
     )
     assert resp.status_code == 200, f"Response: {resp.status_code}, {resp.text}"
     data = resp.json()
+    # The response should have roles under data["user"]["roles"]
     assert any(role["id"] == test_role.id for role in data["user"]["roles"])
     # Confirm in DB
     with db.get_session() as session:
@@ -168,7 +178,7 @@ def test_update_user_roles_success(test_client, admin_user, test_user, test_role
 
 def test_update_user_roles_self_change_forbidden(test_client, admin_user, test_role):
     token = get_access_token(test_client, admin_user.email, "adminpass")
-    payload = {"roles": [test_role.id]}
+    payload = {"role_ids": [test_role.id]}
     resp = test_client.put(
         f"/api/v1/users/{admin_user.id}/roles",
         json=payload,
@@ -181,9 +191,9 @@ def test_update_user_roles_self_change_forbidden(test_client, admin_user, test_r
 def test_update_user_roles_invalid_role_id(test_client, admin_user, test_user):
     token = get_access_token(test_client, admin_user.email, "adminpass")
     invalid_role_id = 999999  # unlikely to exist
-    payload = {"roles": [invalid_role_id]}
+    payload = {"role_ids": [invalid_role_id]}
     resp = test_client.put(
-        f"/api/v1/users/{test_user.id}/role",
+        f"/api/v1/users/{test_user.id}/roles",
         json=payload,
         headers=auth_headers(token),
     )

@@ -1,3 +1,5 @@
+import uuid
+
 from database.db import db
 from database.models import Role
 
@@ -13,8 +15,6 @@ def auth_headers(token):
 
 
 def test_create_role(test_client, admin_user):
-    import uuid
-
     token = get_access_token(test_client, admin_user.email, "adminpass")
     unique_name = f"NewRole_{uuid.uuid4().hex[:8]}"
     payload = {"name": unique_name, "description": "Created by test"}
