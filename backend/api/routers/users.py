@@ -267,7 +267,7 @@ async def update_user_roles(
             detail="You cannot change your own role.",
         )
     try:
-        user = user_service.update_user_roles(user_id, request.roles)
+        user = user_service.update_user_roles(user_id, request.role_ids)
         return UserRoleUpdateResponse(detail="User role(s) updated successfully.", user=user)
     except UserNotFoundError:
         raise HTTPException(

@@ -50,10 +50,11 @@ class UserService:
         # Default preferences
         user_dict["preferences"] = settings.DEFAULT_USER_PREFERENCES
 
-        # Assign roles
-        if not user_dict.get("roles"):
+        # Map role_ids to roles for DB
+        role_ids = user_dict.pop("role_ids", None)
+        if not role_ids:
             raise RoleNotAssignedError()
-        user_dict["roles"] = self._handle_role_updates(user_dict["roles"])
+        user_dict["roles"] = self._handle_role_updates(role_ids)
 
         new_user = self.user_repo.create(user_dict)
         self.user_repo.session.flush()
@@ -92,8 +93,9 @@ class UserService:
             update_dict["password_hash"] = get_password_hash(update_dict.pop("password"))
 
         # Handle role updates
-        if "roles" in update_dict:
-            update_dict["roles"] = self._handle_role_updates(update_dict)
+        if "role_ids" in update_dict:
+            role_ids = update_dict.pop("role_ids", None)
+            update_dict["roles"] = self._handle_role_updates(role_ids)
 
         # Merge preferences
         if "preferences" in update_dict:
