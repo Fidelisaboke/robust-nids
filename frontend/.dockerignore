@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+.next/
+dist/
+build/
+.env
+.env.*
+*.log
+logs/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker / compose / configs
+Dockerfile*
+docker-compose*.yml
+.dockerignore

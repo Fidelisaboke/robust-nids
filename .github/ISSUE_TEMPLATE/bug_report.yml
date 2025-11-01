@@ -1,0 +1,50 @@
+name: 🐛 Bug Report
+description: Report a reproducible bug in the project
+title: "[BUG]: "
+labels: [bug]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: Short description of the bug
+      placeholder: "E.g., Model crashes on specific input"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the bug?
+      placeholder: |
+        1. Run `python app.py`
+        2. Call endpoint `/predict` with payload XYZ
+        3. See error stack trace
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead?
+      placeholder: "Model should return class label with confidence score"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: "500 Internal Server Error"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: Add any logs, error messages, or screenshots
+      placeholder: "Paste stack trace or attach images"
