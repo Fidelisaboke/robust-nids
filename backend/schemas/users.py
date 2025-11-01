@@ -42,7 +42,7 @@ class UserCreate(BaseModel):
     department: Optional[str] = None
     job_title: Optional[str] = None
     timezone: Optional[str] = None
-    roles: Optional[List[int]] = None  # List of role IDs
+    role_ids: Optional[List[int]] = None  # List of role IDs
     preferences: Optional[dict] = {}
     is_active: bool
 
@@ -57,12 +57,12 @@ class UserUpdate(BaseModel):
     department: Optional[str] = None
     job_title: Optional[str] = None
     timezone: Optional[str] = None
-    roles: Optional[List[int]] = None  # List of role IDs
+    role_ids: Optional[List[int]] = None  # List of role IDs
     preferences: Optional[dict] = {}
     is_active: Optional[bool] = None
 
 class UserRoleUpdateRequest(BaseModel):
-    roles: list[int] | None = None
+    role_ids: list[int] | None = None
 
 
 class UserRoleUpdateResponse(BaseModel):
