@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useRoles } from "@/hooks/useRoleManagement";
 import {
+  useUpdateUser,
   useUpdateUserRoles,
   useUser,
   useUserActivity,
@@ -32,6 +33,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { normalizeError } from "@/lib/api/apiClient";
+import { UserFormData } from "@/schemas/userForm";
+import { UserFormDialog } from "@/components/admin/UserFormDialog";
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -47,14 +50,17 @@ export default function UserDetailPage() {
     action: "activate" | "deactivate" | "delete" | "reset-password" | null;
   }>({ open: false, action: null });
 
+  const [userFormOpen, setUserFormOpen] = useState<boolean>(false);
   const [roleUpdateDialog, setRoleUpdateDialog] = useState<boolean>(false);
 
   const activateMutation = useActivateUser();
   const deactivateMutation = useDeactivateUser();
   const deleteMutation = useDeleteUser();
   const resetPasswordMutation = useForcePasswordReset();
+  const updateUserMutation = useUpdateUser();
   const updateRolesMutation = useUpdateUserRoles();
 
+  // Handle confirm dialog action
   const handleAction = async () => {
     let response = null;
     try {
@@ -80,6 +86,18 @@ export default function UserDetailPage() {
     }
   };
 
+  // Handle user form submission
+  const handleUpdateUser = async (userData: UserFormData) => {
+    try {
+      await updateUserMutation.mutateAsync({ id: userId, data: userData });
+      toast.success("User updated successfully");
+      setUserFormOpen(false);
+    } catch (error) {
+      toast.error(normalizeError(error).message);
+    }
+  };
+
+  // Handle role update
   const handleRoleUpdate = async (roleIds: number[]) => {
     try {
       const response = await updateRolesMutation.mutateAsync({
@@ -194,15 +212,18 @@ export default function UserDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setUserFormOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
+            >
+              <Edit className="w-4 h-4" />
+              <span>Edit User</span>
+            </button>
+            <button
               onClick={() => setRoleUpdateDialog(true)}
               className="flex items-center space-x-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
             >
               <Shield className="w-4 h-4" />
-              <span>Edit Roles</span>
-            </button>
-            <button className="flex items-center space-x-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700">
-              <Edit className="w-4 h-4" />
-              <span>Edit</span>
+              <span>Update Roles</span>
             </button>
             {user.is_active ? (
               <button
@@ -246,6 +267,16 @@ export default function UserDetailPage() {
       >
         <UserDetailsCard user={user} />
       </motion.div>
+
+      {/* User Form Dialog */}
+      <UserFormDialog
+        open={userFormOpen}
+        onOpenChange={setUserFormOpen}
+        user={user}
+        availableRoles={availableRoles?.items || []}
+        onSubmit={handleUpdateUser}
+        isLoading={updateUserMutation.isPending}
+      />
 
       {/* Activity Log */}
       <motion.div

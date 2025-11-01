@@ -4,17 +4,27 @@ import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Users as UsersIcon, UserPlus, Clock, TrendingUp } from "lucide-react";
-import { useUsers, useExportUsers } from "@/hooks/useUserManagement";
+import {
+  useUsers,
+  useExportUsers,
+  useCreateUser,
+} from "@/hooks/useUserManagement";
 import { UserTable } from "@/components/admin/UserTable";
 import { UserFilters } from "@/components/admin/UserFilters";
 import { UserListParams } from "@/lib/api/usersApi";
 import { getRecentUsers } from "@/lib/utils";
 import Link from "next/link";
+import { useRoles } from "@/hooks/useRoleManagement";
+import { toast } from "sonner";
+import { normalizeError } from "@/lib/api/apiClient";
+import { UserFormDialog } from "@/components/admin/UserFormDialog";
+import { UserFormData } from "@/schemas/userForm";
 
 export default function UsersPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<UserListParams>({});
+  const [userFormOpen, setUserFormOpen] = useState(false);
 
   const { data: usersData, isLoading } = useUsers({
     ...filters,
@@ -22,6 +32,8 @@ export default function UsersPage() {
     size: 20,
   });
 
+  const { data: availableRoles } = useRoles();
+  const createUserMutation = useCreateUser();
   const exportMutation = useExportUsers();
 
   const recentUsers = useMemo(
@@ -32,6 +44,17 @@ export default function UsersPage() {
   const handleFilterChange = (newFilters: UserListParams) => {
     setFilters(newFilters);
     setCurrentPage(1);
+  };
+
+  const handleCreateUser = async (userData: UserFormData) => {
+    try {
+      await createUserMutation.mutateAsync(userData);
+      toast.success("User created successfully");
+    } catch (error) {
+      const errorMsg = normalizeError(error).message;
+      console.log(errorMsg);
+      toast.error(errorMsg);
+    }
   };
 
   const handleExport = () => {
@@ -92,7 +115,10 @@ export default function UsersPage() {
               <Clock className="w-5 h-5" />
               <span>Pending Requests</span>
             </Link>
-            <button className="flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+            <button
+              onClick={() => setUserFormOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+            >
               <UserPlus className="w-5 h-5" />
               <span>Add User</span>
             </button>
@@ -154,6 +180,15 @@ export default function UsersPage() {
           onUserClick={handleUserClick}
         />
       </motion.div>
+
+      {/* User Form Dialog */}
+      <UserFormDialog
+        open={userFormOpen}
+        onOpenChange={setUserFormOpen}
+        onSubmit={handleCreateUser}
+        availableRoles={availableRoles?.items || []}
+        isLoading={createUserMutation.isPending}
+      />
 
       {/* Recent Registrations */}
       {recentUsers && recentUsers.length > 0 && (

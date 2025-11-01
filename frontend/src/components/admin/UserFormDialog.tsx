@@ -1,306 +1,447 @@
+"use client";
+
 import React, { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
-import { User } from "@/types/auth";
-import { Role } from "@/lib/api/rolesApi"; // Adjust to your Role type
-import { useRoles } from "@/hooks/useRoleManagement"; // Import your hook
-
-// Zod schema for validation
-const formSchema = z.object({
-  first_name: z.string().min(2, "First name is required"),
-  last_name: z.string().min(2, "Last name is required"),
-  email: z.email(),
-  department: z.string().optional(),
-  password: z
-    .string()
-    .optional()
-    .refine((val) => val === "" || !val || val.length >= 8, {
-      message: "Password must be at least 8 characters",
-    }),
-  role_ids: z.array(z.number()).min(1, "At least one role must be selected"),
-});
-
-export type UserFormData = z.infer<typeof formSchema>;
+import { Badge } from "@/components/ui/badge";
+import {
+  UserPlus,
+  UserIcon,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  Shield,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { User, Role } from "@/types/auth";
+import { userFormSchema, type UserFormData } from "@/schemas/userForm";
 
 interface UserFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user?: User | null;
-  onSubmit: (values: UserFormData) => void;
+  user?: User;
+  availableRoles: Role[];
+  onSubmit: (data: UserFormData) => Promise<void>;
   isLoading?: boolean;
 }
 
-export const UserFormDialog: React.FC<UserFormDialogProps> = ({
+export function UserFormDialog({
   open,
   onOpenChange,
   user,
+  availableRoles,
   onSubmit,
-  isLoading,
-}) => {
-  const isEditMode = Boolean(user);
-
-  const { data: allRoles, isLoading: isLoadingRoles } = useRoles();
+  isLoading = false,
+}: UserFormDialogProps) {
+  const isEditMode = !!user;
 
   const {
     register,
     handleSubmit,
-    control,
+    formState: { errors, isValid },
+    watch,
+    setValue,
+    getValues,
     reset,
-    formState: { errors },
   } = useForm<UserFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
+      email: "",
+      username: "",
       first_name: "",
       last_name: "",
-      email: "",
+      phone: "",
       department: "",
-      password: "",
+      job_title: "",
+      is_active: true,
+      send_welcome_email: true,
       role_ids: [],
     },
+    mode: "onChange",
   });
 
-  // Populate form when in edit mode or clear for create mode
+  // Watch role_ids to show selected roles
+  const selectedRoleIds = watch("role_ids");
+  const isActive = watch("is_active");
+  const sendWelcomeEmail = watch("send_welcome_email");
+
+  // Initialize form when opening or when user data changes
   useEffect(() => {
     if (open) {
-      if (isEditMode && user) {
+      if (user) {
+        // Edit mode
         reset({
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
+          email: user.email || "",
+          username: user.username || "",
+          first_name: user.first_name || "",
+          last_name: user.last_name || "",
+          phone: user.phone || "",
           department: user.department || "",
-          password: "", // Always clear password field
-          role_ids: user.roles.map((role: Role) => role.id), // Set role IDs
+          job_title: user.job_title || "",
+          is_active: user.is_active ?? true,
+          send_welcome_email: false,
+          role_ids: user.roles?.map((role: Role) => role.id) || [],
         });
       } else {
-        // Reset form for create mode
+        // Create mode
         reset({
+          email: "",
+          username: "",
           first_name: "",
           last_name: "",
-          email: "",
+          phone: "",
           department: "",
-          password: "",
+          job_title: "",
+          is_active: true,
+          send_welcome_email: true,
           role_ids: [],
         });
       }
     }
-  }, [user, isEditMode, open, reset]);
+  }, [open, user, reset]);
 
-  // Handle form submission
-  const onValidSubmit = (data: UserFormData) => {
-    const payload = { ...data };
+  const handleRoleToggle = (roleId: number) => {
+    const currentRoles = getValues("role_ids");
+    const newRoles = currentRoles.includes(roleId)
+      ? currentRoles.filter((id) => id !== roleId)
+      : [...currentRoles, roleId];
 
-    // If in edit mode and password is empty, don't send it
-    if (isEditMode && !payload.password) {
-      delete payload.password;
+    setValue("role_ids", newRoles, { shouldValidate: true });
+  };
+
+  const onFormSubmit = async (data: UserFormData) => {
+    try {
+      await onSubmit(data);
+      onOpenChange(false);
+    } catch {
+      // Error handling is done in the parent component
     }
+  };
 
-    onSubmit(payload);
+  const ErrorMessage = ({ message }: { message?: string }) => {
+    if (!message) return null;
+
+    return (
+      <div className="flex items-center space-x-1 mt-1 text-sm text-red-400">
+        <AlertCircle className="w-3 h-3" />
+        <span>{message}</span>
+      </div>
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-800 border-slate-700 text-white sm:max-w-lg">
+      <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Edit User" : "Create New User"}
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            {isEditMode
-              ? "Update the user's details."
-              : "Fill in the form to add a new user."}
-          </DialogDescription>
+          <div className="flex items-center space-x-3">
+            <div
+              className={`p-2 rounded-lg ${isEditMode ? "bg-blue-500/10" : "bg-emerald-500/10"}`}
+            >
+              {isEditMode ? (
+                <UserIcon className="w-5 h-5 text-blue-400" />
+              ) : (
+                <UserPlus className="w-5 h-5 text-emerald-400" />
+              )}
+            </div>
+            <div>
+              <DialogTitle className="text-white">
+                {isEditMode ? "Edit User" : "Create New User"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                {isEditMode
+                  ? `Update ${user.first_name} ${user.last_name}'s information`
+                  : "Add a new user to the system"}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-4 pt-4">
-          <div className="grid grid-cols-2 gap-4">
-            {/* First Name */}
-            <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-white">
-                First Name
-              </Label>
-              <Input
-                id="firstName"
-                placeholder="John"
-                className="bg-slate-900 border-slate-700"
-                {...register("first_name")}
-              />
-              {errors.first_name && (
-                <p className="text-sm text-red-400">
-                  {errors.first_name.message}
-                </p>
-              )}
-            </div>
-            {/* Last Name */}
-            <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-white">
-                Last Name
-              </Label>
-              <Input
-                id="lastName"
-                placeholder="Doe"
-                className="bg-slate-900 border-slate-700"
-                {...register("last_name")}
-              />
-              {errors.last_name && (
-                <p className="text-sm text-red-400">
-                  {errors.last_name.message}
-                </p>
-              )}
-            </div>
-          </div>
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+              <UserIcon className="w-4 h-4 text-gray-400" />
+              <span>Basic Information</span>
+            </h3>
 
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-white">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="john.doe@example.com"
-              className="bg-slate-900 border-slate-700"
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-400">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Department */}
-          <div className="space-y-2">
-            <Label htmlFor="department" className="text-white">
-              Department
-            </Label>
-            <Input
-              id="department"
-              placeholder="Engineering"
-              className="bg-slate-900 border-slate-700"
-              {...register("department")}
-            />
-            {errors.department && (
-              <p className="text-sm text-red-400">
-                {errors.department.message}
-              </p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-white">
-              Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="********"
-              className="bg-slate-900 border-slate-700"
-              {...register("password")}
-            />
-            {isEditMode && (
-              <p className="text-xs text-gray-400 mt-1">
-                Leave blank to keep current password.
-              </p>
-            )}
-            {errors.password && (
-              <p className="text-sm text-red-400">{errors.password.message}</p>
-            )}
-          </div>
-
-          {/* Roles Checkbox Group */}
-          <div className="space-y-2">
-            <Label className="text-white">Roles</Label>
-            {isLoadingRoles ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Skeleton className="h-5 w-1/3 bg-slate-700" />
-                <Skeleton className="h-5 w-1/2 bg-slate-700" />
+                <Label htmlFor="first_name" className="text-gray-300">
+                  First Name *
+                </Label>
+                <Input
+                  id="first_name"
+                  placeholder="John"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  {...register("first_name")}
+                />
+                <ErrorMessage message={errors.first_name?.message} />
               </div>
-            ) : (
-              <Controller
-                name="role_ids"
-                control={control}
-                render={({ field }) => (
-                  <div className="max-h-40 overflow-y-auto rounded-md border border-slate-700 bg-slate-900 p-4 space-y-3">
-                    {allRoles?.map((role) => (
-                      <div
-                        key={role.id}
-                        className="flex items-center space-x-3"
-                      >
-                        <Checkbox
-                          id={`role-${role.id}`}
-                          checked={field.value?.includes(role.id)}
-                          onCheckedChange={(checked: boolean) => {
-                            const currentIds = field.value || [];
-                            if (checked) {
-                              field.onChange([...currentIds, role.id]);
-                            } else {
-                              field.onChange(
-                                currentIds.filter((id) => id !== role.id),
-                              );
-                            }
-                          }}
-                          className="border-slate-500 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                        />
-                        <label
-                          htmlFor={`role-${role.id}`}
-                          className="text-sm font-medium text-white leading-none cursor-pointer"
-                        >
-                          {role.name}
-                          {role.description && (
-                            <p className="text-xs text-gray-400">
-                              {role.description}
-                            </p>
-                          )}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              />
-            )}
-            {errors.role_ids && (
-              <p className="text-sm text-red-400 mt-1">
-                {errors.role_ids.message}
-              </p>
-            )}
+
+              <div className="space-y-2">
+                <Label htmlFor="last_name" className="text-gray-300">
+                  Last Name *
+                </Label>
+                <Input
+                  id="last_name"
+                  placeholder="Doe"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  {...register("last_name")}
+                />
+                <ErrorMessage message={errors.last_name?.message} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-300">
+                  Email Address *
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john.doe@example.com"
+                    className="bg-slate-700 border-slate-600 text-white pl-10"
+                    disabled={isEditMode}
+                    {...register("email")}
+                  />
+                </div>
+                <ErrorMessage message={errors.email?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-gray-300">
+                  Username *
+                </Label>
+                <Input
+                  id="username"
+                  placeholder="johndoe"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  disabled={isEditMode}
+                  {...register("username")}
+                />
+                <ErrorMessage message={errors.username?.message} />
+              </div>
+            </div>
           </div>
 
-          {/* 9. Dialog Footer with Submit Button */}
-          <DialogFooter className="pt-4">
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-slate-700 text-white hover:bg-slate-600 border-slate-600"
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-            </DialogClose>
+          {/* Contact Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+              <Phone className="w-4 h-4 text-gray-400" />
+              <span>Contact Information</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-gray-300">
+                  Phone Number
+                </Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    className="bg-slate-700 border-slate-600 text-white pl-10"
+                    {...register("phone")}
+                  />
+                </div>
+                <ErrorMessage message={errors.phone?.message} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="department" className="text-gray-300">
+                  Department
+                </Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="department"
+                    placeholder="IT Security"
+                    className="bg-slate-700 border-slate-600 text-white pl-10"
+                    {...register("department")}
+                  />
+                </div>
+                <ErrorMessage message={errors.department?.message} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="job_title" className="text-gray-300">
+                Job Title
+              </Label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                <Input
+                  id="job_title"
+                  placeholder="Security Analyst"
+                  className="bg-slate-700 border-slate-600 text-white pl-10"
+                  {...register("job_title")}
+                />
+              </div>
+              <ErrorMessage message={errors.job_title?.message} />
+            </div>
+          </div>
+
+          {/* Roles & Permissions */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+              <Shield className="w-4 h-4 text-gray-400" />
+              <span>Roles & Permissions</span>
+            </h3>
+
+            {/* Selected Roles */}
+            {selectedRoleIds.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-300">Selected Roles</Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRoleIds.map((roleId) => {
+                    const role = availableRoles.find((r) => r.id === roleId);
+                    return role ? (
+                      <Badge
+                        key={roleId}
+                        variant="secondary"
+                        className="bg-purple-500/20 text-purple-300 border-purple-500/30"
+                      >
+                        {role.name}
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Role Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-300">Assign Roles *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                {availableRoles.map((role) => (
+                  <div
+                    key={role.id}
+                    className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                      selectedRoleIds.includes(role.id)
+                        ? "bg-purple-500/10 border-purple-500/50"
+                        : "bg-slate-700/50 border-slate-600 hover:bg-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        checked={selectedRoleIds.includes(role.id)}
+                        onCheckedChange={() => handleRoleToggle(role.id)}
+                        className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <Label className="font-medium text-white cursor-pointer">
+                          {role.name}
+                        </Label>
+                        {role.description && (
+                          <p className="text-sm text-gray-400 mt-1">
+                            {role.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <ErrorMessage message={errors.role_ids?.message} />
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">Settings</h3>
+
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="is_active"
+                  checked={isActive}
+                  onCheckedChange={(checked) =>
+                    setValue("is_active", checked as boolean)
+                  }
+                  className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                />
+                <Label
+                  htmlFor="is_active"
+                  className="text-gray-300 cursor-pointer"
+                >
+                  Account is active
+                </Label>
+              </div>
+              <p className="text-sm text-gray-500 ml-7">
+                User will be able to access the system immediately
+              </p>
+
+              {!isEditMode && (
+                <>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="send_welcome_email"
+                      checked={sendWelcomeEmail}
+                      onCheckedChange={(checked) =>
+                        setValue("send_welcome_email", checked as boolean)
+                      }
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                    <Label
+                      htmlFor="send_welcome_email"
+                      className="text-gray-300 cursor-pointer"
+                    >
+                      Send welcome email
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-500 ml-7">
+                    User will receive setup instructions via email
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+              className="bg-slate-700 text-white hover:bg-slate-600 border-slate-600"
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              disabled={isLoading || isLoadingRoles}
+              disabled={isLoading || !isValid}
+              className={
+                isEditMode
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              }
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isEditMode ? "Updating..." : "Creating..."}
+                </>
               ) : isEditMode ? (
-                "Save Changes"
+                "Update User"
               ) : (
                 "Create User"
               )}
@@ -310,4 +451,4 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
+}

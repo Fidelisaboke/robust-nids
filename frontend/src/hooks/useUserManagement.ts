@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   usersApi,
   UserListParams,
+  CreateUserRequest,
   UpdateUserRequest,
 } from "@/lib/api/usersApi";
 import { toast } from "sonner";
@@ -34,6 +35,46 @@ export const useUser = (id: number) => {
     queryKey: userKeys.detail(id),
     queryFn: () => usersApi.getUserById(id),
     enabled: !!id,
+  });
+};
+
+// Create user mutation
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateUserRequest) => usersApi.createUser(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+};
+
+// Update user mutation
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateUserRequest }) =>
+      usersApi.updateUser(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.id),
+      });
+    },
+  });
+};
+
+// Delete user mutation
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => usersApi.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
   });
 };
 
@@ -97,41 +138,13 @@ export const useDeactivateUser = () => {
   });
 };
 
-// Delete user mutation
-export const useDeleteUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: number) => usersApi.deleteUser(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-    },
-  });
-};
-
-// Update user mutation
-export const useUpdateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateUserRequest }) =>
-      usersApi.updateUser(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({
-        queryKey: userKeys.detail(variables.id),
-      });
-    },
-  });
-};
-
 // Update user roles mutation
 export const useUpdateUserRoles = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ id, role_ids }: { id: number; role_ids: number[] }) =>
-      usersApi.updateUserRoles(id, { roles: role_ids }),
+      usersApi.updateUserRoles(id, { role_ids }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({

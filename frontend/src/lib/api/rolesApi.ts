@@ -4,9 +4,8 @@ import { apiClient } from "./apiClient";
 export interface Role {
   id: number;
   name: string;
-  description?: string;
+  description: string | null;
   permissions: Permission[];
-  created_at?: string;
 }
 
 export interface RoleListParams {

@@ -21,16 +21,6 @@ interface UserDetailsCardProps {
 }
 
 export const UserDetailsCard: React.FC<UserDetailsCardProps> = ({ user }) => {
-  // const getRoleVariant = (roleName: string) => {
-  //   const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
-  //     admin: "destructive",
-  //     analyst: "default",
-  //     viewer: "secondary",
-  //     auditor: "outline",
-  //   };
-  //   return variants[roleName.toLowerCase()] || "secondary";
-  // };
-
   const getRoleColor = (roleName: string) => {
     const colors: { [key: string]: string } = {
       admin: "bg-red-500/20 text-red-300 border-red-500/30",
@@ -246,27 +236,7 @@ export const UserDetailsCard: React.FC<UserDetailsCardProps> = ({ user }) => {
           )}
         </div>
 
-        {/* Security Information */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">
-            Security Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {user.last_profile_update && (
-              <div>
-                <label className="text-sm text-gray-400">
-                  Last Profile Update
-                </label>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <p className="text-white font-medium">
-                    {format(new Date(user.last_profile_update), "MMM d, yyyy")}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* TODO: Add info on user sessions, failed attempts, etc... */}
       </div>
     </div>
   );

@@ -22,6 +22,18 @@ export interface UserListResponse {
   pages: number;
 }
 
+export interface CreateUserRequest {
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  department?: string;
+  job_title?: string;
+  is_active: boolean;
+  role_ids: number[];
+}
+
 export interface UpdateUserRequest {
   first_name?: string;
   last_name?: string;
@@ -30,10 +42,11 @@ export interface UpdateUserRequest {
   department?: string;
   job_title?: string;
   is_active?: boolean;
+  role_ids?: number[];
 }
 
 export interface UpdateUserRolesRequest {
-  roles: number[];
+  role_ids: number[];
 }
 
 export interface PendingRegistration {
@@ -93,14 +106,29 @@ export const usersApi = {
     return response.data;
   },
 
+  // Create new user
+  // TODO: Ensure temp passwords are being set after admin creates user
+  createUser: async (data: CreateUserRequest): Promise<{ user: User }> => {
+    const response = await apiClient.post<{ user: User }>(USERS_BASE, data);
+    return response.data;
+  },
+
   // Update user details
   updateUser: async (
     id: number,
     data: UpdateUserRequest,
   ): Promise<{ detail: string; user: User }> => {
-    const response = await apiClient.patch<{ detail: string; user: User }>(
-      `${USERS_BASE}/${id}`,
+    const response = await apiClient.put<{ detail: string; user: User }>(
+      `${USERS_BASE}${id}`,
       data,
+    );
+    return response.data;
+  },
+
+  // Delete user
+  deleteUser: async (id: number): Promise<{ detail: string }> => {
+    const response = await apiClient.delete<{ detail: string }>(
+      `${USERS_BASE}${id}`,
     );
     return response.data;
   },
@@ -117,14 +145,6 @@ export const usersApi = {
   deactivateUser: async (id: number): Promise<{ detail: string }> => {
     const response = await apiClient.post<{ detail: string }>(
       `${USERS_BASE}${id}/deactivate`,
-    );
-    return response.data;
-  },
-
-  // Delete user
-  deleteUser: async (id: number): Promise<{ detail: string }> => {
-    const response = await apiClient.delete<{ detail: string }>(
-      `${USERS_BASE}${id}`,
     );
     return response.data;
   },
