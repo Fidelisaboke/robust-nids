@@ -332,6 +332,21 @@ wheels = [
 ]
 
 [[package]]
+name = "cicflowmeter"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "requests" },
+    { name = "scapy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/da/20/61f2285a6bae616a2412c2fc1eb5b95296e10ceaa69fcd78011dfa82f612/cicflowmeter-0.5.0.tar.gz", hash = "sha256:501d8b78ca6b95a1d1300bf5f9424bbfa1f359d188e0af960920586b4a0d4f0e", size = 31417, upload-time = "2025-10-25T10:42:31.974Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/44/5c3b39d14836398334513647c975ed797b6a393cfd719895210c61070fc3/cicflowmeter-0.5.0-py3-none-any.whl", hash = "sha256:5aabcbb05651261b2c34171aa041015f55673cddda01dc8a6f7508976795c361", size = 19896, upload-time = "2025-10-25T10:42:30.214Z" },
+]
+
+[[package]]
 name = "click"
 version = "8.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2419,6 +2434,7 @@ dependencies = [
     { name = "alembic" },
     { name = "altair" },
     { name = "bcrypt" },
+    { name = "cicflowmeter" },
     { name = "fastapi" },
     { name = "fastapi-mail" },
     { name = "fastapi-paginate", extra = ["sqlalchemy"] },
@@ -2468,6 +2484,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.14,<2.0" },
     { name = "altair", specifier = ">=5.5,<6.0" },
     { name = "bcrypt", specifier = "==5.0.0" },
+    { name = "cicflowmeter", specifier = ">=0.5.0" },
     { name = "fastapi", specifier = ">=0.115,<1.0" },
     { name = "fastapi-mail", specifier = ">=1.5.6" },
     { name = "fastapi-paginate", extras = ["sqlalchemy"], specifier = ">=0.1.0" },
@@ -2616,6 +2633,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/73/e6/03b882225a1b0627e75339b420883dc3c90707a8917d2284abef7a58d317/ruff-0.14.0-py3-none-win32.whl", hash = "sha256:7450a243d7125d1c032cb4b93d9625dea46c8c42b4f06c6b709baac168e10543", size = 12367872, upload-time = "2025-10-07T18:21:46.67Z" },
     { url = "https://files.pythonhosted.org/packages/41/77/56cf9cf01ea0bfcc662de72540812e5ba8e9563f33ef3d37ab2174892c47/ruff-0.14.0-py3-none-win_amd64.whl", hash = "sha256:ea95da28cd874c4d9c922b39381cbd69cb7e7b49c21b8152b014bd4f52acddc2", size = 13464628, upload-time = "2025-10-07T18:21:50.318Z" },
     { url = "https://files.pythonhosted.org/packages/c6/2a/65880dfd0e13f7f13a775998f34703674a4554906167dce02daf7865b954/ruff-0.14.0-py3-none-win_arm64.whl", hash = "sha256:f42c9495f5c13ff841b1da4cb3c2a42075409592825dada7c5885c2c844ac730", size = 12565142, upload-time = "2025-10-07T18:21:53.577Z" },
+]
+
+[[package]]
+name = "scapy"
+version = "2.6.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/2f/035d3888f26d999e9680af8c7ddb7ce4ea0fd8d0e01c000de634c22dcf13/scapy-2.6.1.tar.gz", hash = "sha256:7600d7e2383c853e5c3a6e05d37e17643beebf2b3e10d7914dffcc3bc3c6e6c5", size = 2247754, upload-time = "2024-11-05T08:43:23.488Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4b/34/8695b43af99d0c796e4b7933a0d7df8925f43a8abdd0ff0f6297beb4de3a/scapy-2.6.1-py3-none-any.whl", hash = "sha256:88a998572049b511a1f3e44f4aa7c62dd39c6ea2aa1bb58434f503956641789d", size = 2420670, upload-time = "2024-11-05T08:43:21.285Z" },
 ]
 
 [[package]]

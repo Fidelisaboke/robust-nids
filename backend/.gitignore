@@ -206,6 +206,7 @@ __marimo__/
 # Data and serialized models
 /data/
 /models/
+ml/models/artifacts/*.json
 *.pkl
 *.h5
 *.joblib

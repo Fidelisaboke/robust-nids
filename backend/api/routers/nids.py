@@ -1,18 +1,35 @@
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
-from schemas.nids import PredictRequest, PredictResponse, TrainRequest
+from ml.models.predict import predict_sample_binary, predict_sample_multi
+from schemas.nids import PredictBinaryResponse, PredictMultiResponse, PredictRequest, TrainRequest
 
 router = APIRouter(prefix="/api/v1/nids", tags=["NIDS"])
 
 
-@router.post("/predict", response_model=PredictResponse, status_code=status.HTTP_200_OK)
-def predict_sample(request: PredictRequest):
-    """Placeholder for NIDS model inference endpoint."""
-    # TODO: integrate ml.models.predict
-    return JSONResponse(
-        content={"message": "Prediction endpoint not implemented yet."}, status_code=status.HTTP_200_OK
-    )
+@router.post("/predict/binary", response_model=PredictBinaryResponse, status_code=status.HTTP_200_OK)
+def predict_traffic_binary(request: PredictRequest):
+    """Run inference for binary classification of network traffic.
+
+    Args:
+        request (PredictRequest): The network traffic prediction request data.
+
+    Returns:
+        PredictResponse: Response containing binary prediction results
+    """
+    return predict_sample_binary(request.features)
+
+@router.post("/predict/multiclass", response_model=PredictMultiResponse, status_code=status.HTTP_200_OK)
+def predict_traffic_multi(request: PredictRequest):
+    """Run inference for multiclass classification of network traffic.
+
+    Args:
+        request (PredictRequest): The network traffic prediction request data.
+
+    Returns:
+        PredictResponse: Response containing multiclass prediction results
+    """
+    return predict_sample_multi(request.features)
 
 
 @router.post("/train", status_code=status.HTTP_202_ACCEPTED)

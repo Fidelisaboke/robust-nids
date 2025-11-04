@@ -7,9 +7,13 @@ class PredictRequest(BaseModel):
     features: List[float]
 
 
-class PredictResponse(BaseModel):
-    prediction: str
-    confidence: Optional[float]
+class PredictBinaryResponse(BaseModel):
+    binary: str
+    binary_proba: Optional[List[float]] = None
+
+class PredictMultiResponse(BaseModel):
+    multilabel: str
+    multilabel_proba: Optional[List[float]] = None
 
 
 class TrainRequest(BaseModel):
