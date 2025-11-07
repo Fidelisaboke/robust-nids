@@ -141,203 +141,133 @@ echo "Generating realistic web traffic..."
 ) &
 
 
-# --- Video Traffic (Fast Video Streaming) ---
-# Expected Flows: ~2000+ (typical video streaming patterns)
-echo "Generating 'Video' traffic (Streaming/Conferencing)..."
+# --- Video Traffic (Realistic multi-stream) ---
+echo "Generating 'Video' traffic (realistic streaming)..."
 (
-  timeout 60 tcpdump -i lo -s 0 -w "$TEST_DIR/benign_video.pcap" 2>/dev/null &
+  timeout 75 tcpdump -i lo -s 0 -w "$TEST_DIR/benign_video.pcap" 2>/dev/null &
   TCPDUMP_PID=$!
   sleep 1
   {
-    # Start video servers with timeouts
-    for server_port in {50000..50030}; do
-      timeout 55 nc -l -p $server_port >/dev/null 2>/dev/null &
-    done
-    sleep 1
+    echo "  -> Simulating multiplexed video streaming sessions..."
+    # Generate dummy video payload
+    dd if=/dev/urandom of=/tmp/testvideo.bin bs=1K count=200 >/dev/null 2>&1
 
-    # Fast video client connections - no data transfer, just connections
-    echo "  -> Generating video streaming flows..."
-    for stream in {1..400}; do
-      server_port=$((50000 + (stream % 31)))
-      client_port=$((60000 + stream))
+    for session in {1..300}; do
+      port=$((52000 + session))
+      # Simulate video streaming bursts (HTTP progressive style)
+      curl -s --limit-rate $((100 + RANDOM % 400))K \
+        -T /tmp/testvideo.bin "http://127.0.0.1:$port/upload?stream=$session" >/dev/null 2>&1 &
 
-      # Quick TCP connections (no data transfer = faster)
-      nc -z -w 0.1 127.0.0.1 $server_port -p $client_port 2>/dev/null &
-
-      # Every 4th stream, add a proper connection with small data
-      if (( stream % 4 == 0 )); then
-        echo "video_data" | timeout 0.3 nc -w 0.2 -p $((client_port + 10000)) 127.0.0.1 $server_port 2>/dev/null &
-      fi
-
-      # Better concurrency control
-      if (( stream % 100 == 0 )); then
-        wait
-      fi
+      # Random jitter between clients
+      sleep 0.$((RANDOM % 4))
+      if (( session % 50 == 0 )); then wait; fi
     done
     wait
 
-    # Additional wave for more flows
-    for stream in {401..800}; do
-      server_port=$((50000 + (stream % 31)))
-      client_port=$((61000 + stream))
-      nc -z -w 0.05 127.0.0.1 $server_port -p $client_port 2>/dev/null &
-
-      if (( stream % 150 == 0 )); then
-        wait
-      fi
-    done
-    wait
-
-    echo "  -> Video traffic generation completed"
+    echo "  -> Realistic video streaming complete"
     sleep 2
     kill -INT $TCPDUMP_PID 2>/dev/null || true
   } &
   wait $!
   wait $TCPDUMP_PID 2>/dev/null || true
 ) &
-spinner $! "  -> Generating 2000+ 'Video' flows (fast streaming)..."
+spinner $! "  -> Generating 2000+ 'Video' flows (progressive streaming)..."
 
 
-
-# --- Audio Traffic (Fast Audio Streaming) ---
-# Expected Flows: ~3000+ (typical audio conference patterns)
-echo "Generating 'Audio' traffic (VoIP/RTP streams)..."
+# --- Audio Traffic (VoIP Simulation) ---
+echo "Generating 'Audio' traffic (RTP-style UDP)..."
 (
-  timeout 60 tcpdump -i lo -s 0 -w "$TEST_DIR/benign_audio.pcap" 2>/dev/null &
+  timeout 70 tcpdump -i lo -s 0 -w "$TEST_DIR/benign_audio.pcap" 2>/dev/null &
   TCPDUMP_PID=$!
   sleep 1
   {
-    # Start audio servers with timeouts
-    for server_port in {51000..51080}; do
-      timeout 55 nc -l -p $server_port >/dev/null 2>/dev/null &
-    done
-    sleep 1
-
-    # Fast audio client connections
-    echo "  -> Generating VoIP audio streams..."
-    for stream in {1..600}; do
-      server_port=$((51000 + (stream % 81)))
-      client_port=$((62000 + stream))
-
-      # Very quick TCP connections for audio flows
-      nc -z -w 0.05 127.0.0.1 $server_port -p $client_port 2>/dev/null &
-
-      # Every 3rd stream, add small data transfer
-      if (( stream % 3 == 0 )); then
-        echo "audio" | timeout 0.2 nc -w 0.1 -p $((client_port + 20000)) 127.0.0.1 $server_port 2>/dev/null &
-      fi
-
-      # Efficient concurrency control
-      if (( stream % 150 == 0 )); then
-        wait
-      fi
+    echo "  -> Simulating RTP/VoIP streams..."
+    for call in {1..400}; do
+      dst_port=$((53000 + (call % 50)))
+      src_port=$((60000 + call))
+      # 50–200 byte UDP bursts at 20–60 ms intervals
+      for pkt in {1..20}; do
+        head -c $((50 + RANDOM % 150)) /dev/urandom | \
+          nc -u -w 0.02 -p $src_port 127.0.0.1 $dst_port >/dev/null 2>&1
+        sleep 0.0$((2 + RANDOM % 5))
+      done &
+      if (( call % 80 == 0 )); then wait; fi
     done
     wait
-
-    # Second wave
-    for stream in {601..1200}; do
-      server_port=$((51000 + (stream % 81)))
-      client_port=$((63000 + stream))
-      nc -z -w 0.05 127.0.0.1 $server_port -p $client_port 2>/dev/null &
-
-      if (( stream % 200 == 0 )); then
-        wait
-      fi
-    done
-    wait
-
-    echo "  -> Audio traffic generation completed"
+    echo "  -> Audio streaming completed"
     sleep 2
     kill -INT $TCPDUMP_PID 2>/dev/null || true
   } &
   wait $!
   wait $TCPDUMP_PID 2>/dev/null || true
 ) &
-spinner $! "  -> Generating 3000+ 'Audio' flows (fast VoIP)..."
+spinner $! "  -> Generating 3,000+ 'Audio' flows (RTP-like UDP)..."
 
 
-# # --- Benign-Text (File Transfer) ---
-# # This traffic is realistic and has natural jitter.
-# # Expected Flows: ~3000
-# create_lorem_file
-# echo "Generating 'Text' traffic (file transfer)..."
-# python3 -m http.server 8000 --directory /tmp >/dev/null 2>&1 &
-# HTTP_PID=$!
-# (
-#   timeout 60 tcpdump -i lo 'port 8000' -s 0 -w "$TEST_DIR/benign_text.pcap" 2>/dev/null &
-#   TCPDUMP_PID=$!
-#   sleep 1 # Wait for tcpdump to start
-#   {
-#     # Download a text-like file 3000 times
-#     for i in {1..3000}; do
-#       curl -s http://127.0.0.1:8000/sample_text.txt -o /dev/null || true
-#       # Add light timing jitter (0–0.3s)
-#       sleep 0.$((RANDOM % 3))
-#     done
-#     sleep 2
-#     kill -INT $TCPDUMP_PID 2>/dev/null || true
-#   } &
-#   wait $!
-#   wait $TCPDUMP_PID 2>/dev/null || true
-# ) &
-# spinner $! "  -> Generating 3000 'Text' flows (curl loop)..."
-# kill $HTTP_PID 2>/dev/null || true
 
-# --- Benign-Background (Fast & Light - 30,000 flows) ---
-# Expected Flows: ~30,000 (fast generation)
-generate_fast_background() {
-    local batch_num=$1
-    local batch_size=$2
-
-    for ((i=0; i<batch_size; i++)); do
-        flow_num=$((batch_num * batch_size + i))
-        src_port=$((20000 + (flow_num % 20000)))
-        dst_port=$((50000 + (flow_num % 50)))  # Only 50 destination ports for efficiency
-
-        # Ultra-fast TCP connections (no data, just handshake)
-        nc -z -w 0.05 127.0.0.1 $dst_port -p $src_port 2>/dev/null &
-
-        # Every 10th flow, quick UDP
-        if (( flow_num % 10 == 0 )); then
-            echo "x" | nc -u -w 0.02 -p $((src_port + 30000)) 127.0.0.1 $((dst_port + 1000)) 2>/dev/null &
-        fi
-    done
-    wait
-}
-
-echo "Generating 'Background' traffic (Fast Volume)..."
+# --- Benign-Text (File Transfer) ---
+# This traffic is realistic and has natural jitter.
+# Expected Flows: ~3000
+create_lorem_file
+echo "Generating 'Text' traffic (file transfer)..."
+python3 -m http.server 8000 --directory /tmp >/dev/null 2>&1 &
+HTTP_PID=$!
 (
-  timeout 90 tcpdump -i lo -B 65536 -s 0 -w "$TEST_DIR/benign_background.pcap" 2>/dev/null &
+  timeout 60 tcpdump -i lo 'port 8000' -s 0 -w "$TEST_DIR/benign_text.pcap" 2>/dev/null &
+  TCPDUMP_PID=$!
+  sleep 1 # Wait for tcpdump to start
+  {
+    # Download a text-like file 3000 times
+    for i in {1..3000}; do
+      curl -s http://127.0.0.1:8000/sample_text.txt -o /dev/null || true
+      # Add light timing jitter (0–0.3s)
+      sleep 0.$((RANDOM % 3))
+    done
+    sleep 2
+    kill -INT $TCPDUMP_PID 2>/dev/null || true
+  } &
+  wait $!
+  wait $TCPDUMP_PID 2>/dev/null || true
+) &
+spinner $! "  -> Generating 3000 'Text' flows (curl loop)..."
+kill $HTTP_PID 2>/dev/null || true
+
+# --- Background (Natural Mix) ---
+echo "Generating 'Background' traffic (natural mix)..."
+(
+  timeout 90 tcpdump -i lo -s 0 -w "$TEST_DIR/benign_background.pcap" 2>/dev/null &
   TCPDUMP_PID=$!
   sleep 1
   {
-    # Start minimal listeners
-    for port in {50000..50049}; do
-      timeout 85 nc -l -p $port >/dev/null 2>&1 &
-    done
-    for port in {51000..51049}; do
-      timeout 85 nc -l -u -p $port >/dev/null 2>&1 &
-    done
+    echo "  -> Spawning DNS, HTTP, and ICMP chatter..."
 
-    sleep 1
-
-    echo "  -> Generating fast background traffic..."
-
-    # Single wave: 30,000 flows (6 batches × 5,000)
-    for batch in {0..5}; do
-        generate_fast_background $batch 5000 &
+    for i in {1..20000}; do
+      case $((RANDOM % 4)) in
+        0) # HTTP GET
+          curl -s "http://localhost:8080/?id=$RANDOM" >/dev/null 2>&1 &
+          ;;
+        1) # DNS-like query
+          echo "example$i.com" | nc -u -w 0.02 127.0.0.1 53 >/dev/null 2>&1 &
+          ;;
+        2) # ICMP ping
+          ping -c 1 -i 0.05 127.0.0.1 >/dev/null 2>&1 &
+          ;;
+        3) # Random UDP chatter
+          echo "bg$i" | nc -u -w 0.02 127.0.0.1 $((54000 + (RANDOM % 100))) >/dev/null 2>&1 &
+          ;;
+      esac
+      if (( i % 2000 == 0 )); then wait; fi
     done
     wait
-
-    echo "  -> Background traffic completed"
+    echo "  -> Background chatter complete"
     sleep 1
     kill -INT $TCPDUMP_PID 2>/dev/null || true
   } &
   wait $!
   wait $TCPDUMP_PID 2>/dev/null || true
 ) &
-BACKGROUND_PID=$!
-spinner $BACKGROUND_PID "  -> Generating 30,000 'Background' flows (fast batches)..."
+spinner $! "  -> Generating 20,000+ 'Background' flows (mixed traffic)..."
+
 
 
 
@@ -375,8 +305,8 @@ if command -v nmap >/dev/null 2>&1; then
       echo "  -> Running lightweight mixed port scans..."
 
       # Target range (smaller subset, randomized hosts)
-      TARGETS=(127.0.0.{2..20})
-      PORT_RANGE="1-2000"
+      TARGETS=(127.0.0.{2..5})
+      PORT_RANGE="1-1000"
       SCAN_TYPES=(-sS -sF -sX)
 
       # Fewer scans per type, randomized timing for realism
@@ -405,80 +335,45 @@ if command -v nmap >/dev/null 2>&1; then
 fi
 
 
-# # --- Bruteforce (Stable UDP/TCP Flood) ---
-# # Goal: ~14,000 unique flows, but stable
-# if command -v hping3 >/dev/null 2>&1; then
-#   echo "Generating 'Bruteforce' traffic (Stable Flood)..."
-#   # Start minimal listeners
-#   for port in {9990..10000}; do
-#     timeout 70 nc -l -u -p $port >/dev/null 2>&1 &
-#     timeout 70 nc -l -p $port >/dev/null 2>&1 &
-#   done
+# --- Bruteforce (Hydra + Mixed Protocols) ---
+# Goal: 12,000+ unique flows, realistic login attempts
+if command -v hydra >/dev/null 2>&1; then
+  echo "Generating 'Bruteforce' traffic (Hydra simulation)..."
+  (
+    timeout 90 tcpdump -i lo -s 0 -w "$TEST_DIR/attack_bruteforce_hydra.pcap" 2>/dev/null &
+    TCPDUMP_PID=$!
+    sleep 2
 
-#   (
-#     timeout 75 tcpdump -i lo -s 0 -w "$TEST_DIR/attack_bruteforce_udp.pcap" 2>/dev/null &
-#     TCPDUMP_PID=$!
-#     sleep 2
+    {
+      echo "  -> Launching distributed brute-force attempts..."
+      USERS="/tmp/users.txt"
+      PASS="/tmp/pass.txt"
+      echo -e "admin\nuser\nroot\ntest" > "$USERS"
+      echo -e "1234\nadmin\npassword\nroot\nletmein" > "$PASS"
 
-#     {
-#       # Generate stable mixed flood traffic
-#       echo "  -> Generating stable flood traffic..."
+      TARGETS=(127.0.0.{2..6})
+      SERVICES=(ssh ftp http-post smtp)
 
-#       # Use fewer hping3 instances with controlled rates
-#       for attacker in {1..5}; do
-#         (
-#           # UDP floods - much slower rate
-#           for target in {1..50}; do
-#             hping3 -2 127.0.0.$((1 + target % 5)) \
-#               -p $((9990 + RANDOM % 10)) \
-#               -i u$((1000 + RANDOM % 4000)) \  # Much slower interval
-#               -c $((20 + RANDOM % 30)) \       # Fewer packets
-#               --data $((50 + RANDOM % 100)) \  # Smaller data
-#               >/dev/null 2>&1
-#             sleep 0.$((RANDOM % 2))  # Add delay between hping3 calls
-#           done
-#         ) &
-#       done
-#       wait
+      for svc in "${SERVICES[@]}"; do
+        for tgt in "${TARGETS[@]}"; do
+          hydra -L "$USERS" -P "$PASS" "$tgt" "$svc" \
+            -t 4 -V -I -W 1 -f >/dev/null 2>&1 &
+          # Randomized delay to avoid identical timing
+          sleep $((RANDOM % 3))
+        done
+      done
 
-#       # TCP SYN floods - separate wave
-#       for attacker in {1..5}; do
-#         (
-#           for target in {1..40}; do
-#             hping3 -S 127.0.0.$((1 + target % 5)) \
-#               -p $((9990 + RANDOM % 10)) \
-#               -i u$((1500 + RANDOM % 5000)) \  # Slower interval
-#               -c $((15 + RANDOM % 25)) \       # Fewer packets
-#               >/dev/null 2>&1
-#             sleep 0.$((RANDOM % 2))  # Add delay
-#           done
-#         ) &
-#       done
-#       wait
+      wait
+      echo "  -> Hydra brute-force generation completed"
+      sleep 2
+      kill -INT $TCPDUMP_PID 2>/dev/null || true
+    } &
+    wait $!
+    wait $TCPDUMP_PID 2>/dev/null || true
+  ) &
+  spinner $! "  -> Generating 12,000+ 'Bruteforce' flows (multi-protocol)..."
+fi
 
-#       # Alternative: Use nping for more stability (if available)
-#       if command -v nping >/dev/null 2>&1; then
-#         echo "  -> Supplementing with nping floods..."
-#         for i in {1..10}; do
-#           nping --udp -p 9995 --rate 100 -c 100 127.0.0.1 >/dev/null 2>&1 &
-#           nping --tcp -p 9996 --rate 80 -c 80 127.0.0.1 >/dev/null 2>&1 &
-#           sleep 1
-#         done
-#         wait
-#       fi
-
-#       sleep 2
-#       kill -INT $TCPDUMP_PID 2>/dev/null || true
-#     } &
-
-#     wait $!
-#     wait $TCPDUMP_PID 2>/dev/null || true
-#   ) &
-
-#   spinner $! "  -> Generating ~8,000 'Bruteforce' flows (stable mixed)..."
-#   pkill -f "nc -l -u -p 99" 2>/dev/null || true
-#   pkill -f "nc -l -p 99" 2>/dev/null || true
-# fi
 
 
 # --- DoS Attack (REMOVED) ---

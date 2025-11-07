@@ -70,8 +70,8 @@ echo ""
 
 # --- Main Processing ---
 
-# Find all files ending in _cicflowmeter.csv
-find "$CSV_DIR" -maxdepth 1 -type f -name "*_cicflowmeter.csv" -print0 | while IFS= read -r -d '' csv_file; do
+# Find all files ending in *.csv
+find "$CSV_DIR" -maxdepth 1 -type f -name "*.csv" -print0 | while IFS= read -r -d '' csv_file; do
     echo ""
     echo "================ Testing: $(basename "$csv_file") ================"
 
