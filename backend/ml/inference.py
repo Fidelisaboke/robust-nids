@@ -95,13 +95,16 @@ def preprocess_dataframe(df):
     """
     Preprocesses the raw CICFlowMeter dataframe to match the training format.
     1. Renames columns
-    2. Creates 'Protocol_6.0'
+    2. Creates 'Protocol_6.0', 'Protocol_17.0', or 'Protocol_0.0' features
     3. Handles Infs and NaNs
     """
-    # 1. Create 'Protocol_6.0' feature (TCP)
+    # 1. Creates 'Protocol_6.0', 'Protocol_17.0', or 'Protocol_0.0' features
     # Check if 'protocol' column exists before creating the one-hot
     if "protocol" in df.columns:
+        # Create one-hot encoded protocol features
         df["Protocol_6.0"] = (df["protocol"] == 6).astype(int)
+        df["Protocol_17.0"] = (df["protocol"] == 17).astype(int)
+        df["Protocol_0.0"] = (df["protocol"] == 0).astype(int)
 
     # 2. Rename columns to match model's expected feature names
     df.rename(columns=CICFLOWMETER_TO_TII_MAPPING, inplace=True)
