@@ -2,6 +2,7 @@ import logging
 import os
 
 import joblib
+import shap
 import tensorflow as tf
 from xgboost import XGBClassifier
 
@@ -19,6 +20,7 @@ class ModelBundle:
         # Binary
         self.binary_model = None
         self.binary_preprocessor = None
+        self.binary_explainer = None
         # Multiclass
         self.multiclass_model = None
         self.multiclass_preprocessor = None
@@ -47,6 +49,18 @@ class ModelBundle:
                 self.binary_model = joblib.load(os.path.join(artifacts_dir, "binary_pipeline.pkl"))
                 self.binary_preprocessor = None
                 bin_type = "sklearn_pipeline"
+
+            # Initialize SHAP explaienr for binary model
+            try:
+                logger.info("Initializing Binary SHAP explainer...")
+                #  Unwrap the actual model from the pipeline or Native JSON
+                if self.binary_preprocessor:
+                     actual_model = self.binary_model
+                else:
+                    actual_model = self.binary_model.named_steps['model']
+                self.binary_explainer = shap.TreeExplainer(actual_model)
+            except Exception as e:
+                logger.warning(f"[ERROR]: Could not initialize SHAP explainer: {e}")
 
             # --- 2. Load Multiclass Model ---
             xgb_multi_path = os.path.join(artifacts_dir, "xgboost_multiclass.json")

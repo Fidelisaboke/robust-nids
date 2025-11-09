@@ -4,9 +4,11 @@ import pandas as pd
 import requests
 
 # --- Configuration ---
-API_URL = "http://127.0.0.1:8000/api/v1/nids/predict/full"
+BASE_URL = "http://127.0.0.1:8000/api/v1/nids"
+PREDICT_URL = f"{BASE_URL}/predict/full"
+EXPLAIN_URL = f"{BASE_URL}/explain/binary"
 
-# Define paths using separate steps to keep line lengths manageable for linters
+# Paths
 CURRENT_DIR = os.path.dirname(__file__)
 RELATIVE_DATA_PATH = "../../backend/data/flows/test_results"
 TEST_DATA_DIR = os.path.abspath(os.path.join(CURRENT_DIR, RELATIVE_DATA_PATH))
@@ -32,48 +34,57 @@ def get_random_sample(filename):
         return None
 
 
-def test_endpoint(sample, expected_type):
-    """Sends the sample to the API and validates the response."""
+def test_prediction(sample, expected_type):
+    """Tests the full prediction endpoint."""
     if sample is None:
         return
 
-    print(f"\n-> Sending {expected_type} sample to API...")
-
+    print(f"\n-> Sending {expected_type} sample to PREDICT API...")
     try:
-        response = requests.post(API_URL, json={"features": sample}, timeout=5)
-
+        response = requests.post(PREDICT_URL, json={"features": sample}, timeout=5)
         if response.status_code == 200:
             res = response.json()
             threat = res["threat_level"]
-            bin_res = res["binary"]
-            multi_res = res["multiclass"]
-            anom_res = res["anomaly"]
-
-            print("\n[SUCCESS] API response received.")
+            print("\n[SUCCESS] Prediction received.")
             print(f"   - Threat Level: [{threat}]")
-            print(f"   - Binary:       {bin_res['label']} ({bin_res['confidence']:.4f})")
-            print(f"   - Multiclass:   {multi_res['label']} ({multi_res['confidence']:.4f})")
+            print(f"   - Binary:       {res['binary']['label']} ({res['binary']['confidence']:.4f})")
             print(
-                f"   - Anomaly Score: {anom_res['anomaly_score']:.4f} "
-                f"(Threshold: {anom_res['threshold']:.4f})"
+                f"   - Multiclass:   {res['multiclass']['label']} "
+                f"({res['multiclass']['confidence']:.4f})"
             )
-
-            # Validation logic
-            is_malicious = expected_type == "MALICIOUS"
-            threat_high = threat in ["High", "Critical"]
-            threat_low = threat in ["Low", "Medium"]
-
-            if (is_malicious and threat_high) or (not is_malicious and threat_low):
-                print(">> VERDICT: PASS")
-            else:
-                print(f">> VERDICT: SUSPICIOUS (Expected {expected_type}, got {threat})")
-
         else:
-            print(f"\n[FAIL] API Error ({response.status_code})")
-            print(response.text)
+            print(f"\n[FAIL] API Error ({response.status_code}): {response.text}")
+    except Exception as e:
+        print(f"\n[FAIL] Request failed: {e}")
 
-    except requests.exceptions.ConnectionError:
-        print("\n[FAIL] Connection failed. Is 'uvicorn main:app' running?")
+
+def test_explanation(sample, expected_type):
+    """Tests the SHAP explanation endpoint."""
+    if sample is None:
+        return
+
+    print(f"\n-> Sending {expected_type} sample to EXPLAIN API...")
+    try:
+        response = requests.post(EXPLAIN_URL, json={"features": sample}, timeout=10)
+        if response.status_code == 200:
+            res = response.json()
+            print("\n[SUCCESS] Explanation received.")
+            print(f"   - Base Value: {res['base_value']:.4f}")
+            print("   - Top 5 Contributors:")
+            for i, item in enumerate(res["contributions"][:5], 1):
+                # Simple ASCII bar chart for impact
+                impact = item["shap_value"]
+                bar = "+" * int(impact * 5) if impact > 0 else "-" * int(abs(impact) * 5)
+                # Split long f-string for linter compliance
+                print(
+                    f"     {i}. {item['feature']:<20} | "
+                    f"Val: {item['value']:>8.2f} | "
+                    f"SHAP: {impact:>6.3f} {bar}"
+                )
+        else:
+            print(f"\n[FAIL] API Error ({response.status_code}): {response.text}")
+    except Exception as e:
+        print(f"\n[FAIL] Request failed: {e}")
 
 
 if __name__ == "__main__":
@@ -81,10 +92,18 @@ if __name__ == "__main__":
     print("NIDS API Live Integration Test")
     print("========================================")
 
-    print("\n--- TEST CASE 1: Known Attack (Port Scan) ---")
-    test_endpoint(get_random_sample("infogathering.csv"), "MALICIOUS")
+    # 1. Get Samples
+    malicious_sample = get_random_sample("infogathering.csv")
+    benign_sample = get_random_sample("benign_web_https.csv")
 
-    print("\n--- TEST CASE 2: Known Benign (Web) ---")
-    test_endpoint(get_random_sample("benign_web_https.csv"), "BENIGN")
+    # 2. Test Predictions
+    print("\n--- TEST 1: Predictions ---")
+    test_prediction(malicious_sample, "MALICIOUS")
+    test_prediction(benign_sample, "BENIGN")
+
+    # 3. Test Explanations
+    print("\n--- TEST 2: Explanations (SHAP) ---")
+    test_explanation(malicious_sample, "MALICIOUS")
+    test_explanation(benign_sample, "BENIGN")
 
     print("\n========================================")

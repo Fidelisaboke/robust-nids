@@ -31,3 +31,16 @@ class UnifiedPredictionResponse(BaseModel):
     multiclass: MulticlassResult
     anomaly: AnomalyResult
     threat_level: str
+
+class FeatureContribution(BaseModel):
+    feature: str
+    value: Union[float, int, str]  # The actual value in the flow
+    shap_value: float              # The push this feature gave towards "Malicious"
+
+class ExplanationResponse(BaseModel):
+    status: str = "success"
+    predicted_label: str
+    # Base value is the average model output before seeing this specific sample
+    base_value: float
+    # Top N features that pushed the prediction one way or the other
+    contributions: list[FeatureContribution]
