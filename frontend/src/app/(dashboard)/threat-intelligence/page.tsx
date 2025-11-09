@@ -1,243 +1,391 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Globe, Shield, TrendingUp, MapPin } from "lucide-react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Brain,
+  AlertCircle,
+  Loader2,
+  ChevronUp,
+  Sparkles,
+  FileJson,
+  Play,
+  RotateCcw,
+} from "lucide-react";
+import { ThreatSummaryCard } from "./components/ThreatSummaryCard";
+import { ShapExplanationChart } from "./components/ShapExplanationChart";
+import { useNidsAnalysis, type NetworkFlowFeatures } from "@/hooks/useNids";
+import { Button } from "@/components/ui/button";
+
+const EXAMPLE_FLOW = {
+  src_ip: "192.168.1.100",
+  dst_ip: "10.0.0.50",
+  src_port: 54321,
+  dst_port: 22,
+  protocol: 6,
+  timestamp: "2025-11-09T12:00:00Z",
+  flow_duration: 500,
+  flow_byts_s: 3600,
+  flow_pkts_s: 30,
+  fwd_pkts_s: 20,
+  bwd_pkts_s: 10,
+  tot_fwd_pkts: 10,
+  tot_bwd_pkts: 5,
+  totlen_fwd_pkts: 1200,
+  totlen_bwd_pkts: 600,
+  fwd_pkt_len_max: 150,
+  fwd_pkt_len_min: 60,
+  fwd_pkt_len_mean: 120,
+  fwd_pkt_len_std: 20,
+  bwd_pkt_len_max: 140,
+  bwd_pkt_len_min: 50,
+  bwd_pkt_len_mean: 120,
+  bwd_pkt_len_std: 25,
+  pkt_len_max: 150,
+  pkt_len_min: 50,
+  pkt_len_mean: 120,
+  pkt_len_std: 22,
+  pkt_len_var: 484,
+  fwd_header_len: 320,
+  bwd_header_len: 160,
+  fwd_seg_size_min: 20,
+  fwd_act_data_pkts: 8,
+  flow_iat_mean: 50,
+  flow_iat_max: 80,
+  flow_iat_min: 20,
+  flow_iat_std: 10,
+  fwd_iat_tot: 450,
+  fwd_iat_max: 70,
+  fwd_iat_min: 15,
+  fwd_iat_mean: 45,
+  fwd_iat_std: 8,
+  bwd_iat_tot: 400,
+  bwd_iat_max: 120,
+  bwd_iat_min: 30,
+  bwd_iat_mean: 80,
+  bwd_iat_std: 15,
+  fwd_psh_flags: 0,
+  bwd_psh_flags: 0,
+  fwd_urg_flags: 0,
+  bwd_urg_flags: 0,
+  fin_flag_cnt: 0,
+  syn_flag_cnt: 1,
+  rst_flag_cnt: 0,
+  psh_flag_cnt: 0,
+  ack_flag_cnt: 9,
+  urg_flag_cnt: 0,
+  ece_flag_cnt: 0,
+  down_up_ratio: 0.5,
+  pkt_size_avg: 120,
+  init_fwd_win_byts: 29200,
+  init_bwd_win_byts: 0,
+  active_max: 350,
+  active_min: 150,
+  active_mean: 250,
+  active_std: 50,
+  idle_max: 0,
+  idle_min: 0,
+  idle_mean: 0,
+  idle_std: 0,
+  fwd_byts_b_avg: 0,
+  fwd_pkts_b_avg: 0,
+  bwd_byts_b_avg: 0,
+  bwd_pkts_b_avg: 0,
+  fwd_blk_rate_avg: 0,
+  bwd_blk_rate_avg: 0,
+  fwd_seg_size_avg: 120,
+  bwd_seg_size_avg: 120,
+  cwr_flag_count: 0,
+  subflow_fwd_pkts: 10,
+  subflow_bwd_pkts: 5,
+  subflow_fwd_byts: 1200,
+  subflow_bwd_byts: 600,
+};
 
 export default function ThreatIntelligencePage() {
-  const threats = [
-    {
-      id: 1,
-      name: "Mirai Botnet Variant",
-      severity: "critical",
-      category: "Botnet",
-      targets: "IoT Devices",
-      countries: ["CN", "RU", "US"],
-      confidence: 95,
-      trend: "increasing",
-    },
-    {
-      id: 2,
-      name: "Emotet Campaign",
-      severity: "high",
-      category: "Malware",
-      targets: "Email Systems",
-      countries: ["DE", "FR", "GB"],
-      confidence: 88,
-      trend: "stable",
-    },
-    {
-      id: 3,
-      name: "SQL Injection Attack Pattern",
-      severity: "high",
-      category: "Web Attack",
-      targets: "Web Applications",
-      countries: ["BR", "IN", "VN"],
-      confidence: 92,
-      trend: "increasing",
-    },
-    {
-      id: 4,
-      name: "Ransomware Activity",
-      severity: "critical",
-      category: "Ransomware",
-      targets: "Healthcare, Finance",
-      countries: ["RU", "KP", "IR"],
-      confidence: 97,
-      trend: "increasing",
-    },
-  ];
+  const [jsonInput, setJsonInput] = useState(
+    JSON.stringify(EXAMPLE_FLOW, null, 2),
+  );
+  const [currentFeatures, setCurrentFeatures] =
+    useState<NetworkFlowFeatures | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return "text-red-400 bg-red-500/10 border-red-500/20";
-      case "high":
-        return "text-orange-400 bg-orange-500/10 border-orange-500/20";
-      case "medium":
-        return "text-yellow-400 bg-yellow-500/10 border-yellow-500/20";
-      default:
-        return "text-blue-400 bg-blue-500/10 border-blue-500/20";
+  const {
+    analyzeThreat,
+    explainPrediction,
+    isPredicting,
+    isExplaining,
+    predictionError,
+    explanationError,
+    predictionData,
+    explanationData,
+    resetPrediction,
+    resetExplanation,
+  } = useNidsAnalysis();
+
+  const handleAnalyze = async () => {
+    setJsonError(null);
+    setShowExplanation(false);
+    resetExplanation();
+
+    try {
+      const features = JSON.parse(jsonInput);
+      setCurrentFeatures(features);
+      await analyzeThreat(features);
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        setJsonError("Invalid JSON format. Please check your input.");
+      } else {
+        setJsonError(
+          error instanceof Error ? error.message : "Analysis failed",
+        );
+      }
     }
+  };
+
+  const handleExplain = async () => {
+    if (!currentFeatures) return;
+
+    try {
+      await explainPrediction(currentFeatures);
+      setShowExplanation(true);
+    } catch (error) {
+      console.error("Explanation failed:", error);
+    }
+  };
+
+  const handleReset = () => {
+    setJsonInput(JSON.stringify(EXAMPLE_FLOW, null, 2));
+    setCurrentFeatures(null);
+    setShowExplanation(false);
+    setJsonError(null);
+    resetPrediction();
+    resetExplanation();
+  };
+
+  const handleLoadExample = () => {
+    setJsonInput(JSON.stringify(EXAMPLE_FLOW, null, 2));
+    setJsonError(null);
   };
 
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl font-bold text-white">Threat Intelligence</h1>
-        <p className="text-gray-400 mt-2">
-          Global threat landscape and emerging security risks
-        </p>
-      </motion.div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <Globe className="w-8 h-8 text-blue-400" />
-            <span className="text-sm text-green-400">↑ 12%</span>
-          </div>
-          <p className="text-3xl font-bold text-white mb-2">147</p>
-          <p className="text-sm text-gray-400">Active Threats</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <Shield className="w-8 h-8 text-purple-400" />
-            <span className="text-sm text-red-400">↑ 8%</span>
-          </div>
-          <p className="text-3xl font-bold text-white mb-2">23</p>
-          <p className="text-sm text-gray-400">Critical Alerts</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <MapPin className="w-8 h-8 text-cyan-400" />
-            <span className="text-sm text-orange-400">45 countries</span>
-          </div>
-          <p className="text-3xl font-bold text-white mb-2">892K</p>
-          <p className="text-sm text-gray-400">Attack Sources</p>
-        </motion.div>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Threat Intelligence
+          </h1>
+          <p className="text-gray-400">
+            Manual threat analysis and SHAP-based explainability
+          </p>
+        </div>
+        <div className="flex items-center space-x-2 px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
+          <Brain className="w-5 h-5 text-blue-400" />
+          <span className="text-sm text-gray-400">AI-Powered Analysis</span>
+        </div>
       </div>
 
-      {/* Threat Feed */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
-      >
-        <h2 className="text-xl font-bold text-white mb-6">
-          Active Threat Intelligence
-        </h2>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Input */}
         <div className="space-y-4">
-          {threats.map((threat, index) => (
-            <motion.div
-              key={threat.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 + index * 0.1 }}
-              className="bg-slate-900/50 rounded-lg p-5 hover:bg-slate-900 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white">
-                      {threat.name}
-                    </h3>
-                    <span
-                      className={`text-xs font-semibold px-3 py-1 rounded-full ${getSeverityColor(threat.severity)}`}
-                    >
-                      {threat.severity.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-4 text-sm mb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-500">Category:</span>
-                      <span className="text-gray-300">{threat.category}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-500">Targets:</span>
-                      <span className="text-gray-300">{threat.targets}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-500">Confidence:</span>
-                      <span className="text-green-400 font-medium">
-                        {threat.confidence}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <div className="flex space-x-1">
-                        {threat.countries.map((country) => (
-                          <span
-                            key={country}
-                            className="text-xs px-2 py-1 bg-slate-800 rounded text-gray-400"
-                          >
-                            {country}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp
-                        className={`w-4 h-4 ${threat.trend === "increasing" ? "text-red-400" : "text-gray-400"}`}
-                      />
-                      <span
-                        className={`text-xs ${threat.trend === "increasing" ? "text-red-400" : "text-gray-400"}`}
-                      >
-                        {threat.trend}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <button className="ml-4 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors text-sm">
-                  View Details
-                </button>
+          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <FileJson className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-semibold text-white">
+                  Network Flow Data
+                </h2>
+              </div>
+              <Button
+                onClick={handleLoadExample}
+                size="sm"
+                variant="ghost"
+                className="text-xs text-blue-400 hover:text-blue-300"
+              >
+                <Sparkles className="w-4 h-4 mr-1" />
+                Load Example
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Paste CICFlowMeter JSON features
+                </label>
+                <textarea
+                  value={jsonInput}
+                  onChange={(e) => setJsonInput(e.target.value)}
+                  className={`w-full h-[500px] px-4 py-3 bg-slate-900/50 border ${
+                    jsonError ? "border-red-500" : "border-slate-700"
+                  } rounded-lg text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none`}
+                  placeholder="Paste network flow JSON here..."
+                  spellCheck={false}
+                />
               </div>
 
-              {/* Confidence Bar */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">
-                    Confidence Score
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {threat.confidence}%
-                  </span>
+              {jsonError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start space-x-2 p-3 bg-red-500/10 border border-red-500/50 rounded-lg"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-400">{jsonError}</p>
+                </motion.div>
+              )}
+
+              <div className="flex space-x-3">
+                <Button
+                  onClick={handleAnalyze}
+                  disabled={isPredicting || !jsonInput.trim()}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isPredicting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Analyze Threat
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  variant="outline"
+                  className="border-slate-700 text-gray-400 hover:text-white"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Results */}
+        <div className="space-y-4">
+          <AnimatePresence mode="wait">
+            {predictionData ? (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="space-y-4"
+              >
+                <ThreatSummaryCard prediction={predictionData} />
+
+                {/* Why Button */}
+                <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4">
+                  <Button
+                    onClick={handleExplain}
+                    disabled={isExplaining || showExplanation}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {isExplaining ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating Explanation...
+                      </>
+                    ) : showExplanation ? (
+                      <>
+                        <ChevronUp className="w-4 h-4 mr-2" />
+                        Explanation Loaded
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-4 h-4 mr-2" />
+                        Why? (Show SHAP Analysis)
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
-                    style={{ width: `${threat.confidence}%` }}
-                  />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="placeholder"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-12 text-center"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="p-4 bg-slate-900/50 rounded-full">
+                    <Brain className="w-12 h-12 text-gray-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-400 mb-2">
+                      Ready to Analyze
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Paste network flow data and click &quot;Analyze
+                      Threat&quot; to begin
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {predictionError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 border border-red-500/50 rounded-xl p-4"
+            >
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-red-400 mb-1">
+                    Analysis Failed
+                  </h3>
+                  <p className="text-sm text-red-400/80">
+                    {predictionError.message}
+                  </p>
                 </div>
               </div>
             </motion.div>
-          ))}
+          )}
         </div>
-      </motion.div>
+      </div>
 
-      {/* Threat Map Placeholder */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
-      >
-        <h2 className="text-xl font-bold text-white mb-4">Global Threat Map</h2>
-        <div className="h-96 flex items-center justify-center bg-slate-900/50 rounded-lg">
-          <div className="text-center">
-            <Globe className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">
-              Interactive threat map visualization
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Real-time attack origin tracking
-            </p>
+      {/* Expandable SHAP Explanation */}
+      <AnimatePresence>
+        {showExplanation && explanationData && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ShapExplanationChart explanation={explanationData} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {explanationError && showExplanation && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-orange-500/10 border border-orange-500/50 rounded-xl p-4"
+        >
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-semibold text-orange-400 mb-1">
+                Explanation Failed
+              </h3>
+              <p className="text-sm text-orange-400/80">
+                {explanationError.message}
+              </p>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
