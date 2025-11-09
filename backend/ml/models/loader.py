@@ -1,129 +1,105 @@
+import logging
 import os
 
 import joblib
-import numpy as np
+import tensorflow as tf
 from xgboost import XGBClassifier
 
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "artifacts")
+# Suppress TF warnings
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+logger = logging.getLogger("uvicorn.error")
+ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "artifacts")
 
 
 class ModelBundle:
-    """ModelBundle loads and holds ML models and related artifacts."""
+    """Singleton-style bundle to hold all loaded active models."""
 
     def __init__(self):
-        self.binary_scaler = None
-        self.multiclass_scaler = None
+        # Binary
+        self.binary_model = None
+        self.binary_preprocessor = None
+        # Multiclass
+        self.multiclass_model = None
+        self.multiclass_preprocessor = None
         self.label_encoder = None
-        self.binary_classifier = None
-        self.multi_classifier = None
-        self.meta = {}
+        # Unsupervised
+        self.unsupervised_pipeline = None
+        self.autoencoder = None
+        self.ae_threshold = 0.0
+        # Status
+        self.loaded = False
+        self.meta = {"status": "not_loaded"}
 
-    def load_all(self, model_dir: str = MODEL_DIR):
-        """Loads all models and artifacts.
+    def load_all(self, artifacts_dir: str = ARTIFACTS_DIR):
+        logger.info(f"Loading ML artifacts from {artifacts_dir}...")
+        try:
+            # --- 1. Load Binary Model ---
+            xgb_bin_path = os.path.join(artifacts_dir, "xgboost_binary.json")
+            if os.path.exists(xgb_bin_path):
+                logger.info("Loading Binary model as native XGBoost...")
+                self.binary_preprocessor = joblib.load(os.path.join(artifacts_dir, "binary_preprocessor.pkl"))
+                self.binary_model = XGBClassifier()
+                self.binary_model.load_model(xgb_bin_path)
+                bin_type = "xgboost_native"
+            else:
+                logger.info("Loading Binary model as standard Pipeline...")
+                self.binary_model = joblib.load(os.path.join(artifacts_dir, "binary_pipeline.pkl"))
+                self.binary_preprocessor = None
+                bin_type = "sklearn_pipeline"
 
-        Args:
-            model_dir (str, optional): The directory to load models from. Defaults to MODEL_DIR.
-        """
-        binary_scaler_path = os.path.join(model_dir, "binary_scaler.pkl")
-        if os.path.exists(binary_scaler_path):
-            self.binary_scaler = joblib.load(binary_scaler_path)
+            # --- 2. Load Multiclass Model ---
+            xgb_multi_path = os.path.join(artifacts_dir, "xgboost_multiclass.json")
+            if os.path.exists(xgb_multi_path):
+                logger.info("Loading Multiclass model as native XGBoost...")
+                self.multiclass_preprocessor = joblib.load(
+                    os.path.join(artifacts_dir, "multiclass_preprocessor.pkl")
+                )
+                self.multiclass_model = XGBClassifier()
+                self.multiclass_model.load_model(xgb_multi_path)
+                multi_type = "xgboost_native"
+            else:
+                logger.info("Loading Multiclass model as standard Pipeline...")
+                self.multiclass_model = joblib.load(os.path.join(artifacts_dir, "multiclass_pipeline.pkl"))
+                self.multiclass_preprocessor = None
+                multi_type = "sklearn_pipeline"
 
-        multiclass_scaler_path = os.path.join(model_dir, "multiclass_scaler.pkl")
-        if os.path.exists(multiclass_scaler_path):
-            self.multiclass_scaler = joblib.load(multiclass_scaler_path)
+            self.label_encoder = joblib.load(os.path.join(artifacts_dir, "label_encoder.pkl"))
 
-        le_path = os.path.join(model_dir, "label_encoder.pkl")
-        if os.path.exists(le_path):
-            self.label_encoder = joblib.load(le_path)
+            # --- 3. Load Unsupervised Artifacts ---
+            self.unsupervised_pipeline = joblib.load(os.path.join(artifacts_dir, "unsupervised_pipeline.pkl"))
+            self.autoencoder = tf.keras.models.load_model(
+                os.path.join(artifacts_dir, "autoencoder_model.keras")
+            )
+            with open(os.path.join(artifacts_dir, "ae_threshold.txt"), "r") as f:
+                self.ae_threshold = float(f.read().strip())
 
-        binary_path = os.path.join(model_dir, "binary_classifier.json")
-        if os.path.exists(binary_path):
-            xgb_binary = XGBClassifier()
-            xgb_binary.load_model(binary_path)
-            self.binary_classifier = xgb_binary
-
-        multi_path = os.path.join(model_dir, "multiclass_classifier.json")
-        if os.path.exists(multi_path):
-            xgb_multi = XGBClassifier()
-            xgb_multi.load_model(multi_path)
-            self.multi_classifier = xgb_multi
-
-        # Metadata
-        self.meta = {
-            "loaded": {
-                "binary_scaler": bool(self.binary_scaler),
-                "multiclass_scaler": bool(self.multiclass_scaler),
-                "label_encoder": bool(self.label_encoder),
-                "binary_classifier": bool(self.binary_classifier),
-                "multi_classifier": bool(self.multi_classifier),
+            self.loaded = True
+            self.meta = {
+                "status": "loaded",
+                "binary_type": bin_type,
+                "multiclass_type": multi_type,
+                "ae_threshold": self.ae_threshold,
+                "classes": self.label_encoder.classes_.tolist() if self.label_encoder else [],
             }
-        }
+            logger.info("All NIDS models loaded successfully.")
 
-    def transform(self, X: np.ndarray | list, multiclass: bool = False):
-        """Transforms the input features.
+        except Exception as e:
+            logger.error(f"Error loading models: {e}")
+            self.loaded = False
+            self.meta = {"status": "error", "error": str(e)}
 
-        Args:
-            X (np.ndarray or list): The input features to transform.
+    # --- Helper Methods ---
+    def _prepare_input(self, df, preprocessor):
+        return preprocessor.transform(df) if preprocessor else df
 
-        Returns:
-            np.ndarray: The transformed features.
-        """
-        if not multiclass:
-            scaler = self.binary_scaler
-        else:
-            scaler = self.multiclass_scaler
-        if scaler is None:
-            return X
+    def get_binary_prediction(self, df):
+        data = self._prepare_input(df, self.binary_preprocessor)
+        return self.binary_model.predict(data)[0], self.binary_model.predict_proba(data)[0]
 
-        X_np = np.asarray(X)
-        if X_np.ndim == 1:
-            X_np = X_np.reshape(1, -1)
-        return scaler.transform(X_np)
-
-    def predict_binary(self, X_scaled: np.ndarray):
-        """Performs binary classification on the input data.
-
-        Args:
-            X_scaled (np.ndarray): The scaled input features.
-
-        Raises:
-            RuntimeError: If the binary classifier is not loaded.
-
-        Returns:
-            tuple: A tuple containing the predicted class and probabilities.
-        """
-        if self.binary_classifier is None:
-            raise RuntimeError("Binary model not loaded")
-
-        pred = self.binary_classifier.predict(X_scaled)
-        pred_probas = (
-            self.binary_classifier.predict_proba(X_scaled)
-            if hasattr(self.binary_classifier, "predict_proba")
-            else None
-        )
-        return pred, pred_probas
-
-    def predict_multiclass(self, X_scaled: np.ndarray):
-        """Performs multiclass classification on the input data.
-
-        Args:
-            X_scaled (np.ndarray): The scaled input features.
-
-        Raises:
-            RuntimeError: If the multiclass classifier is not loaded.
-
-        Returns:
-            tuple: A tuple containing the predicted class and probabilities.
-        """
-        if self.multi_classifier is None:
-            raise RuntimeError("Multiclass model not loaded")
-        pred = self.multi_classifier.predict(X_scaled)
-        pred_probas = (
-            self.multi_classifier.predict_proba(X_scaled)
-            if hasattr(self.multi_classifier, "predict_proba")
-            else None
-        )
-        return pred, pred_probas
+    def get_multiclass_prediction(self, df):
+        data = self._prepare_input(df, self.multiclass_preprocessor)
+        return self.multiclass_model.predict(data)[0], self.multiclass_model.predict_proba(data)[0]
 
 
 MODEL_BUNDLE = ModelBundle()

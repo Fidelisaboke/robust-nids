@@ -1,21 +1,33 @@
-from typing import List, Optional
+from typing import Dict, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PredictRequest(BaseModel):
-    features: List[float]
+    """Accepts a dictionary of features (key=column name, value=value)."""
+    features: Dict[str, Union[float, int, str]] = Field(
+        ..., example={"Flow Duration": 156, "Total Fwd Packets": 2, "Protocol": 6}
+    )
 
+class BinaryResult(BaseModel):
+    label: str
+    confidence: float
+    is_malicious: bool
 
-class PredictBinaryResponse(BaseModel):
-    binary: str
-    binary_proba: Optional[List[float]] = None
+class MulticlassResult(BaseModel):
+    label: str
+    confidence: float
+    probabilities: Dict[str, float]
 
-class PredictMultiResponse(BaseModel):
-    multilabel: str
-    multilabel_proba: Optional[List[float]] = None
+class AnomalyResult(BaseModel):
+    is_anomaly: bool
+    anomaly_score: float
+    threshold: float
 
-
-class TrainRequest(BaseModel):
-    epochs: Optional[int] = 10
-    adversarial_method: Optional[str] = "FGSM"
+class UnifiedPredictionResponse(BaseModel):
+    status: str = "success"
+    timestamp: str
+    binary: BinaryResult
+    multiclass: MulticlassResult
+    anomaly: AnomalyResult
+    threat_level: str
