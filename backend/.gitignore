@@ -207,6 +207,8 @@ __marimo__/
 /data/
 /models/
 ml/models/artifacts/*.json
+ml/models/artifacts/*.txt
 *.pkl
 *.h5
+*.keras
 *.joblib

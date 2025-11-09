@@ -94,44 +94,58 @@ echo ""
 read -p "Press ENTER to continue..."
 
 
-# ==========================================
-# 1. BENIGN TRAFFIC GENERATION
-# Goal: 100,000+ total benign flows
-# ==========================================
-echo ""
-echo "========================================="
-echo "Step 1: Capturing Benign Traffic"
-echo "========================================="
-
-# --- Benign-Web (Realistic browsing simulation) ---
-# Expected Flows: ~2500+ with proper HTTP/HTTPS patterns
-echo "Generating realistic web traffic..."
+# --- Benign-Web (Realistic Hybrid Simulation) ---
+# Captures both high-volume local traffic and realistic external HTTPS.
+# NOTE: Requires Internet access for external tests.
+echo "Generating realistic web traffic (Hybrid Local/External)..."
 (
-  timeout 180 tcpdump -i lo -s 0 -w "$TEST_DIR/benign_web_https.pcap"
+  # Capture on lo and eth0
+  timeout 600 tcpdump -i lo -i eth0 -s 0 -w "$TEST_DIR/benign_web_https.pcap" 'not port 22' >/dev/null 2>&1 &
   TCPDUMP_PID=$!
-  sleep 1
+  sleep 2
   {
-    # Start local web server with multiple resources
-    python3 -m http.server 8080 --directory /tmp >/dev/null 2>&1 &
+    # 1. Start Local Noise Server (for volume)
+    mkdir -p /tmp/www_noise
+    echo "generic_data" > /tmp/www_noise/index.html
+    python3 -m http.server 8080 --directory /tmp/www_noise >/dev/null 2>&1 &
     HTTP_PID=$!
+    sleep 1
 
-    # Simulate browser loading multiple resources
+    # 2. Define Safe External Targets (for realism)
+    # These provide real TLS handshakes and varied connection timings.
+    EXT_TARGETS=(
+        "https://www.example.com"
+        "https://www.example.org"
+        "https://www.example.net"
+        "http://httpforever.com"
+    )
+
+    echo "  -> Starting hybrid browsing simulation (approx 10 mins)..."
+    # Main loop - mixes local volume with intermittent external realism
     for i in {1..800}; do
-      # Main page request
-      curl -s "http://127.0.0.1:8080/sample_text.txt?session=$i" >/dev/null &
+        # A. High-Volume Local Hits (Fast background noise)
+        for j in {1..4}; do
+          curl -s "http://127.0.0.1:8080/sample_text.txt?resource=$j&session=$i" >/dev/null &
+        done
 
-      # Simulate CSS/JS/image requests
-      for j in {1..5}; do
-        curl -s "http://127.0.0.1:8080/sample_text.txt?resource=$j&session=$i" >/dev/null &
-      done
+        # B. Realistic External Hit (Slower, real TLS handshake)
+        for k in {1..3}; do
+          # We pick a random target from the list
+          TARGET=${EXT_TARGETS[$RANDOM % ${#EXT_TARGETS[@]}]}
+          # -L follows redirects (common in real traffic, e.g., 80->443)
+          curl -s -L "$TARGET" -o /dev/null &
+        done
 
-      # AJAX-like requests
-      curl -s "http://127.0.0.1:8080/sample_text.txt?ajax=$i" -H "X-Requested-With: XMLHttpRequest" >/dev/null &
+        # C. AJAX-like request
+        curl -s "http://127.0.0.1:8080/sample_text.txt?ajax=$i" -H "X-Requested-With: XMLHttpRequest" >/dev/null &
 
-      sleep 0.5
+        sleep 0.2
     done
 
+    # Wait for all curl background jobs in THIS subshell to finish
     wait
+
+    # Cleanup local server immediately after loop
     kill $HTTP_PID 2>/dev/null || true
     sleep 2
     kill -INT $TCPDUMP_PID 2>/dev/null || true
@@ -139,6 +153,7 @@ echo "Generating realistic web traffic..."
   wait $!
   wait $TCPDUMP_PID 2>/dev/null || true
 ) &
+spinner $! "  -> Generating 5,000+ 'Web' flows (hybrid local/external)..."
 
 
 # --- Video Traffic (Realistic multi-stream) ---
@@ -297,7 +312,7 @@ fi
 if command -v nmap >/dev/null 2>&1; then
   echo "Generating 'Information Gathering' traffic (optimized)..."
   (
-    timeout 45 tcpdump -i lo -s 0 -w "$TEST_DIR/attack_scan_infogathering.pcap" 2>/dev/null &
+    timeout 45 tcpdump -i lo -s 0 -w "$TEST_DIR/infogathering.pcap" 2>/dev/null &
     TCPDUMP_PID=$!
     sleep 1 # Ensure tcpdump is running
 
@@ -340,7 +355,7 @@ fi
 if command -v hydra >/dev/null 2>&1; then
   echo "Generating 'Bruteforce' traffic (Hydra simulation)..."
   (
-    timeout 90 tcpdump -i lo -s 0 -w "$TEST_DIR/attack_bruteforce_hydra.pcap" 2>/dev/null &
+    timeout 90 tcpdump -i lo -s 0 -w "$TEST_DIR/bruteforce.pcap" 2>/dev/null &
     TCPDUMP_PID=$!
     sleep 2
 

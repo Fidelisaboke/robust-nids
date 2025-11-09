@@ -49,36 +49,7 @@ fi
 # a clean, TII-SSRC-23 compatible class name.
 get_output_name() {
     local pcap_filename=$1
-    case "$pcap_filename" in
-        benign_video.pcap)
-            echo "Benign_Video.csv"
-            ;;
-        benign_audio.pcap)
-            echo "Benign_Audio.csv"
-            ;;
-        benign_text.pcap)
-            echo "Benign_Text.csv"
-            ;;
-        benign_web_https.pcap)
-            # FIX: We give it a unique name. We will merge them
-            # in the notebook by labeling BOTH as "Text".
-            echo "Benign_Web.csv"
-            ;;
-        benign_background.pcap)
-            echo "Benign_Background.csv"
-            ;;
-        attack_scan_infogathering.pcap)
-            echo "InfoGathering.csv"
-            ;;
-        attack_bruteforce_udp.pcap)
-            echo "Bruteforce.csv"
-            ;;
-        # Add any other pcap names here
-        *)
-            # Default: just replace .pcap with .csv
-            echo "$(basename "$pcap_filename" .pcap)_unknown.csv"
-            ;;
-    esac
+    echo "$(basename "$pcap_filename" .pcap).csv"
 }
 
 
@@ -107,7 +78,7 @@ find "$PCAP_DIR" -maxdepth 1 -type f -name "*.pcap" -print0 | while IFS= read -r
     # Rename the temp file to the final clean name
     mv "$temp_output_csv" "$output_csv"
 
-    # --- FIX: Count flows and log it ---
+    # Count flows and log it ---
     # wc -l includes the header, so subtract 1 for the true flow count
     flow_count=$(($(wc -l < "$output_csv") - 1))
 

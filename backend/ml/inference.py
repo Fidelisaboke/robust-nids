@@ -1,17 +1,20 @@
-"""Terminal-based traffic inferencing for binary and multiclass models."""
+"""
+Terminal-based traffic inferencing using full scikit-learn Pipelines and Autoencoders.
+"""
 
 import argparse
-import json
+import os
 import sys
 from collections import Counter
 
 import joblib
 import numpy as np
 import pandas as pd
-from xgboost import XGBClassifier
+
+# Suppress TensorFlow info/warning messages
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 # --- Feature Name Mapping ---
-# Renames columns from cicflowmeter (left) to what the model expects (right)
 CICFLOWMETER_TO_TII_MAPPING = {
     "flow_duration": "Flow Duration",
     "flow_byts_s": "Flow Bytes/s",
@@ -37,7 +40,7 @@ CICFLOWMETER_TO_TII_MAPPING = {
     "fwd_header_len": "Fwd Header Length",
     "fwd_act_data_pkts": "Fwd Act Data Pkts",
     "fwd_seg_size_min": "Fwd Seg Size Min",
-    "fwd_seg_size_avg": "Fwd Seg Size Avg",
+    "fwd_seg_size_avg": "Fwd Segment Size Avg",
     "bwd_pkts_s": "Bwd Packets/s",
     "tot_bwd_pkts": "Total Bwd packets",
     "totlen_bwd_pkts": "Total Length of Bwd Packet",
@@ -53,6 +56,8 @@ CICFLOWMETER_TO_TII_MAPPING = {
     "bwd_psh_flags": "Bwd PSH Flags",
     "bwd_urg_flags": "Bwd URG Flags",
     "bwd_header_len": "Bwd Header Length",
+    "bwd_seg_size_min": "Bwd Seg Size Min",
+    "bwd_seg_size_avg": "Bwd Segment Size Avg",
     "fin_flag_cnt": "FIN Flag Count",
     "syn_flag_cnt": "SYN Flag Count",
     "rst_flag_cnt": "RST Flag Count",
@@ -71,10 +76,10 @@ CICFLOWMETER_TO_TII_MAPPING = {
     "init_fwd_win_byts": "FWD Init Win Bytes",
     "init_bwd_win_byts": "Bwd Init Win Bytes",
     "fwd_byts_b_avg": "Fwd Bytes/Bulk Avg",
-    "fwd_pkts_b_avg": "Fwd Packets/Bulk Avg",
+    "fwd_pkts_b_avg": "Fwd Packet/Bulk Avg",
     "fwd_blk_rate_avg": "Fwd Bulk Rate Avg",
     "bwd_byts_b_avg": "Bwd Bytes/Bulk Avg",
-    "bwd_pkts_b_avg": "Bwd Packets/Bulk Avg",
+    "bwd_pkts_b_avg": "Bwd Packet/Bulk Avg",
     "bwd_blk_rate_avg": "Bwd Bulk Rate Avg",
     "subflow_fwd_pkts": "Subflow Fwd Packets",
     "subflow_fwd_byts": "Subflow Fwd Bytes",
@@ -88,161 +93,141 @@ CICFLOWMETER_TO_TII_MAPPING = {
     "idle_min": "Idle Min",
     "idle_mean": "Idle Mean",
     "idle_std": "Idle Std",
+    "src_port": "Src Port",
+    "dst_port": "Dst Port",
 }
 
 
 def preprocess_dataframe(df):
     """
-    Preprocesses the raw CICFlowMeter dataframe to match the training format.
-    1. Renames columns
-    2. Creates 'Protocol_6.0', 'Protocol_17.0', or 'Protocol_0.0' features
-    3. Handles Infs and NaNs
+    Preprocesses raw CICFlowMeter data to exactly match the training pipeline's expected input.
     """
-    # 1. Creates 'Protocol_6.0', 'Protocol_17.0', or 'Protocol_0.0' features
-    # Check if 'protocol' column exists before creating the one-hot
-    if "protocol" in df.columns:
-        # Create one-hot encoded protocol features
-        df["Protocol_6.0"] = (df["protocol"] == 6).astype(int)
-        df["Protocol_17.0"] = (df["protocol"] == 17).astype(int)
-        df["Protocol_0.0"] = (df["protocol"] == 0).astype(int)
-
-    # 2. Rename columns to match model's expected feature names
+    df.columns = [c.lower() for c in df.columns]
     df.rename(columns=CICFLOWMETER_TO_TII_MAPPING, inplace=True)
 
-    # 3. Handle infinities and NaNs
+    # Explicit Protocol One-Hot Encoding
+    if "Protocol" in df.columns:
+        df["Protocol"] = pd.to_numeric(df["Protocol"], errors="coerce").fillna(-1)
+        df["Protocol_6"] = (df["Protocol"] == 6).astype(float)
+        df["Protocol_17"] = (df["Protocol"] == 17).astype(float)
+        df["Protocol_0"] = (df["Protocol"] == 0).astype(float)
+        df.drop(columns=["Protocol"], inplace=True)
+    else:
+        df["Protocol_6"] = 0.0
+        df["Protocol_17"] = 0.0
+        df["Protocol_0"] = 0.0
+
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.fillna(0, inplace=True)
-
     return df
 
 
-# --- Setup Command-Line Argument Parsing ---
-parser = argparse.ArgumentParser(description="Run traffic inferencing from the terminal.")
-
+# --- CLI Setup ---
+parser = argparse.ArgumentParser(description="Run AI traffic inference.")
 parser.add_argument(
     "--mode",
     type=str,
-    choices=["binary", "multiclass"],
+    choices=["binary", "multiclass", "unsupervised"],
     required=True,
-    help="Classification mode: 'binary' or 'multiclass'.",
+    help="Inference mode.",
 )
+parser.add_argument("--csv", type=str, required=True, help="Path to input CSV.")
 parser.add_argument(
-    "--csv", type=str, required=True, help="Path to the input CSV file containing traffic data."
+    "--model", type=str, required=True, help="Path to model file (.pkl pipeline or .keras model)."
 )
-parser.add_argument(
-    "--features", type=str, required=True, help="Path to the JSON file listing the features to use."
-)
-parser.add_argument("--model", type=str, required=True, help="Path to the trained .pkl or .json model file.")
-parser.add_argument(
-    "--encoder", type=str, help="Path to the .pkl label encoder file (REQUIRED for multiclass mode)."
-)
-# --- FIX: Add the --scaler argument ---
-parser.add_argument("--scaler", type=str, required=True, help="Path to the .pkl scaler file.")
+parser.add_argument("--encoder", type=str, help="Label encoder .pkl (Required for multiclass).")
+parser.add_argument("--preprocessor", type=str, help="Preprocessor .pkl (Required for .json/.keras models)")
+parser.add_argument("--threshold", type=str, help="Threshold .txt file (Required for unsupervised).")
 
-# Parse the arguments
 args = parser.parse_args()
 
-# --- Load Data and Model using CLI Arguments ---
-
+# --- Execution ---
 try:
-    # Load features from CSV
-    print(f"Loading data from: {args.csv}")
-    df = pd.read_csv(args.csv)
+    # 1. Load and Preprocess Data
+    print(f"Loading data: {args.csv}")
+    raw_df = pd.read_csv(args.csv)
+    if raw_df.empty:
+        sys.exit("Error: Input CSV is empty.")
+    df_clean = preprocess_dataframe(raw_df)
 
-    # Handle empty CSV files
-    if df.empty:
-        print("Warning: CSV file is empty. No predictions to make.")
-        sys.exit(0)
+    model_ext = os.path.splitext(args.model)[1]
+    is_pipeline = model_ext == ".pkl"
 
-    # Preprocess the dataframe (rename cols, create Protocol_6.0, etc.)
-    df = preprocess_dataframe(df)
-
-    # Load the feature list
-    print(f"Loading features from: {args.features}")
-    with open(args.features) as f:
-        features = json.load(f)
-
-    # Ensure all features are in the DataFrame *after* preprocessing
-    missing_features = [f for f in features if f not in df.columns]
-    if missing_features:
-        print("\nError: The following required features are missing from the CSV after preprocessing:")
-        print(missing_features)
-        sys.exit(1)  # Exit the script with an error code
-
-    # Select only the features the model was trained on
-    X_unscaled = df[features]
-
-    print(f"Loading scaler from: {args.scaler}")
-    scaler = joblib.load(args.scaler)
-
-    # Apply the scaler transformation
-    X = scaler.transform(X_unscaled)
-
-    # Load model
-    print(f"Loading model from: {args.model}")
-    if args.model.endswith(".json"):
-        xgb_model = XGBClassifier()
-        xgb_model.load_model(args.model)
-        model = xgb_model
-    else:
+    # --- Model Loading & Data Prep ---
+    if is_pipeline:
+        # Case 1: Full Pipeline (Easiest, Preferred)
+        print(f"Loading pipeline: {args.model}")
         model = joblib.load(args.model)
+        X_ready = df_clean  # Pipeline handles scaling internally
+    else:
+        # Case 2: Raw Model (needs manual preprocessing)
+        if not args.preprocessor:
+            sys.exit(f"Error: Raw {model_ext} models require --preprocessor.")
+        print(f"Loading preprocessor: {args.preprocessor}")
+        preprocessor = joblib.load(args.preprocessor)
+        X_ready = preprocessor.transform(df_clean)
 
-except FileNotFoundError as e:
-    print("\nError: File not found.")
-    print(e)
-    sys.exit(1)
+        if model_ext == ".json":
+            from xgboost import XGBClassifier
+
+            model = XGBClassifier()
+            model.load_model(args.model)
+            print(f"Loaded XGBoost model: {args.model}")
+        elif model_ext == ".keras":
+            import tensorflow as tf
+            model = tf.keras.models.load_model(args.model, compile=False)
+            print(f"Loaded Keras model: {args.model}")
+
+    # --- Inference Modes ---
+    print(f"Running {args.mode.upper()} inference...")
+
+    # --- UNSUPERVISED MODE (Autoencoder) ---
+    if args.mode == "unsupervised":
+        # Lazy import TensorFlow to save time for other modes
+        import tensorflow as tf
+
+        if not args.preprocessor or not args.threshold:
+            sys.exit("Error: --preprocessor and --threshold required for unsupervised mode.")
+
+        print(f"Loading preprocessor: {args.preprocessor}")
+        preprocessor = joblib.load(args.preprocessor)
+
+        print(f"Loading Keras model: {args.model}")
+        model = tf.keras.models.load_model(args.model, compile=False)
+
+        with open(args.threshold, "r") as f:
+            threshold = float(f.read().strip())
+        print(f"Loaded anomaly threshold: {threshold}")
+
+        print("Running unsupervised inference...")
+        # 1. Scale data using the exact same preprocessor as training
+        X_scaled = preprocessor.transform(df_clean)
+        # 2. Get reconstructions
+        reconstructions = model.predict(X_scaled, verbose=0)
+        # 3. Calculate MAE (Reconstruction Error)
+        mae = np.mean(np.abs(X_scaled - reconstructions), axis=1)
+        # 4. Compare to threshold (MAE > threshold = Anomaly/Malicious)
+        labels = ["Anomaly (Malicious)" if error > threshold else "Benign" for error in mae]
+    else:
+        # Supervised (Binary/Multiclass)
+        raw_preds = model.predict(X_ready)
+
+        if args.mode == "binary":
+            labels = ["Benign" if p == 0 else "Malicious" for p in raw_preds]
+        elif args.mode == "multiclass":
+            if not args.encoder:
+                sys.exit("Error: Multiclass requires --encoder.")
+            le = joblib.load(args.encoder)
+            labels = le.inverse_transform(raw_preds)
+
+    # 5. Output Summary
+    print("\n=== Inference Summary ===")
+    print(f"Mode: {args.mode.upper()}")
+    print(f"Total Flows: {len(labels)}")
+    counts = Counter(labels)
+    for label, count in counts.most_common():
+        print(f" - {label:<25}: {count:>6} ({(count / len(labels)) * 100:.1f}%)")
+
 except Exception as e:
-    print(f"\nAn error occurred during loading: {e}")
+    print(f"\nAn unexpected error occurred:\n{e}")
     sys.exit(1)
-
-
-# --- Run Prediction Based on Mode ---
-print("Running predictions...")
-
-if args.mode == "binary":
-    # Predict on the *scaled* data
-    preds = model.predict(X)
-    # Convert predictions numpy array to labels
-    labels = ["Benign" if p == 0 else "Malicious" for p in preds]
-
-    # --- Output Binary Summary ---
-    total_flows = len(labels)
-    label_counts = Counter(labels)
-
-    print("\n--- Prediction Summary ---")
-    print(f"Total Flows: {total_flows}")
-    for label, count in label_counts.most_common():
-        percentage = (count / total_flows) * 100
-        print(f"  - {label}: {count} ({percentage:.2f}%)")
-
-elif args.mode == "multiclass":
-    # Check if encoder path was provided
-    if not args.encoder:
-        print("\nError: --encoder argument is required for multiclass mode.")
-        sys.exit(1)
-
-    try:
-        # Load label encoder
-        print(f"Loading label encoder from: {args.encoder}")
-        label_encoder = joblib.load(args.encoder)
-    except FileNotFoundError:
-        print(f"\nError: Label encoder file not found at {args.encoder}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\nAn error occurred loading the encoder: {e}")
-        sys.exit(1)
-
-    # Predict on the *scaled* data
-    preds = model.predict(X)
-    pred_labels = label_encoder.inverse_transform(preds).tolist()
-
-    # --- Output Multiclass Summary ---
-    total_flows = len(pred_labels)
-    label_counts = Counter(pred_labels)
-
-    print("\n--- Prediction Summary ---")
-    print(f"Total Flows: {total_flows}")
-    # Sort by count (most common first)
-    for label, count in label_counts.most_common():
-        percentage = (count / total_flows) * 100
-        print(f"  - {label}: {count} ({percentage:.2f}%)")

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # capture_live_flow.sh
 # Captures *all* traffic on a live interface for a duration.
-# Usage: sudo ./scripts/traffic_capture/capture_live_flow.sh [duration_seconds] [interface]
+# Usage: sudo ./scripts/capture_live_flow.sh [duration_seconds] [interface]
 
 set -eu
 
@@ -13,8 +13,8 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 DURATION=${1:-60}
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DEST_DIR="$REPO_ROOT/data/flows/pcap"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEST_DIR="$REPO_ROOT/data/flows/test_results"
 ORIGINAL_USER=${SUDO_USER:-$(whoami)}
 ORIGINAL_GROUP=$(id -gn "$ORIGINAL_USER")
 
@@ -118,9 +118,6 @@ echo "Size: $FILE_SIZE"
 echo "Packets: $PACKET_COUNT"
 echo ""
 echo "Next steps:"
-echo "  1. Convert to CSV: python3 scripts/extract_pcap.py \\"
-echo "       --pcap $DEST_DIR/live_flow_${TS}.pcap \\"
-echo "       --output data/flows/csv/live_flow_${TS}.csv \\"
-echo "       --mode multiclass"
+echo "  1. Convert to CSV: ./scripts/process_pcaps.sh"
 echo "  2. Run inference on the CSV"
 echo "========================================="
