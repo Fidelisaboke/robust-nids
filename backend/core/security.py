@@ -28,40 +28,27 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
 
 
-def create_access_token(user_id: int):
-    """Create a JWT access token."""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {
-        "sub": str(user_id),
-        "exp": expire,
-        "token_type": "access",
-    }
-    encoded_jwt = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    return encoded_jwt
+def _create_token(user_id: int, minutes: int, token_type: str) -> str:
+    """Create a JWT token with the given user ID, expiration time, and token type."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+    payload = {"sub": str(user_id), "exp": expire, "token_type": token_type}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: int):
-    """Create a JWT refresh token."""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-    payload = {
-        "sub": str(user_id),
-        "exp": expire,
-        "token_type": "refresh",
-    }
-    encoded_jwt = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    return encoded_jwt
+def create_access_token(user_id: int) -> str:
+    """Create a JWT access token for the given user ID."""
+    return _create_token(user_id, settings.ACCESS_TOKEN_EXPIRE_MINUTES, "access")
 
 
-def create_mfa_challenge_token(user_id: int):
-    """Create a JWT token for MFA challenge."""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES)
-    payload = {
-        "sub": str(user_id),
-        "exp": expire,
-        "token_type": "mfa_challenge",
-    }
-    encoded_jwt = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    return encoded_jwt
+def create_refresh_token(user_id: int) -> str:
+    """Create a JWT refresh token for the given user ID."""
+    return _create_token(user_id, settings.REFRESH_TOKEN_EXPIRE_MINUTES, "refresh")
+
+
+def create_mfa_challenge_token(user_id: int) -> str:
+    """Create a JWT token for MFA challenge for the given user ID."""
+    return _create_token(user_id, settings.MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES, "mfa_challenge")
+
 
 
 def decode_token(token: str):
