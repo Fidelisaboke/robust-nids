@@ -33,9 +33,14 @@ export const LiveThreatFeed: React.FC = () => {
 
   // Track which threats are new for animation purposes
   const newThreatIds = useRef<Set<string>>(new Set());
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (threats) {
+      // Clear any existing timer first to prevent stale updates
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       const currentIds = threats.map((t) => t.id || t.timestamp);
       const previousIds = previousThreatsRef.current;
 
@@ -47,11 +52,15 @@ export const LiveThreatFeed: React.FC = () => {
       previousThreatsRef.current = currentIds;
 
       // Clear new threat tracking after animation completes
-      const timer = setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         newThreatIds.current.clear();
       }, 1000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+      };
     }
   }, [threats]);
 

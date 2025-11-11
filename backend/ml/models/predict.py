@@ -109,6 +109,9 @@ def predict_full_report(features: dict) -> dict:
         if multi_res["label"] in MALICIOUS_LABELS:
             # If Multiclass also detects a critical attack type, elevate to Critical.
             threat_level = "Critical"
+        elif anom_res["is_anomaly"]:
+            # If Autoencoder also flags it, elevate to High.
+            threat_level = "High"
     elif anom_res["is_anomaly"]:
         # CASE B: Binary missed it, but Autoencoder flagged it.
         # Check if Multiclass also detects something suspicious.

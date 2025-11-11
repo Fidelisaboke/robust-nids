@@ -43,7 +43,8 @@ def is_benign_noise(row):
         src_port = int(row.get("src_port", 0))
         dst_port = int(row.get("dst_port", 0))
     except (ValueError, TypeError):
-        return False
+        # Invalid port values are likely malformed packets or noise
+        return True
 
     if dst_port in DEMO_TARGET_PORTS:
         return False
@@ -117,7 +118,7 @@ def process_flow_row(row, is_first_alert):
         return False
 
     try:
-        response = requests.post(API_URL, json={"features": row.to_dict()}, timeout=1)
+        response = requests.post(API_URL, json={"features": row.to_dict()}, timeout=5)
         if response.status_code == 200:
             res = response.json()
 

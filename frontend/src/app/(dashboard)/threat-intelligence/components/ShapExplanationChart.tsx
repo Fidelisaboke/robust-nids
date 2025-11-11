@@ -45,8 +45,9 @@ export const ShapExplanationChart: React.FC<ShapExplanationChartProps> = ({
     (a, b) => Math.abs(b.shap_value) - Math.abs(a.shap_value),
   );
 
-  // Take top 15 features for clarity
-  const topContributions = sortedContributions.slice(0, 15);
+  // Take top features (up to 15) for clarity
+  const maxFeatures = Math.min(15, sortedContributions.length);
+  const topContributions = sortedContributions.slice(0, maxFeatures);
 
   const chartData = {
     labels: topContributions.map((c) => c.feature),
@@ -89,12 +90,14 @@ export const ShapExplanationChart: React.FC<ShapExplanationChartProps> = ({
         displayColors: false,
         callbacks: {
           title: (context) => {
+            if (!context || context.length === 0) return "Unknown";
             const index = context[0].dataIndex;
-            return topContributions[index].feature;
+            return topContributions[index]?.feature || "Unknown feature";
           },
           label: (context) => {
             const index = context.dataIndex;
             const contribution = topContributions[index];
+            if (!contribution) return ["No data available"];
             return [
               `SHAP Value: ${contribution.shap_value.toFixed(4)}`,
               `Feature Value: ${contribution.value}`,

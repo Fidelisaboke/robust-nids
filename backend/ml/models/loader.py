@@ -55,7 +55,7 @@ class ModelBundle:
                 logger.info("Initializing Binary SHAP explainer...")
                 #  Unwrap the actual model from the pipeline or Native JSON
                 if self.binary_preprocessor:
-                     actual_model = self.binary_model
+                    actual_model = self.binary_model
                 else:
                     actual_model = self.binary_model.named_steps['model']
                 self.binary_explainer = shap.TreeExplainer(actual_model)

@@ -152,6 +152,7 @@ export default function ThreatIntelligencePage() {
       setShowExplanation(true);
     } catch (error) {
       console.error("Explanation failed:", error);
+      setShowExplanation(false);
     }
   };
 
