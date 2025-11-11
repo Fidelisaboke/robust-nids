@@ -100,7 +100,7 @@ read -p "Press ENTER to continue..."
 echo "Generating realistic web traffic (Hybrid Local/External)..."
 (
   # Capture on lo and eth0
-  timeout 600 tcpdump -i lo -i eth0 -s 0 -w "$TEST_DIR/benign_web_https.pcap" 'not port 22' >/dev/null 2>&1 &
+  timeout 600 tcpdump -i any -s 0 -w "$TEST_DIR/benign_web_https.pcap" 'not port 22' >/dev/null 2>&1 &
   TCPDUMP_PID=$!
   sleep 2
   {
@@ -139,7 +139,8 @@ echo "Generating realistic web traffic (Hybrid Local/External)..."
         # C. AJAX-like request
         curl -s "http://127.0.0.1:8080/sample_text.txt?ajax=$i" -H "X-Requested-With: XMLHttpRequest" >/dev/null &
 
-        sleep 0.2
+        # Jitter: sleep between 0.1s and 0.4s
+        sleep "$(shuf -i 1-4 -n 1 | awk '{print $1/10}')"
     done
 
     # Wait for all curl background jobs in THIS subshell to finish
