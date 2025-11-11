@@ -4,12 +4,18 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
+from starlette.middleware.authentication import AuthenticationMiddleware
 
 from api.exception_handlers import exc_handlers
-from api.middleware import ServiceExceptionHandlerMiddleware
+from api.middleware import AuditMiddleware, RequestBodyBufferMiddleware, ServiceExceptionHandlerMiddleware
 from api.routers import auth, mfa, nids, roles, users
+from core.auth_backend import JWTAuthBackend
 from core.config import settings
+from core.logging import setup_logging
 from ml.models.loader import MODEL_BUNDLE
+
+# Set up logging
+setup_logging()
 
 
 @asynccontextmanager
@@ -19,16 +25,17 @@ async def lifespan(app: FastAPI):
     print("ML model loader meta: ", MODEL_BUNDLE.meta)
     yield
 
-app = FastAPI(
-    lifespan=lifespan,
-    title=f"{settings.APP_NAME} API", version="0.1.0"
-)
+
+app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version="0.1.0")
 
 # Origins (Frontend URLs)
 origins = settings.BACKEND_CORS_ORIGINS
 
-# Service exception handling middleware
+# Custom Middlewares - added in order
 app.add_middleware(ServiceExceptionHandlerMiddleware)  # noqa
+app.add_middleware(RequestBodyBufferMiddleware)
+app.add_middleware(AuthenticationMiddleware, backend=JWTAuthBackend())
+app.add_middleware(AuditMiddleware)
 
 # Pagination support
 add_pagination(app)
@@ -41,20 +48,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.middleware("http")
-async def add_body_to_state(request: Request, call_next):
-    """Middleware to read and store request body in state for rate limiting."""
-    if "body" not in request.state.__dict__:
-        body = await request.body()
-        request.state.body = body
-
-        # Make the body available for future reads
-        request._body = body
-
-    response = await call_next(request)
-    return response
-
 
 # Include API routers
 app.include_router(auth.router)
