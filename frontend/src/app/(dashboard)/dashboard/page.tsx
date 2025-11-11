@@ -1,61 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Activity,
-  AlertTriangle,
-  Shield,
-  TrendingUp,
-  Users,
-  Server,
-} from "lucide-react";
+import { Users, Server } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { LiveThreatFeed } from "./components/LiveThreatFeed";
+import { ThreatSummaryWidget } from "./components/ThreatSummaryWidget";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-
-  const stats = [
-    {
-      name: "Active Alerts",
-      value: "12",
-      change: "+3",
-      changeType: "increase",
-      icon: AlertTriangle,
-      color: "text-red-400",
-      bgColor: "bg-red-500/10",
-      borderColor: "border-red-500/20",
-    },
-    {
-      name: "Network Events",
-      value: "1,234",
-      change: "+12%",
-      changeType: "increase",
-      icon: Activity,
-      color: "text-blue-400",
-      bgColor: "bg-blue-500/10",
-      borderColor: "border-blue-500/20",
-    },
-    {
-      name: "Protected Assets",
-      value: "48",
-      change: "+2",
-      changeType: "increase",
-      icon: Shield,
-      color: "text-green-400",
-      bgColor: "bg-green-500/10",
-      borderColor: "border-green-500/20",
-    },
-    {
-      name: "Threat Score",
-      value: "72",
-      change: "-5%",
-      changeType: "decrease",
-      icon: TrendingUp,
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/10",
-      borderColor: "border-purple-500/20",
-    },
-  ];
 
   const recentAlerts = [
     {
@@ -97,92 +49,79 @@ export default function DashboardPage() {
         </p>
       </motion.div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`bg-slate-800/50 border ${stat.borderColor} rounded-xl p-6 hover:scale-105 transition-transform`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 ${stat.bgColor} rounded-lg`}>
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-                <span
-                  className={`text-sm font-medium ${
-                    stat.changeType === "increase"
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  {stat.change}
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-1">
-                {stat.value}
-              </h3>
-              <p className="text-sm text-gray-400">{stat.name}</p>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* Recent Alerts */}
+      {/* Live Threat Monitor Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
-        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+        className="space-y-4"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Recent Alerts</h2>
-          <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-            View All
-          </button>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">Real-Time Threats</h2>
+          <span className="text-sm text-gray-400">
+            Auto-refreshing every 2 seconds
+          </span>
         </div>
 
-        <div className="space-y-4">
-          {recentAlerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="flex items-start space-x-4 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900 transition-colors"
-            >
-              <div
-                className={`mt-1 w-2 h-2 rounded-full ${
-                  alert.type === "Critical"
-                    ? "bg-red-400"
-                    : alert.type === "High"
-                      ? "bg-orange-400"
-                      : "bg-yellow-400"
-                }`}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span
-                    className={`text-xs font-semibold px-2 py-1 rounded ${
-                      alert.type === "Critical"
-                        ? "bg-red-500/20 text-red-400"
-                        : alert.type === "High"
-                          ? "bg-orange-500/20 text-orange-400"
-                          : "bg-yellow-500/20 text-yellow-400"
-                    }`}
-                  >
-                    {alert.type}
-                  </span>
-                  <span className="text-xs text-gray-400">{alert.time}</span>
-                </div>
-                <p className="text-sm text-white font-medium mb-1">
-                  {alert.message}
-                </p>
-                <p className="text-xs text-gray-400">Source: {alert.source}</p>
-              </div>
+        {/* Threat Summary Cards */}
+        <ThreatSummaryWidget />
+
+        {/* Live Threat Feed */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <LiveThreatFeed />
+
+          {/* Recent Alerts (Static Data) */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Recent Alerts</h2>
+              <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                View All
+              </button>
             </div>
-          ))}
+
+            <div className="space-y-4">
+              {recentAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-start space-x-4 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900 transition-colors"
+                >
+                  <div
+                    className={`mt-1 w-2 h-2 rounded-full ${
+                      alert.type === "Critical"
+                        ? "bg-red-400"
+                        : alert.type === "High"
+                          ? "bg-orange-400"
+                          : "bg-yellow-400"
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded ${
+                          alert.type === "Critical"
+                            ? "bg-red-500/20 text-red-400"
+                            : alert.type === "High"
+                              ? "bg-orange-500/20 text-orange-400"
+                              : "bg-yellow-500/20 text-yellow-400"
+                        }`}
+                      >
+                        {alert.type}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {alert.time}
+                      </span>
+                    </div>
+                    <p className="text-sm text-white font-medium mb-1">
+                      {alert.message}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Source: {alert.source}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </motion.div>
 

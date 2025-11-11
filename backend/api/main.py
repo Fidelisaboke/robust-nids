@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -7,9 +9,20 @@ from api.exception_handlers import exc_handlers
 from api.middleware import ServiceExceptionHandlerMiddleware
 from api.routers import auth, mfa, nids, roles, users
 from core.config import settings
+from ml.models.loader import MODEL_BUNDLE
 
-app = FastAPI(title=f"{settings.APP_NAME} API", version="0.1.0")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager to load ML models on startup."""
+    MODEL_BUNDLE.load_all()
+    print("ML model loader meta: ", MODEL_BUNDLE.meta)
+    yield
+
+app = FastAPI(
+    lifespan=lifespan,
+    title=f"{settings.APP_NAME} API", version="0.1.0"
+)
 
 # Origins (Frontend URLs)
 origins = settings.BACKEND_CORS_ORIGINS
@@ -28,7 +41,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.middleware("http")
 async def add_body_to_state(request: Request, call_next):

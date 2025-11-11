@@ -43,7 +43,7 @@ build/
 
 # Datasets and model weights
 data/
-models/
+*.pkl
 *.h5
 *.ckpt
 *.pt

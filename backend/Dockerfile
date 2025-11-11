@@ -33,7 +33,7 @@ USER appuser
 EXPOSE 8000
 
 # Use entrypoint script
-ENTRYPOINT ["scripts/entrypoint.sh"]
+ENTRYPOINT ["scripts/docker/entrypoint.sh"]
 
 # Default command to run the application
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

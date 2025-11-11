@@ -1,17 +1,49 @@
-from typing import List, Optional
+from typing import Dict, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PredictRequest(BaseModel):
-    features: List[float]
+    """Accepts a dictionary of features (key=column name, value=value)."""
+    features: Dict[str, Union[float, int, str]] = Field(
+        ..., example={"Flow Duration": 156, "Total Fwd Packets": 2, "Protocol": 6}
+    )
 
+class BinaryResult(BaseModel):
+    label: str
+    confidence: float
+    is_malicious: bool
 
-class PredictResponse(BaseModel):
-    prediction: str
-    confidence: Optional[float]
+class MulticlassResult(BaseModel):
+    label: str
+    confidence: float
+    probabilities: Dict[str, float]
 
+class AnomalyResult(BaseModel):
+    is_anomaly: bool
+    anomaly_score: float
+    threshold: float
 
-class TrainRequest(BaseModel):
-    epochs: Optional[int] = 10
-    adversarial_method: Optional[str] = "FGSM"
+class UnifiedPredictionResponse(BaseModel):
+    id: str | None = None
+    src_ip: str | None = None
+    dst_ip: str | None = None
+    status: str = "success"
+    timestamp: str
+    binary: BinaryResult
+    multiclass: MulticlassResult
+    anomaly: AnomalyResult
+    threat_level: str
+
+class FeatureContribution(BaseModel):
+    feature: str
+    value: Union[float, int, str]  # The actual value in the flow
+    shap_value: float              # The push this feature gave towards "Malicious"
+
+class ExplanationResponse(BaseModel):
+    status: str = "success"
+    predicted_label: str
+    # Base value is the average model output before seeing this specific sample
+    base_value: float
+    # Top N features that pushed the prediction one way or the other
+    contributions: list[FeatureContribution]
