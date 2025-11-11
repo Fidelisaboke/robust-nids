@@ -25,6 +25,9 @@ class AnomalyResult(BaseModel):
     threshold: float
 
 class UnifiedPredictionResponse(BaseModel):
+    id: str | None = None
+    src_ip: str | None = None
+    dst_ip: str | None = None
     status: str = "success"
     timestamp: str
     binary: BinaryResult

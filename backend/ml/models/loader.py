@@ -37,7 +37,7 @@ class ModelBundle:
         logger.info(f"Loading ML artifacts from {artifacts_dir}...")
         try:
             # --- 1. Load Binary Model ---
-            xgb_bin_path = os.path.join(artifacts_dir, "xgboost_binary.json")
+            xgb_bin_path = os.path.join(artifacts_dir, "binary_xgboost.json")
             if os.path.exists(xgb_bin_path):
                 logger.info("Loading Binary model as native XGBoost...")
                 self.binary_preprocessor = joblib.load(os.path.join(artifacts_dir, "binary_preprocessor.pkl"))
@@ -63,7 +63,7 @@ class ModelBundle:
                 logger.warning(f"[ERROR]: Could not initialize SHAP explainer: {e}")
 
             # --- 2. Load Multiclass Model ---
-            xgb_multi_path = os.path.join(artifacts_dir, "xgboost_multiclass.json")
+            xgb_multi_path = os.path.join(artifacts_dir, "multiclass_xgboost.json")
             if os.path.exists(xgb_multi_path):
                 logger.info("Loading Multiclass model as native XGBoost...")
                 self.multiclass_preprocessor = joblib.load(

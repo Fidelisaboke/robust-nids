@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/apiClient";
 
 export interface NetworkFlowFeatures {
@@ -24,6 +24,9 @@ export interface AnomalyDetection {
 }
 
 export interface UnifiedPredictionResponse {
+  id?: string;
+  src_ip: string;
+  dst_ip: string;
   timestamp: string;
   threat_level: "Low" | "Medium" | "High" | "Critical";
   binary: BinaryPrediction;
@@ -72,6 +75,22 @@ export const useNidsExplanation = () => {
       );
       return response.data;
     },
+  });
+};
+
+/**
+ * Hook for live polling of latest threats
+ */
+export const useLiveThreats = () => {
+  return useQuery({
+    queryKey: ["live-threats"],
+    queryFn: async () => {
+      const res = await apiClient.get<UnifiedPredictionResponse[]>(
+        `${NIDS_BASE}live-events`,
+      );
+      return res.data;
+    },
+    refetchInterval: 2000, // Poll every 2 seconds
   });
 };
 
