@@ -150,6 +150,10 @@ class AlertService:
         """
         alert = self.get_alert(alert_id)
 
+        # Prevent alert from being resolved multiple times
+        if alert.status == AlertStatus.RESOLVED:
+            return alert
+
         new_description = alert.description or ""
         if notes:
             timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")

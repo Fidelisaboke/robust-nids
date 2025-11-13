@@ -162,12 +162,12 @@ def clear_live_events():
     status_code=status.HTTP_200_OK,
 )
 def list_alerts(
-    start_date: datetime | None = None,
-    end_date: datetime | None = None,
-    severity: AlertSeverity | None = None,
-    status: AlertStatus | None = None,
-    sort_by: str = Query("flow_timestamp", description="Column to sort by"),
-    sort_direction: str = Query("desc", description="'asc' or 'desc'"),
+    start_date: datetime | None = Query(None, description="Filter by start date (ISO8601)"),
+    end_date: datetime | None = Query(None, description="Filter by end date (ISO8601)"),
+    severity: AlertSeverity | None = Query(None),
+    status: AlertStatus | None = Query(None),
+    sort_by: str = Query("flow_timestamp"),
+    sort_direction: str = Query("desc"),
     alert_service: AlertService = Depends(get_alert_service),
 ):
     """
