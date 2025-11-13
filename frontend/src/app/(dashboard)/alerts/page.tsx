@@ -2,82 +2,49 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Search, Clock, Eye, CheckCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  Search,
+  Clock,
+  Eye,
+  CheckCircle,
+  MoreVertical,
+  Loader2,
+  User,
+  ExternalLink,
+  Zap,
+} from "lucide-react";
+import { useAlerts, useAcknowledgeAlert } from "@/hooks/useAlertManagement";
+import { AlertListParams, Alert } from "@/lib/api/alertsApi";
+import { Pagination } from "@/components/Pagination";
+import { AlertActionsDialog } from "@/components/dialogs/AlertActionsDialog";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { normalizeError } from "@/lib/api/apiClient";
 
 export default function AlertsPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState<
     "all" | "critical" | "high" | "medium" | "low"
   >("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "investigating" | "resolved" | "acknowledged"
+  >("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const pageSize = 10;
 
-  const alerts = [
-    {
-      id: 1,
-      severity: "critical",
-      title: "SQL Injection Attempt Detected",
-      description: "Multiple SQL injection attempts from suspicious IP address",
-      source: "192.168.1.45",
-      destination: "10.0.0.5:3306",
-      timestamp: "2025-10-13T14:23:45Z",
-      status: "active",
-      category: "Web Attack",
-    },
-    {
-      id: 2,
-      severity: "high",
-      title: "Brute Force Attack Detected",
-      description: "Multiple failed SSH login attempts detected",
-      source: "203.0.113.42",
-      destination: "10.0.0.10:22",
-      timestamp: "2025-10-13T14:15:22Z",
-      status: "active",
-      category: "Authentication",
-    },
-    {
-      id: 3,
-      severity: "high",
-      title: "Port Scan Activity",
-      description: "Systematic port scanning detected from external source",
-      source: "198.51.100.78",
-      destination: "10.0.0.0/24",
-      timestamp: "2025-10-13T14:05:10Z",
-      status: "investigating",
-      category: "Reconnaissance",
-    },
-    {
-      id: 4,
-      severity: "medium",
-      title: "Unusual Outbound Traffic",
-      description: "Abnormal data transfer to unknown external server",
-      source: "10.0.0.25",
-      destination: "185.220.101.15:443",
-      timestamp: "2025-10-13T13:45:33Z",
-      status: "resolved",
-      category: "Data Exfiltration",
-    },
-    {
-      id: 5,
-      severity: "medium",
-      title: "Malware Signature Match",
-      description: "Known malware pattern detected in network traffic",
-      source: "10.0.0.18",
-      destination: "93.184.216.34:80",
-      timestamp: "2025-10-13T13:30:15Z",
-      status: "resolved",
-      category: "Malware",
-    },
-    {
-      id: 6,
-      severity: "low",
-      title: "Certificate Expiring Soon",
-      description: "SSL certificate will expire in 14 days",
-      source: "web-server-01",
-      destination: "N/A",
-      timestamp: "2025-10-13T12:00:00Z",
-      status: "acknowledged",
-      category: "Configuration",
-    },
-  ];
+  const acknowledgeMutation = useAcknowledgeAlert();
+
+  const params: AlertListParams = {
+    page: currentPage,
+    size: pageSize,
+    ...(filter !== "all" && { severity: filter }),
+    ...(statusFilter !== "all" && { status: statusFilter }),
+  };
+
+  const { data, isLoading, error } = useAlerts(params);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -134,21 +101,51 @@ export default function AlertsPage() {
     }
   };
 
-  const filteredAlerts = alerts.filter((alert) => {
-    const matchesFilter = filter === "all" || alert.severity === filter;
-    const matchesSearch =
-      alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alert.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const handleQuickAcknowledge = async (
+    alertId: number,
+    e: React.MouseEvent,
+  ) => {
+    e.stopPropagation(); // Prevent card click
+    try {
+      await acknowledgeMutation.mutateAsync(alertId);
+      toast.success("Alert acknowledged");
+    } catch (error) {
+      const normalizedError = normalizeError(error);
+      toast.error(normalizedError.message || "Failed to acknowledge alert");
+    }
+  };
+
+  const handleCardClick = (alertId: number) => {
+    router.push(`/alerts/${alertId}`);
+  };
+
+  const filteredAlerts =
+    data?.items.filter((alert) => {
+      const matchesSearch =
+        alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        alert.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        alert.src_ip.includes(searchQuery);
+      return matchesSearch;
+    }) || [];
 
   const alertCounts = {
-    all: alerts.length,
-    critical: alerts.filter((a) => a.severity === "critical").length,
-    high: alerts.filter((a) => a.severity === "high").length,
-    medium: alerts.filter((a) => a.severity === "medium").length,
-    low: alerts.filter((a) => a.severity === "low").length,
+    all: data?.total || 0,
+    critical: data?.items.filter((a) => a.severity === "critical").length || 0,
+    high: data?.items.filter((a) => a.severity === "high").length || 0,
+    medium: data?.items.filter((a) => a.severity === "medium").length || 0,
+    low: data?.items.filter((a) => a.severity === "low").length || 0,
   };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <p className="text-gray-400">Failed to load alerts</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -169,117 +166,268 @@ export default function AlertsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex flex-col sm:flex-row gap-4"
+        className="space-y-4"
       >
-        <div className="flex-1 relative">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
           <input
             type="text"
-            placeholder="Search alerts..."
+            placeholder="Search alerts by title, category, or IP..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto">
-          {(["all", "critical", "high", "medium", "low"] as const).map(
-            (severity) => (
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex gap-2 overflow-x-auto">
+            {(["all", "critical", "high", "medium", "low"] as const).map(
+              (severity) => (
+                <button
+                  key={severity}
+                  onClick={() => {
+                    setFilter(severity);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                    filter === severity
+                      ? "bg-blue-500 text-white"
+                      : "bg-slate-800/50 text-gray-400 hover:bg-slate-700 hover:text-white"
+                  }`}
+                >
+                  {severity.charAt(0).toUpperCase() + severity.slice(1)}
+                  {filter === severity && ` (${alertCounts[severity]})`}
+                </button>
+              ),
+            )}
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto">
+            {(
+              [
+                "all",
+                "active",
+                "investigating",
+                "acknowledged",
+                "resolved",
+              ] as const
+            ).map((status) => (
               <button
-                key={severity}
-                onClick={() => setFilter(severity)}
-                className={`px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  filter === severity
-                    ? "bg-blue-500 text-white"
+                key={status}
+                onClick={() => {
+                  setStatusFilter(status);
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  statusFilter === status
+                    ? "bg-purple-500 text-white"
                     : "bg-slate-800/50 text-gray-400 hover:bg-slate-700 hover:text-white"
                 }`}
               >
-                {severity.charAt(0).toUpperCase() + severity.slice(1)} (
-                {alertCounts[severity]})
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
-            ),
-          )}
+            ))}
+          </div>
         </div>
       </motion.div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />
+        </div>
+      )}
+
       {/* Alerts List */}
-      <div className="space-y-4">
-        {filteredAlerts.map((alert, index) => {
-          const colors = getSeverityColor(alert.severity);
-          return (
-            <motion.div
-              key={alert.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={`bg-slate-800/50 border ${colors.border} rounded-xl p-6 hover:scale-[1.01] transition-transform`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className={`p-3 ${colors.bg} rounded-lg`}>
-                    {getStatusIcon(alert.status)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <span
-                        className={`text-xs font-semibold px-3 py-1 rounded-full ${colors.badge}`}
-                      >
-                        {alert.severity.toUpperCase()}
-                      </span>
-                      <span className="text-xs text-gray-400 capitalize">
-                        {alert.status}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {alert.category}
-                      </span>
+      {!isLoading && (
+        <>
+          <div className="space-y-4">
+            {filteredAlerts.map((alert, index) => {
+              const colors = getSeverityColor(alert.severity);
+              return (
+                <motion.div
+                  key={alert.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  onClick={() => handleCardClick(alert.id)}
+                  className={`bg-slate-800/50 border ${colors.border} rounded-xl p-6 hover:scale-[1.01] transition-all cursor-pointer group`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <div className={`p-3 ${colors.bg} rounded-lg`}>
+                        {getStatusIcon(alert.status)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <span
+                            className={`text-xs font-semibold px-3 py-1 rounded-full ${colors.badge}`}
+                          >
+                            {alert.severity.toUpperCase()}
+                          </span>
+                          <span className="text-xs text-gray-400 capitalize">
+                            {alert.status}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {alert.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="text-lg font-semibold text-white">
+                            {alert.title}
+                          </h3>
+                          <ExternalLink className="w-4 h-4 text-gray-500 group-hover:text-blue-400 transition-colors" />
+                        </div>
+                        {alert.description && (
+                          <p className="text-sm text-gray-400 mb-3 whitespace-pre-line line-clamp-2">
+                            {alert.description}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-4 text-sm mb-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500">Source:</span>
+                            <code className="text-gray-300 bg-slate-900/50 px-2 py-1 rounded">
+                              {alert.src_ip}
+                            </code>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500">Destination:</span>
+                            <code className="text-gray-300 bg-slate-900/50 px-2 py-1 rounded">
+                              {alert.dst_ip}:{alert.dst_port}
+                            </code>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-gray-500" />
+                            <span className="text-gray-400">
+                              {new Date(alert.flow_timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                        {alert.assigned_user && (
+                          <div className="flex items-center space-x-2 text-sm">
+                            <User className="w-4 h-4 text-blue-400" />
+                            <span className="text-gray-400">Assigned to:</span>
+                            <span className="text-blue-400">
+                              {alert.assigned_user.first_name}{" "}
+                              {alert.assigned_user.last_name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">
-                      {alert.title}
-                    </h3>
-                    <p className="text-sm text-gray-400 mb-3">
-                      {alert.description}
-                    </p>
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-gray-500">Source:</span>
-                        <code className="text-gray-300 bg-slate-900/50 px-2 py-1 rounded">
-                          {alert.source}
-                        </code>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-gray-500">Destination:</span>
-                        <code className="text-gray-300 bg-slate-900/50 px-2 py-1 rounded">
-                          {alert.destination}
-                        </code>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <span className="text-gray-400">
-                          {new Date(alert.timestamp).toLocaleString()}
+
+                    {/* Quick Actions */}
+                    <div className="flex items-center space-x-2 ml-4">
+                      {alert.status !== "acknowledged" &&
+                        alert.status !== "resolved" && (
+                          <button
+                            onClick={(e) => handleQuickAcknowledge(alert.id, e)}
+                            disabled={acknowledgeMutation.isPending}
+                            className="p-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-lg transition-colors disabled:opacity-50 group/btn"
+                            title="Quick Acknowledge"
+                          >
+                            <Zap className="w-5 h-5" />
+                          </button>
+                        )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAlert(alert);
+                        }}
+                        className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                        title="More Actions"
+                      >
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Model Confidence Indicator */}
+                  <div className="flex items-center space-x-4 pt-4 border-t border-slate-700/50">
+                    <div className="flex items-center space-x-2 text-xs">
+                      <span className="text-gray-500">Threat Confidence:</span>
+                      <div className="flex items-center space-x-1">
+                        <div className="h-1.5 w-16 bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${
+                              alert.model_output.binary.confidence > 0.9
+                                ? "bg-red-500"
+                                : alert.model_output.binary.confidence > 0.7
+                                  ? "bg-orange-500"
+                                  : "bg-yellow-500"
+                            }`}
+                            style={{
+                              width: `${alert.model_output.binary.confidence * 100}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="text-white font-medium">
+                          {(alert.model_output.binary.confidence * 100).toFixed(
+                            0,
+                          )}
+                          %
                         </span>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2 text-xs">
+                      <span className="text-gray-500">Attack Type:</span>
+                      <span className="text-white font-medium">
+                        {alert.model_output.multiclass.label}
+                      </span>
+                      <span className="text-gray-500">
+                        (
+                        {(
+                          alert.model_output.multiclass.confidence * 100
+                        ).toFixed(0)}
+                        %)
+                      </span>
+                    </div>
+                    {alert.model_output.anomaly.is_anomaly && (
+                      <div className="flex items-center space-x-2 text-xs">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-red-400 font-medium">
+                          Anomaly Detected
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <button className="ml-4 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors">
-                  Investigate
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+                </motion.div>
+              );
+            })}
+          </div>
 
-      {filteredAlerts.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12"
-        >
-          <AlertTriangle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400">
-            No alerts found matching your criteria
-          </p>
-        </motion.div>
+          {filteredAlerts.length === 0 && !isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <AlertTriangle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400">
+                No alerts found matching your criteria
+              </p>
+            </motion.div>
+          )}
+
+          {/* Pagination */}
+          {data && data.total > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data.pages}
+              onPageChange={setCurrentPage}
+              totalItems={data.total}
+              itemsPerPage={pageSize}
+            />
+          )}
+        </>
+      )}
+
+      {/* Alert Actions Dialog */}
+      {selectedAlert && (
+        <AlertActionsDialog
+          alert={selectedAlert}
+          onClose={() => setSelectedAlert(null)}
+        />
       )}
     </div>
   );
