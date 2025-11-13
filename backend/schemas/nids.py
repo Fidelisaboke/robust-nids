@@ -1,31 +1,40 @@
+from datetime import datetime
 from typing import Dict, Union
 
 from pydantic import BaseModel, Field
 
+from schemas.users import UserOut
+from utils.enums import AlertSeverity, AlertStatus
+
 
 class PredictRequest(BaseModel):
     """Accepts a dictionary of features (key=column name, value=value)."""
+
     features: Dict[str, Union[float, int, str]] = Field(
         ..., example={"Flow Duration": 156, "Total Fwd Packets": 2, "Protocol": 6}
     )
+
 
 class BinaryResult(BaseModel):
     label: str
     confidence: float
     is_malicious: bool
 
+
 class MulticlassResult(BaseModel):
     label: str
     confidence: float
     probabilities: Dict[str, float]
+
 
 class AnomalyResult(BaseModel):
     is_anomaly: bool
     anomaly_score: float
     threshold: float
 
+
 class UnifiedPredictionResponse(BaseModel):
-    id: str | None = None
+    id: int | None = None
     src_ip: str | None = None
     dst_ip: str | None = None
     status: str = "success"
@@ -35,10 +44,12 @@ class UnifiedPredictionResponse(BaseModel):
     anomaly: AnomalyResult
     threat_level: str
 
+
 class FeatureContribution(BaseModel):
     feature: str
     value: Union[float, int, str]  # The actual value in the flow
-    shap_value: float              # The push this feature gave towards "Malicious"
+    shap_value: float  # The push this feature gave towards "Malicious"
+
 
 class ExplanationResponse(BaseModel):
     status: str = "success"
@@ -47,3 +58,62 @@ class ExplanationResponse(BaseModel):
     base_value: float
     # Top N features that pushed the prediction one way or the other
     contributions: list[FeatureContribution]
+
+
+# --- Base Schema for Alerts ---
+# This is the shared fields between create, update, and output
+class AlertBase(BaseModel):
+    title: str
+    severity: AlertSeverity
+    category: str | None = None
+    src_ip: str | None = None
+    dst_ip: str | None = None
+    dst_port: int | None = None
+    flow_timestamp: datetime
+
+
+# --- Schema for Creating Alerts ---
+# This is used when the NIDS creates a new alert
+class AlertCreate(AlertBase):
+    description: str | None = None
+    model_output: dict | None = None
+    status: AlertStatus = AlertStatus.ACTIVE
+
+
+# --- Schema for Updating Alerts ---
+# This is used by an analyst to change the status, assign, or add notes
+class AlertUpdate(BaseModel):
+    status: AlertStatus | None = None
+    assigned_to_id: int | None = None
+    description: str | None = None  # For adding analyst notes
+
+
+# --- Schema for API Output ---
+# This is the full alert object sent to the frontend
+class AlertOut(AlertBase):
+    id: int
+    title: str
+    severity: AlertSeverity
+    category: str | None = None
+    src_ip: str | None = None
+    dst_ip: str | None = None
+    dst_port: int | None = None
+    flow_timestamp: datetime
+    status: AlertStatus
+    description: str | None = None
+    model_output: dict | None = None
+    assigned_to_id: int | None = None
+    assigned_user: UserOut | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AssignAlertRequest(BaseModel):
+    user_id: int = Field(..., description="The ID of the user to assign the alert to.")
+
+
+class ResolveAlertRequest(BaseModel):
+    notes: str = Field(..., min_length=10, description="Analyst notes on how the alert was resolved.")

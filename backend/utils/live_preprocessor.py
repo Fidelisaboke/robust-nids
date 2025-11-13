@@ -121,27 +121,33 @@ def process_flow_row(row, is_first_alert):
         response = requests.post(API_URL, json={"features": row.to_dict()}, timeout=5)
         if response.status_code == 200:
             res = response.json()
+            threat = res["threat_level"]
+            atk_type = res["multiclass"]["label"]
 
-            # Alert Condition: High Threat OR Debug Target
-            if res["threat_level"] in ["High", "Critical"] or is_debug_target:
-                atk_type = res["multiclass"]["label"]
-                threat = res["threat_level"]
+            # Log anything that is NOT a "Low" threat.
+            if threat != "Low" or is_debug_target:
+                # Don't log "Medium" threats if they are just benign noise
+                if atk_type in IGNORED_LABELS and not is_debug_target:
+                    return False
+
+                if is_first_alert:
+                    print("\n", end="")
+
+                src = f"{row.get('src_ip')}:{row.get('src_port')}"
+                dst = f"{row.get('dst_ip')}:{row.get('dst_port')}"
                 conf = res["binary"]["confidence"]
 
-                # Console Output
-                if atk_type not in IGNORED_LABELS or is_debug_target:
-                    if is_first_alert:
-                        print("\n", end="")
-                    src = f"{row.get('src_ip')}:{row.get('src_port')}"
-                    dst = f"{row.get('dst_ip')}:{row.get('dst_port')}"
-                    icon = (
-                        "🔍 DEBUG" if (is_debug_target and threat not in ["High", "Critical"]) else "🚨 ALERT"
-                    )
-                    print(f"   {icon}: {src} -> {dst} | {atk_type} [{threat}] (Conf: {conf:.2f})")
+                # Determine icon based on severity
+                if threat in ["High", "Critical"]:
+                    icon = "🚨 ALERT"
+                else:
+                    icon = "🔍 DEBUG"  # For "Medium" or "Low-on-demo-port"
 
-                    # SAVE JSON FOR ANALYSIS
-                    save_debug_json(row, f"{icon}: {atk_type} [{threat}]")
-                    return True
+                print(f"   {icon}: {src} -> {dst} | {atk_type} [{threat}] (Conf: {conf:.2f})")
+
+                # Save JSON for analysis
+                save_debug_json(row, f"{icon}: {atk_type} [{threat}]")
+                return True
     except Exception as e:
         print(f" [!] Exception in process_flow_row: {e}")
     return False
