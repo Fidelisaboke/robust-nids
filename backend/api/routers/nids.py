@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import deque
 from datetime import datetime, timedelta, timezone
@@ -7,6 +8,7 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 
 from api.dependencies import get_current_active_user, require_permissions
+from core.cache import redis_client
 from database.models import User
 from ml.models.explain import explain_binary
 from ml.models.predict import predict_full_report
@@ -29,12 +31,10 @@ from utils.enums import AlertSeverity, AlertStatus, SystemPermissions
 
 router = APIRouter(prefix="/api/v1/nids", tags=["NIDS"])
 
-# In-memory storage for recent high-threat events (last 50)
+# In-memory storage for recent high-threat events
 RECENT_ALERTS = deque(maxlen=50)
 
-# Aggregation State (prevents alert flooding)
-# Key: (src_ip, attack_type) -> Value: {first_seen, last_seen, count, alert_id}
-ACTIVE_INCIDENTS = {}
+# Active incidents for aggregation
 AGGREGATION_WINDOW = timedelta(seconds=60)  # Group events happening within 60s
 
 # Ignore benign traffic labels
@@ -77,6 +77,49 @@ async def _create_alert_from_report(
         return None
 
 
+async def handle_redis_incident(result, request, alert_service, email_service, background_tasks):
+    """Handles Redis incident aggregation and alert creation."""
+    src_ip = result.get("src_ip", "unknown")
+    attack_type = result["multiclass"]["label"]
+    now = datetime.now(timezone.utc)
+    incident_key_str = f"incident:{src_ip}:{attack_type}"
+    incident_data = redis_client.get(incident_key_str)
+    if incident_data:
+        incident = json.loads(incident_data)
+        incident["count"] += 1
+        incident["last_seen"] = now.isoformat()
+        redis_client.setex(
+            incident_key_str,
+            int(AGGREGATION_WINDOW.total_seconds()),
+            json.dumps(incident),
+        )
+        return incident["alert_id"]
+    else:
+        alert_obj = None
+        try:
+            alert_obj = await _create_alert_from_report(
+                result, request, alert_service, email_service, background_tasks
+            )
+            if alert_obj:
+                result["id"] = alert_obj.id
+                RECENT_ALERTS.appendleft(result)
+                new_incident = {
+                    "first_seen": now.isoformat(),
+                    "last_seen": now.isoformat(),
+                    "count": 1,
+                    "alert_id": result["id"],
+                }
+                redis_client.setex(
+                    incident_key_str,
+                    int(AGGREGATION_WINDOW.total_seconds()),
+                    json.dumps(new_incident),
+                )
+                return alert_obj.id
+        except Exception as e:
+            app_logger.error(f"Failed to create alert in database: {e}")
+        return None
+
+
 @router.post(
     "/predict/full",
     response_model=UnifiedPredictionResponse,
@@ -93,43 +136,18 @@ async def predict_traffic_full(
     High/Critical threats are aggregated and saved to the database.
     """
     try:
-        # 1. Run inference
         result = predict_full_report(request.features)
-        result["id"] = None  # Default: no alert created yet
+        result["id"] = None
 
-        # 2. Aggregation & Alert Creation Logic
         if result["threat_level"] in ["High", "Critical"]:
-            src_ip = result.get("src_ip", "unknown")
-            attack_type = result["multiclass"]["label"]
-            now = datetime.now(timezone.utc)
-
-            incident_key = (src_ip, attack_type)
-            incident = ACTIVE_INCIDENTS.get(incident_key)
-
-            # New incident or outside aggregation window
-            if not incident or (now - incident["last_seen"] > AGGREGATION_WINDOW):
-                # 3. Create persistent alert in DB
-                alert_obj = await _create_alert_from_report(
+            if not redis_client:
+                app_logger.warning("Redis client not available, skipping incident aggregation.")
+            else:
+                alert_id = await handle_redis_incident(
                     result, request, alert_service, email_service, background_tasks
                 )
-
-                if alert_obj:
-                    result["id"] = alert_obj.id
-                    # Add to recent alerts for live view
-                    RECENT_ALERTS.appendleft(result)
-
-                    # Update aggregation cache
-                    ACTIVE_INCIDENTS[incident_key] = {
-                        "first_seen": now,
-                        "last_seen": now,
-                        "count": 1,
-                        "alert_id": result["id"],
-                    }
-            else:
-                # This is an existing incident. Just update cache.
-                incident["count"] += 1
-                incident["last_seen"] = now
-                result["id"] = incident["alert_id"]  # Return the ID of the original alert
+                if alert_id:
+                    result["id"] = alert_id
 
         return result
     except RuntimeError as e:
@@ -152,7 +170,12 @@ def get_live_events():
 def clear_live_events():
     """Clears all currently displayed live alerts."""
     RECENT_ALERTS.clear()
-    ACTIVE_INCIDENTS.clear()
+    if redis_client:
+        # Clear all incident keys from Redis
+        for key in redis_client.scan_iter("incident:*"):
+            redis_client.delete(key)
+    else:
+        app_logger.warning("Redis client not available, skipping incident aggregation data clearing.")
     return None
 
 

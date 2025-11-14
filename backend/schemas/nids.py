@@ -34,7 +34,7 @@ class AnomalyResult(BaseModel):
 
 
 class UnifiedPredictionResponse(BaseModel):
-    id: int | None = None
+    id: int | None = None # The Alert ID (new or existing)
     src_ip: str | None = None
     dst_ip: str | None = None
     status: str = "success"
