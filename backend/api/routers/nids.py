@@ -209,6 +209,7 @@ async def delete_alert(alert_id: int, alert_service: AlertService = Depends(get_
     "/alerts/{alert_id}/assign",
     response_model=AlertOut,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_permissions(SystemPermissions.UPDATE_ALERT_STATUS))],
 )
 def assign_alert(
     alert_id: int,
@@ -216,9 +217,25 @@ def assign_alert(
     alert_service: AlertService = Depends(get_alert_service),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Assign an alert to a user (either analyst or self - if admin/analyst) for investigation."""
+    """
+    Assign an alert to a user for investigation.
+
+    - Admins can assign to any user
+    - Analysts can assign to themselves
+    - The user_id in the request determines who gets assigned
+    """
     try:
-        # You could also just use current_user.id if assigning to self
+        # Check if user is trying to assign to themselves or is an admin
+        is_self_assignment = request.user_id == current_user.id
+        is_admin = any(role.name == "admin" for role in current_user.roles)
+
+        # Analysts can only self-assign unless they're also admins
+        if not is_admin and not is_self_assignment:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only assign alerts to yourself. Contact an admin to assign to others.",
+            )
+
         alert = alert_service.assign_alert(alert_id, request.user_id)
         return alert
     except AlertNotFoundError:

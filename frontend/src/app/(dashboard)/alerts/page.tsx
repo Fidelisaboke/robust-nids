@@ -120,7 +120,7 @@ export default function AlertsPage() {
   };
 
   const filteredAlerts =
-    data?.items.filter((alert) => {
+    data?.items.filter((alert: Alert) => {
       const matchesSearch =
         alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         alert.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -130,10 +130,12 @@ export default function AlertsPage() {
 
   const alertCounts = {
     all: data?.total || 0,
-    critical: data?.items.filter((a) => a.severity === "critical").length || 0,
-    high: data?.items.filter((a) => a.severity === "high").length || 0,
-    medium: data?.items.filter((a) => a.severity === "medium").length || 0,
-    low: data?.items.filter((a) => a.severity === "low").length || 0,
+    critical:
+      data?.items.filter((a: Alert) => a.severity === "critical").length || 0,
+    high: data?.items.filter((a: Alert) => a.severity === "high").length || 0,
+    medium:
+      data?.items.filter((a: Alert) => a.severity === "medium").length || 0,
+    low: data?.items.filter((a: Alert) => a.severity === "low").length || 0,
   };
 
   if (error) {
@@ -242,7 +244,7 @@ export default function AlertsPage() {
       {!isLoading && (
         <>
           <div className="space-y-4">
-            {filteredAlerts.map((alert, index) => {
+            {filteredAlerts.map((alert: Alert, index: number) => {
               const colors = getSeverityColor(alert.severity);
               return (
                 <motion.div
