@@ -175,6 +175,11 @@ def list_alerts(
     """
     Get a paginated list of all persisted alerts with filtering.
     """
+    allowed_sort_by = {"flow_timestamp", "severity", "status", "created_at"}
+    if sort_by not in allowed_sort_by:
+        raise HTTPException(status_code=400, detail=f"Invalid sort_by field. Allowed: {allowed_sort_by}")
+    if sort_direction not in {"asc", "desc"}:
+        raise HTTPException(status_code=400, detail="sort_direction must be 'asc' or 'desc'")
     alert_query = alert_service.list_alerts(
         start_date=start_date,
         end_date=end_date,
