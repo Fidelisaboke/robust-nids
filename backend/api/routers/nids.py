@@ -35,7 +35,7 @@ router = APIRouter(prefix="/api/v1/nids", tags=["NIDS"])
 RECENT_ALERTS = deque(maxlen=50)
 
 # Active incidents for aggregation
-AGGREGATION_WINDOW = timedelta(seconds=60)  # Group events happening within 60s
+AGGREGATION_WINDOW = timedelta(seconds=300)  # Group events happening within 300s
 
 # Ignore benign traffic labels
 IGNORED_LABELS = BENIGN_LABELS
