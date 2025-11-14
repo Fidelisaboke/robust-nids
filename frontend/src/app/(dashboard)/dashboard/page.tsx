@@ -1,37 +1,83 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, Server } from "lucide-react";
+import { Users, Server, AlertTriangle, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAlerts, useAlertsSummary } from "@/hooks/useAlertManagement";
 import { LiveThreatFeed } from "./components/LiveThreatFeed";
 import { ThreatSummaryWidget } from "./components/ThreatSummaryWidget";
+import {
+  AlertStatsWidget,
+  SeverityBreakdown,
+} from "./components/AlertStatsWidget";
+import Link from "next/link";
+import { Alert } from "@/lib/api/alertsApi";
 
 export default function DashboardPage() {
   const { user } = useAuth();
 
-  const recentAlerts = [
-    {
-      id: 1,
-      type: "Critical",
-      message: "Potential SQL Injection Attempt Detected",
-      time: "2 minutes ago",
-      source: "192.168.1.45",
-    },
-    {
-      id: 2,
-      type: "High",
-      message: "Unusual Port Scan Activity",
-      time: "15 minutes ago",
-      source: "10.0.0.23",
-    },
-    {
-      id: 3,
-      type: "Medium",
-      message: "Failed Authentication Attempts",
-      time: "1 hour ago",
-      source: "172.16.0.8",
-    },
-  ];
+  // Fetch alerts summary for statistics
+  const { data: summary } = useAlertsSummary();
+
+  // Fetch recent active alerts for display
+  const { data: recentAlertsData } = useAlerts({
+    page: 1,
+    size: 5,
+    status: "active",
+  });
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "critical":
+        return "bg-red-400";
+      case "high":
+        return "bg-orange-400";
+      case "medium":
+        return "bg-yellow-400";
+      case "low":
+        return "bg-blue-400";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    switch (severity) {
+      case "critical":
+        return "bg-red-500/20 text-red-400";
+      case "high":
+        return "bg-orange-500/20 text-orange-400";
+      case "medium":
+        return "bg-yellow-500/20 text-yellow-400";
+      case "low":
+        return "bg-blue-500/20 text-blue-400";
+      default:
+        return "bg-gray-500/20 text-gray-400";
+    }
+  };
+
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const alertTime = new Date(timestamp);
+    const diffMs = now.getTime() - alertTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    } else if (diffMins > 0) {
+      return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+    } else {
+      return "Just now";
+    }
+  };
+
+  // Calculate total active threats from summary
+  const activeThreatCount =
+    (summary?.by_status.active || 0) + (summary?.by_status.investigating || 0);
 
   return (
     <div className="space-y-6">
@@ -49,84 +95,128 @@ export default function DashboardPage() {
         </p>
       </motion.div>
 
+      {/* Alert Statistics Widget */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <AlertStatsWidget />
+      </motion.div>
+
+      {/* Quick Stats Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-6"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-red-500/20 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-white">
+                {activeThreatCount} Active Threats
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Requires immediate attention
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/alerts?status=active"
+            className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+          >
+            View All
+          </Link>
+        </div>
+      </motion.div>
+
       {/* Live Threat Monitor Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
         className="space-y-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Real-Time Threats</h2>
+          <h2 className="text-xl font-bold text-white">Real-Time Monitoring</h2>
           <span className="text-sm text-gray-400">
-            Auto-refreshing every 2 seconds
+            Auto-refreshing every 30 seconds
           </span>
         </div>
 
         {/* Threat Summary Cards */}
         <ThreatSummaryWidget />
 
-        {/* Live Threat Feed */}
+        {/* Live Threat Feed and Recent Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <LiveThreatFeed />
 
-          {/* Recent Alerts (Static Data) */}
+          {/* Recent Alerts (API Data) */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Recent Alerts</h2>
-              <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              <Link
+                href="/alerts"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
                 View All
-              </button>
+              </Link>
             </div>
 
             <div className="space-y-4">
-              {recentAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-start space-x-4 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900 transition-colors"
-                >
-                  <div
-                    className={`mt-1 w-2 h-2 rounded-full ${
-                      alert.type === "Critical"
-                        ? "bg-red-400"
-                        : alert.type === "High"
-                          ? "bg-orange-400"
-                          : "bg-yellow-400"
-                    }`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span
-                        className={`text-xs font-semibold px-2 py-1 rounded ${
-                          alert.type === "Critical"
-                            ? "bg-red-500/20 text-red-400"
-                            : alert.type === "High"
-                              ? "bg-orange-500/20 text-orange-400"
-                              : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {alert.type}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {alert.time}
-                      </span>
-                    </div>
-                    <p className="text-sm text-white font-medium mb-1">
-                      {alert.message}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Source: {alert.source}
-                    </p>
-                  </div>
+              {recentAlertsData?.items.length === 0 && (
+                <div className="text-center py-8">
+                  <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No active alerts</p>
                 </div>
+              )}
+
+              {recentAlertsData?.items.map((alert: Alert) => (
+                <Link
+                  key={alert.id}
+                  href={`/alerts/${alert.id}`}
+                  className="block"
+                >
+                  <div className="flex items-start space-x-4 p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900 transition-colors cursor-pointer">
+                    <div
+                      className={`mt-1 w-2 h-2 rounded-full ${getSeverityColor(alert.severity)}`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span
+                          className={`text-xs font-semibold px-2 py-1 rounded ${getSeverityBadge(alert.severity)}`}
+                        >
+                          {alert.severity.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {getTimeAgo(alert.flow_timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white font-medium mb-1">
+                        {alert.title}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Source: {alert.src_ip} → {alert.dst_ip}:{alert.dst_port}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* System Status */}
+      {/* Analytics and System Health */}
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Severity Breakdown */}
+        <SeverityBreakdown />
+
+        {/* System Health */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -167,55 +257,52 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
-        >
-          <div className="flex items-center space-x-3 mb-6">
-            <Users className="w-6 h-6 text-purple-400" />
-            <h2 className="text-xl font-bold text-white">Active Sessions</h2>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
-              <div>
-                <p className="text-sm text-white font-medium">Administrator</p>
-                <p className="text-xs text-gray-400">Desktop - Chrome</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-green-400" />
-                <span className="text-xs text-green-400">Active</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
-              <div>
-                <p className="text-sm text-white font-medium">
-                  Security Analyst
-                </p>
-                <p className="text-xs text-gray-400">Mobile - Safari</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-green-400" />
-                <span className="text-xs text-green-400">Active</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
-              <div>
-                <p className="text-sm text-white font-medium">
-                  Network Monitor
-                </p>
-                <p className="text-xs text-gray-400">Tablet - Firefox</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400" />
-                <span className="text-xs text-gray-400">Idle</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
       </div>
+
+      {/* Active Sessions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+      >
+        <div className="flex items-center space-x-3 mb-6">
+          <Users className="w-6 h-6 text-purple-400" />
+          <h2 className="text-xl font-bold text-white">Active Sessions</h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+            <div>
+              <p className="text-sm text-white font-medium">Administrator</p>
+              <p className="text-xs text-gray-400">Desktop - Chrome</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <span className="text-xs text-green-400">Active</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+            <div>
+              <p className="text-sm text-white font-medium">Security Analyst</p>
+              <p className="text-xs text-gray-400">Mobile - Safari</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <span className="text-xs text-green-400">Active</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
+            <div>
+              <p className="text-sm text-white font-medium">Network Monitor</p>
+              <p className="text-xs text-gray-400">Tablet - Firefox</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-gray-400" />
+              <span className="text-xs text-gray-400">Idle</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -12,6 +12,7 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
 
 from core.config import settings
+from database.models import Alert
 from services.exceptions.email import EmailDeliveryException
 
 logger = logging.getLogger(__name__)
@@ -213,7 +214,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -235,7 +236,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "admin_panel_url": admin_panel_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
@@ -256,7 +257,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -278,7 +279,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "admin_panel_url": admin_panel_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
@@ -299,7 +300,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -321,7 +322,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "admin_panel_url": admin_panel_url,
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
@@ -342,7 +343,7 @@ class EmailService:
         template_data = {
             "user_email": user_email,
             "user_name": user_name,
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
             "current_year": datetime.now().year,
         }
@@ -353,6 +354,47 @@ class EmailService:
             recipients=[user_email],
             template_body=template_data,
             template_name="user_account_updated.html",
+        )
+
+    async def send_critical_alert_notification(self, background_tasks: BackgroundTasks, alert: Alert):
+        """
+        Send a high-priority notification to admins about a new critical alert.
+        """
+        admin_emails = [settings.SUPPORT_EMAIL]
+        if not admin_emails:
+            logger.warning("No SUPPORT_EMAIL configured, skipping critical alert notification.")
+            return
+
+        alert_url = f"{settings.FRONTEND_URL}/dashboard/alerts/{alert.id}"
+        model_output = alert.model_output or {}
+
+        # Get confidence and format in percentage in 2 decimal places
+        confidence = model_output.get("binary", {}).get("confidence", None)
+        if confidence is not None:
+            confidence = f"{confidence * 100:.2f}%"
+        else:
+            confidence = "N/A"
+
+        template_data = {
+            "alert_title": alert.title,
+            "alert_severity": str(alert.severity.value).upper(),
+            "alert_category": alert.category,
+            "alert_url": alert_url,
+            "src_ip": alert.src_ip,
+            "dst_ip": alert.dst_ip,
+            "dst_port": alert.dst_port,
+            "flow_timestamp": alert.flow_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "confidence": confidence,
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "current_year": datetime.now().year,
+        }
+
+        self.send_email_background(
+            background_tasks=background_tasks,
+            subject=f"🚨 CRITICAL NIDS ALERT: {alert.title}",
+            recipients=admin_emails,
+            template_body=template_data,
+            template_name="critical_alert.html",
         )
 
 

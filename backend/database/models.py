@@ -3,20 +3,11 @@ SQLAlchemy models for the application.
 Each model represents a database table.
 """
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    Table,
-    Text,
-    func,
-)
+from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Table, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, relationship
+
+from utils.enums import AlertSeverity, AlertStatus
 
 
 class Base(DeclarativeBase):
@@ -81,6 +72,7 @@ class User(Base):
     # Relationship
     roles = relationship("Role", secondary="user_roles", back_populates="users")
     sessions = relationship("UserSession", back_populates="user")
+    alerts = relationship("Alert", back_populates="assigned_user")
 
 
 class UserSession(Base):
@@ -103,6 +95,7 @@ class UserSession(Base):
 
 class Role(Base):
     __tablename__ = "roles"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -141,3 +134,39 @@ role_permissions = Table(
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
     Column("granted_at", DateTime(timezone=True), default=func.now()),
 )
+
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # User assigned to alert
+    assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Alert title and description
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    # Alert severity, resolution status, and category
+    severity = Column(Enum(AlertSeverity), nullable=False, default=AlertSeverity.LOW)
+    status = Column(Enum(AlertStatus), nullable=False, default=AlertStatus.ACTIVE)
+    category = Column(String(100), nullable=True)  # e.g. Bruteforce, Mirai
+
+    # Source and destination identifiers
+    src_ip = Column(String(50), nullable=True)
+    dst_ip = Column(String(50), nullable=True)
+    dst_port = Column(Integer, index=True)
+
+    # Full API JSON
+    model_output = Column(JSON, nullable=True)
+
+    # Timestamp from thhe packet flow
+    flow_timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Timestamp for database record
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationship
+    assigned_user = relationship("User", back_populates="alerts")

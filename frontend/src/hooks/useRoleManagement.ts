@@ -3,6 +3,7 @@ import {
   rolesApi,
   RoleListParams,
   UpdateRoleRequest,
+  Role,
 } from "@/lib/api/rolesApi";
 
 // Query keys for roles
@@ -36,10 +37,10 @@ export const useRole = (id: number) => {
 export const useUpdateRole = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Role, Error, { id: number; data: UpdateRoleRequest }>({
     mutationFn: ({ id, data }: { id: number; data: UpdateRoleRequest }) =>
       rolesApi.updateRole(id, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (_: unknown, variables: { id: number }) => {
       queryClient.invalidateQueries({ queryKey: roleKeys.lists() });
       queryClient.invalidateQueries({
         queryKey: roleKeys.detail(variables.id),

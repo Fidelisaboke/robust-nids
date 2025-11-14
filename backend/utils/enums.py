@@ -50,3 +50,17 @@ class SystemPermissions(StrEnum):
     # Administrative permissions
     VIEW_LOGS = "view_logs"
     SYSTEM_MAINTENANCE = "system_maintenance"
+
+
+class AlertSeverity(StrEnum):
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class AlertStatus(StrEnum):
+    ACTIVE = "active"
+    INVESTIGATING = "investigating"
+    RESOLVED = "resolved"
+    ACKNOWLEDGED = "acknowledged"

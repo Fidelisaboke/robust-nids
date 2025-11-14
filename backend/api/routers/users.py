@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -44,17 +44,43 @@ async def create_user(user_data: UserCreate, user_service: UserService = Depends
     status_code=status.HTTP_200_OK,
 )
 async def list_users(
-    created_after: datetime | None = None,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    is_active: bool | None = Query(
+        None, description="If provided, only return users with the specified active status."
+    ),
+    created_after: datetime | None = Query(
+        None, description="If provided, only return users created after this date."
+    ),
+    role: str | None = Query(None, description="If provided, only return users with the specified role."),
+    email_verified: bool | None = Query(
+        None, description="If provided, filter by email verification status."
+    ),
+    account_status: str | None = Query(None, description="If provided, filter by account status."),
+    search: str | None = Query(None, description="Search term to filter users."),
 ) -> Page[UserOut]:
     """
     List all users in the system.
 
+    Args:
+        user_service (UserService): The user service dependency.
+        is_active (bool | None): If provided, only return users with the specified active status.
+        created_after (datetime | None): If provided, only return users created after this date.
+        role (str | None): If provided, only return users with the specified role.
+        email_verified (bool | None): If provided, filter by email verification status.
+        account_status (str | None): If provided, filter by account status.
+        search (str | None): Search term to filter users.
+
     Returns:
         Page[UserOut]: A paginated list of user objects.
-        user_service (UserService): The user service dependency.
     """
-    query = user_service.list_users(created_after=created_after)
+    query = user_service.list_users(
+        is_active=is_active,
+        created_after=created_after,
+        role=role,
+        email_verified=email_verified,
+        account_status=account_status,
+        search=search,
+    )
     return paginate(user_service.user_repo.session, query)
 
 

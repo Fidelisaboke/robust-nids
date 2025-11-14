@@ -149,7 +149,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 "path": request.url.path,
                 "method": request.method,
                 "client_ip": getattr(request.client, "host", "unknown"),
-                "user": request.scope.get("user", {}).get("username", "anonymous"),
+                "user": self._get_user_for_log(request),
                 "error": str(exc),
                 "duration_ms": round(duration_ms, 2),
             },
