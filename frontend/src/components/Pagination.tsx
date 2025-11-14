@@ -91,7 +91,7 @@ export function Pagination({
             {getPageNumbers().map((page, idx) =>
               typeof page === "number" ? (
                 <button
-                  key={idx}
+                  key={`page-${idx}`}
                   onClick={() => onPageChange(page)}
                   className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                     currentPage === page
@@ -103,7 +103,7 @@ export function Pagination({
                 </button>
               ) : (
                 <span
-                  key={idx}
+                  key={`ellipsis-${idx}`}
                   className="relative inline-flex items-center px-4 py-2 border border-slate-600 bg-slate-700 text-sm font-medium text-gray-400"
                 >
                   {page}
