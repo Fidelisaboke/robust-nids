@@ -2,12 +2,13 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Depends
+from sqlalchemy import func
 
 from core.dependencies import get_alert_repository, get_user_repository
 from database.models import Alert, User
 from database.repositories.alert import AlertRepository
 from database.repositories.user import UserRepository
-from schemas.nids import AlertCreate, AlertUpdate
+from schemas.nids import AlertCreate, AlertsSummaryResponse, AlertUpdate
 from services.email_service import EmailService, get_email_service
 from services.exceptions.alert import AlertNotFoundError
 from services.exceptions.user import UserNotFoundError
@@ -169,6 +170,78 @@ class AlertService:
         self.alert_repo.session.flush()
         self.alert_repo.session.refresh(updated_alert)
         return updated_alert
+
+    def get_alert_summary(
+        self,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        group_by_time: str = "day",  # 'day' or 'hour'
+    ) -> AlertsSummaryResponse:
+        """
+        Generates aggregated statistics for alerts.
+
+        :param start_date: Optional filter for start of time range.
+        :param end_date: Optional filter for end of time range.
+        :param group_by_time: Granularity for time_series ('day' or 'hour').
+        :return: AlertsSummaryResponse
+        """
+        session = self.alert_repo.session
+
+        # Base query with time filters
+        base_query = session.query(Alert)
+        if start_date:
+            base_query = base_query.filter(Alert.flow_timestamp >= start_date)
+        if end_date:
+            base_query = base_query.filter(Alert.flow_timestamp <= end_date)
+
+        # 1. Total Alerts
+        total_alerts = base_query.count()
+
+        # 2. Counts by Status
+        status_counts_query = (
+            base_query.with_entities(Alert.status, func.count(Alert.id)).group_by(Alert.status).all()
+        )
+        by_status = {status: count for status, count in status_counts_query}
+
+        # 3. Counts by Severity
+        severity_counts_query = (
+            base_query.with_entities(Alert.severity, func.count(Alert.id)).group_by(Alert.severity).all()
+        )
+        by_severity = {severity: count for severity, count in severity_counts_query}
+
+        # 4. Top 10 by Category
+        category_counts_query = (
+            base_query.with_entities(Alert.category, func.count(Alert.id).label("count"))
+            .group_by(Alert.category)
+            .order_by(func.count(Alert.id).desc())
+            .limit(10)
+            .all()
+        )
+        by_category = [{"category": category, "count": count} for category, count in category_counts_query]
+
+        # 5. Time Series (Histogram)
+        # Use date_trunc for efficient grouping by hour or day
+        if group_by_time not in ["day", "hour"]:
+            group_by_time = "day"
+
+        time_series_query = (
+            base_query.with_entities(
+                func.date_trunc(group_by_time, Alert.flow_timestamp).label("timestamp"),
+                func.count(Alert.id).label("count"),
+            )
+            .group_by("timestamp")
+            .order_by("timestamp")
+            .all()
+        )
+        time_series = [{"timestamp": ts, "count": count} for ts, count in time_series_query]
+
+        return AlertsSummaryResponse(
+            total_alerts=total_alerts,
+            by_status=by_status,
+            by_severity=by_severity,
+            by_category=by_category,
+            time_series=time_series,
+        )
 
 
 # Dependency injection

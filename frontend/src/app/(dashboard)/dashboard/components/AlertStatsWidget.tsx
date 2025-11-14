@@ -1,39 +1,14 @@
 import { motion } from "framer-motion";
-import { AlertTriangle, Clock, CheckCircle, Eye } from "lucide-react";
-import { useAlerts } from "@/hooks/useAlertManagement";
+import { AlertTriangle, Clock, CheckCircle, Eye, Loader2 } from "lucide-react";
+import { useAlertsSummary } from "@/hooks/useAlertManagement";
 
 export function AlertStatsWidget() {
-  // Fetch all alerts
-  // TODO: Optimize this by creating a dedicated stats endpoint
-  const { data: allAlerts } = useAlerts({ size: 100 });
-
-  // Calculate statistics
-  const stats = {
-    total: allAlerts?.total || 0,
-    bySeverity: {
-      critical:
-        allAlerts?.items.filter((a) => a.severity === "critical").length || 0,
-      high: allAlerts?.items.filter((a) => a.severity === "high").length || 0,
-      medium:
-        allAlerts?.items.filter((a) => a.severity === "medium").length || 0,
-      low: allAlerts?.items.filter((a) => a.severity === "low").length || 0,
-    },
-    byStatus: {
-      active: allAlerts?.items.filter((a) => a.status === "active").length || 0,
-      investigating:
-        allAlerts?.items.filter((a) => a.status === "investigating").length ||
-        0,
-      acknowledged:
-        allAlerts?.items.filter((a) => a.status === "acknowledged").length || 0,
-      resolved:
-        allAlerts?.items.filter((a) => a.status === "resolved").length || 0,
-    },
-  };
+  const { data: summary, isLoading } = useAlertsSummary();
 
   const statCards = [
     {
       label: "Active",
-      value: stats.byStatus.active,
+      value: summary?.by_status.active || 0,
       icon: AlertTriangle,
       color: "text-red-400",
       bgColor: "bg-red-500/10",
@@ -41,7 +16,7 @@ export function AlertStatsWidget() {
     },
     {
       label: "Investigating",
-      value: stats.byStatus.investigating,
+      value: summary?.by_status.investigating || 0,
       icon: Eye,
       color: "text-orange-400",
       bgColor: "bg-orange-500/10",
@@ -49,7 +24,7 @@ export function AlertStatsWidget() {
     },
     {
       label: "Acknowledged",
-      value: stats.byStatus.acknowledged,
+      value: summary?.by_status.acknowledged || 0,
       icon: Clock,
       color: "text-yellow-400",
       bgColor: "bg-yellow-500/10",
@@ -57,13 +32,30 @@ export function AlertStatsWidget() {
     },
     {
       label: "Resolved",
-      value: stats.byStatus.resolved,
+      value: summary?.by_status.resolved || 0,
       icon: CheckCircle,
       color: "text-green-400",
       bgColor: "bg-green-500/10",
       borderColor: "border-green-500/20",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 animate-pulse"
+          >
+            <div className="h-6 w-6 bg-slate-700 rounded mb-3" />
+            <div className="h-8 w-16 bg-slate-700 rounded mb-2" />
+            <div className="h-4 w-20 bg-slate-700 rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -92,37 +84,33 @@ export function AlertStatsWidget() {
 }
 
 export function SeverityBreakdown() {
-  // Fetch all alerts
-  // TODO: Optimize this by creating a dedicated stats endpoint
-  const { data: allAlerts } = useAlerts({ size: 100 });
+  const { data: summary, isLoading } = useAlertsSummary();
 
   const severities = [
     {
       label: "Critical",
-      count:
-        allAlerts?.items.filter((a) => a.severity === "critical").length || 0,
+      count: summary?.by_severity.critical || 0,
       color: "from-red-500 to-red-600",
       bgColor: "bg-red-500/10",
       textColor: "text-red-400",
     },
     {
       label: "High",
-      count: allAlerts?.items.filter((a) => a.severity === "high").length || 0,
+      count: summary?.by_severity.high || 0,
       color: "from-orange-500 to-orange-600",
       bgColor: "bg-orange-500/10",
       textColor: "text-orange-400",
     },
     {
       label: "Medium",
-      count:
-        allAlerts?.items.filter((a) => a.severity === "medium").length || 0,
+      count: summary?.by_severity.medium || 0,
       color: "from-yellow-500 to-yellow-600",
       bgColor: "bg-yellow-500/10",
       textColor: "text-yellow-400",
     },
     {
       label: "Low",
-      count: allAlerts?.items.filter((a) => a.severity === "low").length || 0,
+      count: summary?.by_severity.low || 0,
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-500/10",
       textColor: "text-blue-400",
@@ -130,6 +118,16 @@ export function SeverityBreakdown() {
   ];
 
   const total = severities.reduce((sum, s) => sum + s.count, 0);
+
+  if (isLoading) {
+    return (
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div

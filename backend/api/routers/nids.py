@@ -13,6 +13,7 @@ from ml.models.predict import predict_full_report
 from schemas.nids import (
     AlertCreate,
     AlertOut,
+    AlertsSummaryResponse,
     AssignAlertRequest,
     ExplanationResponse,
     PredictRequest,
@@ -182,6 +183,31 @@ def list_alerts(
         sort_direction=sort_direction,
     )
     return paginate(alert_service.alert_repo.session, alert_query)
+
+
+@router.get(
+    "/alerts/summary",
+    response_model=AlertsSummaryResponse,
+    dependencies=[Depends(require_permissions(SystemPermissions.VIEW_ALERTS))],
+    status_code=status.HTTP_200_OK,
+)
+def get_alerts_summary(
+    start_date: datetime | None = Query(None, description="Start date (ISO8601)"),
+    end_date: datetime | None = Query(None, description="End date (ISO8601)"),
+    group_by_time: str = Query("day", enum=["day", "hour"]),
+    alert_service: AlertService = Depends(get_alert_service),
+):
+    """
+    Get aggregated statistics for alerts.
+    """
+    if not end_date:
+        end_date = datetime.now(timezone.utc)
+    if not start_date:
+        start_date = end_date - timedelta(days=7)  # Default to last 7 days
+
+    return alert_service.get_alert_summary(
+        start_date=start_date, end_date=end_date, group_by_time=group_by_time
+    )
 
 
 @router.get(

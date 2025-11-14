@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Users, Server, AlertTriangle, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAlerts } from "@/hooks/useAlertManagement";
+import { useAlerts, useAlertsSummary } from "@/hooks/useAlertManagement";
 import { LiveThreatFeed } from "./components/LiveThreatFeed";
 import { ThreatSummaryWidget } from "./components/ThreatSummaryWidget";
 import {
@@ -11,22 +11,19 @@ import {
   SeverityBreakdown,
 } from "./components/AlertStatsWidget";
 import Link from "next/link";
+import { Alert } from "@/lib/api/alertsApi";
 
 export default function DashboardPage() {
   const { user } = useAuth();
 
-  // Fetch recent critical and high alerts
+  // Fetch alerts summary for statistics
+  const { data: summary } = useAlertsSummary();
+
+  // Fetch recent active alerts for display
   const { data: recentAlertsData } = useAlerts({
     page: 1,
     size: 5,
     status: "active",
-  });
-
-  // Fetch all alerts for statistics
-  // TODO: Optimize this by creating a dedicated stats endpoint
-  const { data: allAlertsData } = useAlerts({
-    page: 1,
-    size: 100,
   });
 
   const getSeverityColor = (severity: string) => {
@@ -78,11 +75,9 @@ export default function DashboardPage() {
     }
   };
 
-  // Calculate total active threats
+  // Calculate total active threats from summary
   const activeThreatCount =
-    allAlertsData?.items.filter(
-      (a) => a.status === "active" || a.status === "investigating",
-    ).length || 0;
+    (summary?.by_status.active || 0) + (summary?.by_status.investigating || 0);
 
   return (
     <div className="space-y-6">
@@ -180,7 +175,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {recentAlertsData?.items.map((alert) => (
+              {recentAlertsData?.items.map((alert: Alert) => (
                 <Link
                   key={alert.id}
                   href={`/alerts/${alert.id}`}

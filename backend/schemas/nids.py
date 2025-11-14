@@ -117,3 +117,16 @@ class AssignAlertRequest(BaseModel):
 
 class ResolveAlertRequest(BaseModel):
     notes: str = Field(..., min_length=10, description="Analyst notes on how the alert was resolved.")
+
+class AlertTimeSeriesPoint(BaseModel):
+    """A single data point for a time-series chart."""
+    timestamp: datetime
+    count: int
+
+class   AlertsSummaryResponse(BaseModel):
+    """Aggregated statistics for the alerts dashboard."""
+    total_alerts: int
+    by_status: Dict[AlertStatus, int]
+    by_severity: Dict[AlertSeverity, int]
+    by_category: list[Dict[str, Union[str, int]]] # e.g., [{"category": "Bruteforce", "count": 10}]
+    time_series: list[AlertTimeSeriesPoint] # For a "alerts over time" chart

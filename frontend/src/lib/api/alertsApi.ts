@@ -72,6 +72,32 @@ export interface ResolveAlertRequest {
   notes: string;
 }
 
+export interface AlertsSummaryResponse {
+  total_alerts: number;
+  by_status: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  by_severity: {
+    active: number;
+    investigating: number;
+    resolved: number;
+    acknowledged: number;
+  };
+  // by_category: e.g., [{"category": "Bruteforce", "count": 10}]
+  by_category: Array<{
+    category: string;
+    count: number;
+  }>;
+  // time_series: For a "alerts over time" chart
+  time_series: Array<{
+    timestamp: string;
+    count: number;
+  }>;
+}
+
 const ALERTS_BASE = "/api/v1/nids/alerts";
 
 export const alertsApi = {
@@ -119,6 +145,14 @@ export const alertsApi = {
     const response = await apiClient.patch<Alert>(
       `${ALERTS_BASE}/${id}/resolve`,
       data,
+    );
+    return response.data;
+  },
+
+  // Alerts summary
+  getAlertsSummary: async (): Promise<AlertsSummaryResponse> => {
+    const response = await apiClient.get<AlertsSummaryResponse>(
+      `${ALERTS_BASE}/summary`,
     );
     return response.data;
   },
