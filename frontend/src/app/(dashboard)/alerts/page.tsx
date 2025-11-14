@@ -21,6 +21,7 @@ import { AlertActionsDialog } from "@/components/dialogs/AlertActionsDialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { normalizeError } from "@/lib/api/apiClient";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function AlertsPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function AlertsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const pageSize = 10;
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const acknowledgeMutation = useAcknowledgeAlert();
 
@@ -42,6 +44,9 @@ export default function AlertsPage() {
     size: pageSize,
     ...(filter !== "all" && { severity: filter }),
     ...(statusFilter !== "all" && { status: statusFilter }),
+    ...(debouncedSearchQuery.trim() !== "" && {
+      search: debouncedSearchQuery.trim(),
+    }),
   };
 
   const { data, isLoading, error } = useAlerts(params);
@@ -119,14 +124,7 @@ export default function AlertsPage() {
     router.push(`/alerts/${alertId}`);
   };
 
-  const filteredAlerts =
-    data?.items.filter((alert: Alert) => {
-      const matchesSearch =
-        alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        alert.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        alert.src_ip.includes(searchQuery);
-      return matchesSearch;
-    }) || [];
+  const filteredAlerts = data?.items || [];
 
   const alertCounts = {
     all: data?.total || 0,

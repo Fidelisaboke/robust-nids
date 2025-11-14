@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Filter, X, Download } from "lucide-react";
 import { UserListParams } from "@/lib/api/usersApi";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface UserFiltersProps {
   onFilterChange: (filters: UserListParams) => void;
@@ -19,14 +20,15 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   const [verification, setVerification] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  const debouncedSearch = useDebounce(search, 500);
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    applyFilters({ search: value });
   };
 
   const applyFilters = (overrides: Partial<UserListParams> = {}) => {
     const filters: UserListParams = {
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       role: role || undefined,
       is_active:
         status === "active" ? true : status === "inactive" ? false : undefined,
@@ -48,6 +50,11 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
     setVerification("");
     onFilterChange({});
   };
+
+  // Use effect to apply filters when debouncedSearch changes (ignore warning)
+  useEffect(() => {
+    applyFilters();
+  }, [debouncedSearch, role, status, verification]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasActiveFilters = search || role || status || verification;
 
@@ -108,10 +115,10 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">All Roles</option>
-              <option value="Admin">Admin</option>
-              <option value="Security Analyst">Security Analyst</option>
-              <option value="Network Engineer">Network Engineer</option>
-              <option value="Viewer">Viewer</option>
+              <option value="admin">Admin</option>
+              <option value="analyst">Security Analyst</option>
+              <option value="manager">Security Manager</option>
+              <option value="viewer">Viewer</option>
             </select>
           </div>
 

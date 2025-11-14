@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import joinedload
 
 from database.models import Alert
@@ -63,6 +63,7 @@ class AlertRepository(BaseRepository):
         end_date: Optional[datetime] = None,
         severity: Optional[AlertSeverity] = None,
         status: Optional[AlertStatus] = None,
+        search: Optional[str] = None,
         sort_by: str = "flow_timestamp",
         sort_direction: str = "desc",
     ):
@@ -74,7 +75,8 @@ class AlertRepository(BaseRepository):
         :param end_date: Filter for alerts on or before this time.
         :param severity: Filter by alert severity.
         :param status: Filter by alert status.
-        :param sort_by: Column to sort by (default: 'flow_timestamp').
+        :param search: Filter alerts by search term.
+        :param sort_by: Column to sort by (default: flow_timestamp).
         :param sort_direction: 'asc' or 'desc' (default: 'desc').
         :return: A SQLAlchemy Select statement.
         """
@@ -89,6 +91,18 @@ class AlertRepository(BaseRepository):
             stmt = stmt.where(Alert.severity == severity)
         if status:
             stmt = stmt.where(Alert.status == status)
+
+        # Apply search filter
+        if search:
+            search_term = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    Alert.title.ilike(search_term),
+                    Alert.category.ilike(search_term),
+                    Alert.src_ip.ilike(search_term),
+                    Alert.dst_ip.ilike(search_term),
+                )
+            )
 
         # Apply sorting
         sort_column = getattr(Alert, sort_by, Alert.flow_timestamp)

@@ -20,6 +20,7 @@ import { normalizeError } from "@/lib/api/apiClient";
 import { UserFormDialog } from "@/components/admin/UserFormDialog";
 import { UserFormData } from "@/schemas/userForm";
 import { User } from "@/types/auth";
+import { Pagination } from "@/components/Pagination";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -177,10 +178,14 @@ export default function UsersPage() {
         <UserTable
           users={usersData?.items || []}
           isLoading={isLoading}
+          onUserClick={handleUserClick}
+        />
+        <Pagination
           currentPage={currentPage}
           totalPages={usersData?.pages || 1}
-          onPageChange={setCurrentPage}
-          onUserClick={handleUserClick}
+          totalItems={usersData?.total || 0}
+          itemsPerPage={usersData?.size || 20}
+          onPageChange={(page) => setCurrentPage(page)}
         />
       </motion.div>
 
@@ -228,7 +233,7 @@ export default function UsersPage() {
                 className="p-4 bg-slate-900/50 rounded-lg hover:bg-slate-900 transition-colors cursor-pointer"
               >
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-semibold">
+                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-semibold">
                     {user.first_name?.[0]}
                     {user.last_name?.[0]}
                   </div>

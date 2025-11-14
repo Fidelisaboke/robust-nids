@@ -68,9 +68,24 @@ class UserService:
             raise UserNotFoundError()
         return user
 
-    def list_users(self, active_only: bool = False, created_after: datetime | None = None) -> Query:
+    def list_users(
+        self,
+        is_active: bool | None = None,
+        created_after: datetime | None = None,
+        role: str | None = None,
+        email_verified: bool | None = None,
+        account_status: str | None = None,
+        search: str | None = None,
+    ) -> Query:
         """List all users, optionally filtering by active status and creation date."""
-        return self.user_repo.list_all(active_only=active_only, created_after=created_after)
+        return self.user_repo.list_all(
+            is_active=is_active,
+            created_after=created_after,
+            role=role,
+            email_verified=email_verified,
+            account_status=account_status,
+            search=search,
+        )
 
     def update_user(self, user_id: int, update_data: UserUpdate) -> User:
         """Handles updating an existing user."""

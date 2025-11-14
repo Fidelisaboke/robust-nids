@@ -167,6 +167,7 @@ def list_alerts(
     end_date: datetime | None = Query(None, description="Filter by end date (ISO8601)"),
     severity: AlertSeverity | None = Query(None),
     status: AlertStatus | None = Query(None),
+    search: str | None = Query(None, description="Search term for alerts"),
     sort_by: str = Query("flow_timestamp"),
     sort_direction: str = Query("desc"),
     alert_service: AlertService = Depends(get_alert_service),
@@ -179,6 +180,7 @@ def list_alerts(
         end_date=end_date,
         severity=severity,
         status=status,
+        search=search,
         sort_by=sort_by,
         sort_direction=sort_direction,
     )

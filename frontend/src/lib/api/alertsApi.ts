@@ -54,6 +54,9 @@ export interface AlertListParams {
   status?: "active" | "investigating" | "resolved" | "acknowledged";
   page?: number;
   size?: number;
+  search?: string;
+  sort_by?: string;
+  sort_direction?: "asc" | "desc";
 }
 
 export interface AlertListResponse {

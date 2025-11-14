@@ -2,24 +2,18 @@ import React from "react";
 import { User } from "@/types/auth";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, Calendar, Mail } from "lucide-react";
+import { Calendar, Mail } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface UserTableProps {
   users: User[];
   isLoading: boolean;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
   onUserClick: (userId: number) => void;
 }
 
 export const UserTable: React.FC<UserTableProps> = ({
   users,
   isLoading,
-  currentPage,
-  totalPages,
-  onPageChange,
   onUserClick,
 }) => {
   if (isLoading) {
@@ -73,7 +67,7 @@ export const UserTable: React.FC<UserTableProps> = ({
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-semibold">
                       {user.first_name?.[0]}
                       {user.last_name?.[0]}
                     </div>
@@ -128,31 +122,6 @@ export const UserTable: React.FC<UserTableProps> = ({
           </tbody>
         </table>
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-800/50 border border-slate-700 rounded-xl">
-          <div className="text-sm text-gray-400">
-            Page {currentPage} of {totalPages}
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="p-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

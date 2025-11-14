@@ -47,6 +47,7 @@ class AlertService:
         end_date: Optional[datetime] = None,
         severity: Optional[AlertSeverity] = None,
         status: Optional[AlertStatus] = None,
+        search: Optional[str] = None,
         sort_by: str = "flow_timestamp",
         sort_direction: str = "desc",
     ):
@@ -60,6 +61,7 @@ class AlertService:
             end_date=end_date,
             severity=severity,
             status=status,
+            search=search,
             sort_by=sort_by,
             sort_direction=sort_direction,
         )
