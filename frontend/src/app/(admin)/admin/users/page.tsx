@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { normalizeError } from "@/lib/api/apiClient";
 import { UserFormDialog } from "@/components/admin/UserFormDialog";
 import { UserFormData } from "@/schemas/userForm";
+import { User } from "@/types/auth";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -86,7 +87,7 @@ export default function UsersPage() {
     },
     {
       name: "Active Sessions",
-      value: usersData?.items?.filter((u) => u.is_active).length || 0,
+      value: usersData?.items?.filter((u: User) => u.is_active).length || 0,
       icon: Clock,
       color: "text-purple-400",
       bgColor: "bg-purple-500/10",
@@ -220,7 +221,7 @@ export default function UsersPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentUsers?.items?.slice(0, 6).map((user) => (
+            {recentUsers?.items?.slice(0, 6).map((user: User) => (
               <div
                 key={user.id}
                 onClick={() => handleUserClick(user.id)}

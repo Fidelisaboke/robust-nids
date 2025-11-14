@@ -69,7 +69,10 @@ export const useUpdateUser = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateUserRequest }) =>
       usersApi.updateUser(id, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (
+      _: unknown,
+      variables: { id: number; data: UpdateUserRequest },
+    ) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({
         queryKey: userKeys.detail(variables.id),
@@ -130,7 +133,7 @@ export const useActivateUser = () => {
 
   return useMutation({
     mutationFn: (id: number) => usersApi.activateUser(id),
-    onSuccess: (_, userId) => {
+    onSuccess: (_: unknown, userId: number) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
     },
@@ -143,7 +146,7 @@ export const useDeactivateUser = () => {
 
   return useMutation({
     mutationFn: (id: number) => usersApi.deactivateUser(id),
-    onSuccess: (_, userId) => {
+    onSuccess: (_: unknown, userId: number) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
     },
@@ -157,7 +160,7 @@ export const useUpdateUserRoles = () => {
   return useMutation({
     mutationFn: ({ id, role_ids }: { id: number; role_ids: number[] }) =>
       usersApi.updateUserRoles(id, { role_ids }),
-    onSuccess: (_, variables) => {
+    onSuccess: (_: unknown, variables: { id: number; role_ids: number[] }) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({
         queryKey: userKeys.detail(variables.id),
@@ -172,7 +175,7 @@ export const useForcePasswordReset = () => {
 
   return useMutation({
     mutationFn: (id: number) => usersApi.forcePasswordReset(id),
-    onSuccess: (_, userId) => {
+    onSuccess: (_: unknown, userId: number) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
     },
@@ -185,7 +188,7 @@ export const useApproveRegistration = () => {
 
   return useMutation({
     mutationFn: (id: number) => usersApi.approveRegistration(id),
-    onSuccess: (data) => {
+    onSuccess: (data: { detail: string }) => {
       toast.success(data.detail);
       queryClient.invalidateQueries({ queryKey: userKeys.pending() });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
@@ -210,7 +213,7 @@ export const useRejectRegistration = () => {
 export const useExportUsers = () => {
   return useMutation({
     mutationFn: (params?: UserListParams) => usersApi.exportUsers(params),
-    onSuccess: (blob) => {
+    onSuccess: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
