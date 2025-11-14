@@ -291,24 +291,31 @@ export default function UserDetailPage() {
         </div>
         {activityData && activityData.logs.length > 0 ? (
           <div className="space-y-3">
-            {activityData.logs.map((log) => (
-              <div
-                key={log.id}
-                className="p-4 bg-slate-900/50 rounded-lg border border-slate-700"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-white font-medium">{log.action}</p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      IP: {log.ip_address}
-                    </p>
+            {activityData.logs.map(
+              (log: {
+                id: number;
+                action: string;
+                ip_address: string;
+                timestamp: string;
+              }) => (
+                <div
+                  key={log.id}
+                  className="p-4 bg-slate-900/50 rounded-lg border border-slate-700"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-white font-medium">{log.action}</p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        IP: {log.ip_address}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {format(new Date(log.timestamp), "MMM d, yyyy HH:mm")}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {format(new Date(log.timestamp), "MMM d, yyyy HH:mm")}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         ) : (
           <p className="text-gray-400 text-center py-8">No activity logs</p>

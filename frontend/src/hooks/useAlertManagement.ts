@@ -4,6 +4,7 @@ import {
   AlertListParams,
   AssignAlertRequest,
   ResolveAlertRequest,
+  Alert,
 } from "@/lib/api/alertsApi";
 
 // Query keys for alerts
@@ -53,7 +54,7 @@ export const useDeleteAlert = () => {
 export const useAssignAlert = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Alert, Error, { id: number; data: AssignAlertRequest }>({
     mutationFn: ({ id, data }: { id: number; data: AssignAlertRequest }) =>
       alertsApi.assignAlert(id, data),
     onSuccess: (_: unknown, variables: { id: number }) => {
@@ -83,7 +84,7 @@ export const useAcknowledgeAlert = () => {
 export const useResolveAlert = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Alert, Error, { id: number; data: ResolveAlertRequest }>({
     mutationFn: ({ id, data }: { id: number; data: ResolveAlertRequest }) =>
       alertsApi.resolveAlert(id, data),
     onSuccess: (_: unknown, variables: { id: number }) => {

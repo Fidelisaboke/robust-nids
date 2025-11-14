@@ -1,10 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  usersApi,
-  UserListParams,
+  type AuditLog,
   CreateUserRequest,
+  type PendingRegistrationsResponse,
   UpdateUserRequest,
+  type UserActivityLog,
+  UserListParams,
+  type UserListResponse,
+  usersApi,
 } from "@/lib/api/usersApi";
+import { User } from "@/types/auth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 // Query keys
@@ -22,7 +27,7 @@ export const userKeys = {
 
 // Get users list
 export const useUsers = (params?: UserListParams) => {
-  return useQuery({
+  return useQuery<UserListResponse>({
     queryKey: userKeys.list(params),
     queryFn: () => usersApi.getUsers(params),
     staleTime: 30000, // 30 seconds
@@ -35,7 +40,7 @@ export const useRecentUsers = (days: number) => {
   date.setDate(date.getDate() - days);
   const created_after = date.toISOString().split("T")[0];
 
-  return useQuery({
+  return useQuery<UserListResponse>({
     queryKey: userKeys.recent(days),
     queryFn: () => usersApi.getUsers({ created_after }),
   });
@@ -43,7 +48,7 @@ export const useRecentUsers = (days: number) => {
 
 // Get single user
 export const useUser = (id: number) => {
-  return useQuery({
+  return useQuery<User>({
     queryKey: userKeys.detail(id),
     queryFn: () => usersApi.getUserById(id),
     enabled: !!id,
@@ -54,7 +59,7 @@ export const useUser = (id: number) => {
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ user: User }, Error, CreateUserRequest>({
     mutationFn: (data: CreateUserRequest) => usersApi.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
@@ -66,12 +71,26 @@ export const useCreateUser = () => {
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateUserRequest }) =>
+  interface UpdateUserMutationVariables {
+    id: number;
+    data: UpdateUserRequest;
+  }
+
+  interface UpdateUserMutationResponse {
+    detail: string;
+    user: User;
+  }
+
+  return useMutation<
+    UpdateUserMutationResponse,
+    Error,
+    UpdateUserMutationVariables
+  >({
+    mutationFn: ({ id, data }: UpdateUserMutationVariables) =>
       usersApi.updateUser(id, data),
     onSuccess: (
-      _: unknown,
-      variables: { id: number; data: UpdateUserRequest },
+      _: UpdateUserMutationResponse,
+      variables: UpdateUserMutationVariables,
     ) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({
@@ -85,7 +104,7 @@ export const useUpdateUser = () => {
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ detail: string }, Error, number>({
     mutationFn: (id: number) => usersApi.deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
@@ -98,7 +117,7 @@ export const usePendingRegistrations = (
   page: number = 1,
   limit: number = 20,
 ) => {
-  return useQuery({
+  return useQuery<PendingRegistrationsResponse>({
     queryKey: [...userKeys.pending(), page, limit],
     queryFn: () => usersApi.getPendingRegistrations(page, limit),
     staleTime: 30000,
@@ -111,7 +130,7 @@ export const useUserActivity = (
   page: number = 1,
   limit: number = 50,
 ) => {
-  return useQuery({
+  return useQuery<{ logs: UserActivityLog[]; total: number }>({
     queryKey: [...userKeys.activity(userId), page, limit],
     queryFn: () => usersApi.getUserActivityLogs(userId, page, limit),
     enabled: !!userId,
@@ -120,7 +139,7 @@ export const useUserActivity = (
 
 // Get audit logs
 export const useAuditLogs = (page: number = 1, limit: number = 50) => {
-  return useQuery({
+  return useQuery<{ logs: AuditLog[]; total: number }>({
     queryKey: [...userKeys.audit(), page, limit],
     queryFn: () => usersApi.getAuditLogs(page, limit),
     staleTime: 30000,
@@ -131,9 +150,9 @@ export const useAuditLogs = (page: number = 1, limit: number = 50) => {
 export const useActivateUser = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ detail: string }, Error, number>({
     mutationFn: (id: number) => usersApi.activateUser(id),
-    onSuccess: (_: unknown, userId: number) => {
+    onSuccess: (_: { detail: string }, userId: number) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
     },
@@ -144,9 +163,9 @@ export const useActivateUser = () => {
 export const useDeactivateUser = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ detail: string }, Error, number>({
     mutationFn: (id: number) => usersApi.deactivateUser(id),
-    onSuccess: (_: unknown, userId: number) => {
+    onSuccess: (_: { detail: string }, userId: number) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
     },
@@ -157,10 +176,17 @@ export const useDeactivateUser = () => {
 export const useUpdateUserRoles = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    { detail: string; user: User },
+    Error,
+    { id: number; role_ids: number[] }
+  >({
     mutationFn: ({ id, role_ids }: { id: number; role_ids: number[] }) =>
       usersApi.updateUserRoles(id, { role_ids }),
-    onSuccess: (_: unknown, variables: { id: number; role_ids: number[] }) => {
+    onSuccess: (
+      _: { detail: string; user: User },
+      variables: { id: number; role_ids: number[] },
+    ) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({
         queryKey: userKeys.detail(variables.id),
@@ -173,9 +199,9 @@ export const useUpdateUserRoles = () => {
 export const useForcePasswordReset = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ detail: string }, Error, number>({
     mutationFn: (id: number) => usersApi.forcePasswordReset(id),
-    onSuccess: (_: unknown, userId: number) => {
+    onSuccess: (_: { detail: string }, userId: number) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
     },
@@ -186,7 +212,7 @@ export const useForcePasswordReset = () => {
 export const useApproveRegistration = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<{ detail: string }, Error, number>({
     mutationFn: (id: number) => usersApi.approveRegistration(id),
     onSuccess: (data: { detail: string }) => {
       toast.success(data.detail);
@@ -200,7 +226,11 @@ export const useApproveRegistration = () => {
 export const useRejectRegistration = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    { detail: string },
+    Error,
+    { id: number; reason?: string }
+  >({
     mutationFn: ({ id, reason }: { id: number; reason?: string }) =>
       usersApi.rejectRegistration(id, reason),
     onSuccess: () => {
@@ -211,7 +241,7 @@ export const useRejectRegistration = () => {
 
 // Export users mutation
 export const useExportUsers = () => {
-  return useMutation({
+  return useMutation<Blob, Error, UserListParams | undefined>({
     mutationFn: (params?: UserListParams) => usersApi.exportUsers(params),
     onSuccess: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
