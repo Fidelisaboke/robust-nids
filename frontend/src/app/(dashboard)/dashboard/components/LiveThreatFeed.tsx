@@ -9,7 +9,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { useLiveThreats } from "@/hooks/useNids";
+import { UnifiedPredictionResponse, useLiveThreats } from "@/hooks/useNids";
 import { Badge } from "@/components/ui/badge";
 
 // Helper function to format relative time
@@ -41,11 +41,15 @@ export const LiveThreatFeed: React.FC = () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      const currentIds = threats.map((t) => t.id || t.timestamp);
+      const currentIds = threats.map(
+        (t: UnifiedPredictionResponse) => t.id || t.timestamp,
+      );
       const previousIds = previousThreatsRef.current;
 
       // Find new threats that weren't in the previous list
-      const newIds = currentIds.filter((id) => !previousIds.includes(id));
+      const newIds = currentIds.filter(
+        (id: string) => !previousIds.includes(id),
+      );
       newThreatIds.current = new Set(newIds);
 
       // Update the reference
@@ -187,7 +191,7 @@ export const LiveThreatFeed: React.FC = () => {
           </motion.div>
         ) : (
           <AnimatePresence initial={false}>
-            {threats.map((threat) => {
+            {threats.map((threat: UnifiedPredictionResponse) => {
               const config = getThreatConfig(threat.threat_level);
               const threatId = threat.id || threat.timestamp;
               const isNew = newThreatIds.current.has(threatId);

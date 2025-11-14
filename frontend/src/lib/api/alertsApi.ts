@@ -74,13 +74,13 @@ export interface ResolveAlertRequest {
 
 export interface AlertsSummaryResponse {
   total_alerts: number;
-  by_status: {
+  by_severity: {
     critical: number;
     high: number;
     medium: number;
     low: number;
   };
-  by_severity: {
+  by_status: {
     active: number;
     investigating: number;
     resolved: number;
