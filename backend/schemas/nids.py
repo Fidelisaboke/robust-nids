@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from schemas.users import UserOut
 from utils.enums import AlertSeverity, AlertStatus
@@ -10,8 +10,20 @@ from utils.enums import AlertSeverity, AlertStatus
 class PredictRequest(BaseModel):
     """Accepts a dictionary of features (key=column name, value=value)."""
 
-    features: Dict[str, Union[float, int, str]] = Field(
-        ..., example={"Flow Duration": 156, "Total Fwd Packets": 2, "Protocol": 6}
+    features: Dict[str, Union[float, int, str]] = Field(...)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "features": {
+                        "Flow Duration": 156,
+                        "Total Fwd Packets": 2,
+                        "Protocol": 6,
+                    }
+                }
+            ]
+        }
     )
 
 
@@ -116,8 +128,7 @@ class AlertOut(AlertBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignAlertRequest(BaseModel):

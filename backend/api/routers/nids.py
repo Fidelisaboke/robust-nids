@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from collections import deque
 from datetime import datetime, timedelta, timezone
 
@@ -14,7 +13,6 @@ from database.models import User
 from ml.models.explain import explain_binary
 from ml.models.loader import MODEL_BUNDLE
 from ml.models.predict import predict_full_report, run_robustness_demo_experiment
-from schemas.adversarial import AdversarialReportFileSchema
 from schemas.nids import (
     AdversarialExperimentResults,
     AdversarialMetric,
@@ -408,53 +406,45 @@ def get_robustness_report():
     Fetches the pre-calculated results from the adversarial training experiment notebook.
     """
     try:
-        report_path = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "../../ml/models/artifacts/adversarial_experiment.json",
+        from database.db import db
+        from database.models import RobustnessReport
+
+        with db.get_session() as session:
+            reports = session.query(RobustnessReport).all()
+            if not reports:
+                app_logger.error("No robustness reports found in database.")
+                raise HTTPException(
+                    status_code=404,
+                    detail="No robustness report data found in database.",
+                )
+
+            # Transform DB rows to AdversarialMetric list
+            metrics_list = [
+                AdversarialMetric(model=report.model, accuracy=report.accuracy) for report in reports
+            ]
+
+            # Use first three for summary fields (customize as needed)
+            baseline_normal = next(
+                (m.accuracy for m in metrics_list if "Baseline" in m.model and "Normal" in m.model), None
             )
-        )
+            baseline_adv = next(
+                (m.accuracy for m in metrics_list if "Baseline" in m.model and "FGSM" in m.model), None
+            )
+            robust_normal = next(
+                (m.accuracy for m in metrics_list if "Robust" in m.model and "Normal" in m.model), None
+            )
+            robust_adv = next(
+                (m.accuracy for m in metrics_list if "Robust" in m.model and "FGSM" in m.model), None
+            )
 
-        with open(report_path, "r") as f:
-            raw_data = json.load(f)
-
-        # Parse the data (ignoring 'config') using the new file schema
-        parsed_data = AdversarialReportFileSchema(
-            baseline_clean_acc=raw_data["baseline_clean_acc"],
-            baseline_results=raw_data["baseline_results"],
-            robust_clean_acc=raw_data["robust_clean_acc"],
-            robust_results=raw_data["robust_results"],
-        )
-
-        # Frontend expects a flat list of metrics
-        metrics_list = [
-            AdversarialMetric(model="Baseline (on Normal Data)", accuracy=parsed_data.baseline_clean_acc),
-            AdversarialMetric(
-                model="Baseline (on FGSM Attack)",
-                accuracy=parsed_data.baseline_results.epsilons["0.1"].fgsm.acc,  # Example: using 0.1 epsilon
-            ),
-            AdversarialMetric(
-                model="Robust Model (on FGSM Attack)",
-                accuracy=parsed_data.robust_results.epsilons["0.1"].fgsm.acc,  # Example: using 0.1 epsilon
-            ),
-        ]
-
-        # Return the transformed results
-        return AdversarialExperimentResults(
-            title="Adversarial Robustness (FGSM, Epsilon 0.1)",
-            baseline_model_accuracy_normal=parsed_data.baseline_clean_acc,
-            baseline_model_accuracy_adversarial=parsed_data.baseline_results.epsilons["0.1"].fgsm.acc,
-            robust_model_accuracy_normal=parsed_data.robust_clean_acc,
-            robust_model_accuracy_adversarial=parsed_data.robust_results.epsilons["0.1"].fgsm.acc,
-            metrics=metrics_list,
-        )
-
-    except FileNotFoundError:
-        app_logger.error("adversarial_experiment.json not found.")
-        raise HTTPException(
-            status_code=404,
-            detail="Adversarial experiment results file not found.",
-        )
+            return AdversarialExperimentResults(
+                title="Adversarial Robustness (FGSM, Epsilon 0.1)",
+                baseline_model_accuracy_normal=baseline_normal,
+                baseline_model_accuracy_adversarial=baseline_adv,
+                robust_model_accuracy_normal=robust_normal,
+                robust_model_accuracy_adversarial=robust_adv,
+                metrics=metrics_list,
+            )
     except Exception as e:
-        app_logger.error(f"Failed to read robustness report: {e}")
+        app_logger.error(f"Failed to read robustness report from DB: {e}")
         raise HTTPException(status_code=500, detail=str(e))
