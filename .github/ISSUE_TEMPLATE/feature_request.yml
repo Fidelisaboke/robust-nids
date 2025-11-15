@@ -1,0 +1,44 @@
+name: ✨ Feature Request
+description: Suggest a new feature or improvement
+title: "[FEATURE]: "
+labels: [enhancement]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: What's the feature about?
+      placeholder: "Add adversarial training configuration UI"
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this feature needed? What problem does it solve?
+      placeholder: "It will allow users to configure FGSM/PGD parameters directly"
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this feature working?
+      placeholder: |
+        - Add dropdown for attack type
+        - Add slider for epsilon value
+        - Update FastAPI endpoint `/train` to accept params
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Did you consider other approaches?
+      placeholder: "Could predefine configs instead of user customization"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any references, links, or diagrams?
+      placeholder: "Attach screenshots or papers"

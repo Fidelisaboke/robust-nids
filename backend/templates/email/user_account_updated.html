@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Updated by Administrator - NIDS</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">Network Intrusion Detection System</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 20px;">Administrative Account Update</h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                Hello {{ user_name }}, your NIDS account has been updated by a system administrator.
+            </p>
+
+            <!-- Admin Action Notice -->
+            <div style="text-align: center; margin: 40px 0;">
+                <div style="display: inline-block; width: 80px; height: 80px; background: #faf5ff; border: 2px solid #8b5cf6; border-radius: 50%; margin-bottom: 20px; text-align: center; line-height: 80px;">
+                    <span style="font-size: 36px; color: #8b5cf6;">⚙️</span>
+                </div>
+                <h2 style="font-size: 24px; font-weight: 600; color: #2d3748; margin-bottom: 10px;">
+                    Administrative Update
+                </h2>
+                <p style="color: #718096; font-size: 16px;">
+                    Changes made by NIDS administrator
+                </p>
+            </div>
+
+            <!-- Update Details -->
+            <div
+                style="background: #faf5ff; border: 1px solid #d8b4fe; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #7c3aed; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    📋 Administrative Changes
+                </h3>
+                <table style="width: 100%; color: #5b21b6; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600; width: 100px;">Account:</td>
+                        <td style="padding: 8px 0;">{{ user_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Updated:</td>
+                        <td style="padding: 8px 0;">{{ timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Initiated By:</td>
+                        <td style="padding: 8px 0;">
+                            <span style="background: #ede9fe; color: #5b21b6; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                🔧 System Administrator
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Impact Explanation -->
+            <div
+                style="background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #0369a1; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    🔄 What This Means For You
+                </h3>
+                <ul style="color: #1e3a8a; margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li style="margin-bottom: 8px;">Your account access privileges may have changed</li>
+                    <li style="margin-bottom: 8px;">You may see new features or options in your dashboard</li>
+                    <li style="margin-bottom: 8px;">Some previously available features may be restricted</li>
+                    <li>Your security monitoring capabilities may be updated</li>
+                </ul>
+            </div>
+
+            <!-- Next Steps -->
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{ settings.FRONTEND_URL }}/dashboard"
+                    style="color: white; display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); margin: 0 10px;">
+                    Access Dashboard
+                </a>
+                <a href="{{ settings.FRONTEND_URL }}/help/permissions"
+                    style="color: #8b5cf6; display: inline-block; background: white; border: 2px solid #8b5cf6; padding: 10px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 0 10px;">
+                    Learn About Roles
+                </a>
+            </div>
+
+            <!-- Support Information -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #475569; font-weight: 600; margin-bottom: 12px; font-size: 14px;">
+                    💬 Questions?
+                </h4>
+                <p style="color: #64748b; font-size: 14px; margin: 0;">
+                    If you have questions about these changes or need assistance with your new permissions,
+                    please contact your administrator or our support team at
+                    <a href="mailto:{{ support_email }}" style="color: #8b5cf6; font-weight: 600; text-decoration: none;">
+                        {{ support_email }}
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 16px;">
+                This is an automated administrative notification from the NIDS user management system.
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px; text-align: center;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
