@@ -255,7 +255,9 @@ export default function AlertsPage() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start space-x-4 flex-1">
-                      <div className={`p-3 ${colors.bg} rounded-lg`}>
+                      <div
+                        className={`p-3 ${colors.bg} rounded-lg ${colors.text}`}
+                      >
                         {getStatusIcon(alert.status)}
                       </div>
                       <div className="flex-1 min-w-0">

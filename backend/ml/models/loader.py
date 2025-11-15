@@ -29,6 +29,9 @@ class ModelBundle:
         self.unsupervised_pipeline = None
         self.autoencoder = None
         self.ae_threshold = 0.0
+        # Adversarial Experiment Models
+        self.vulnerable_binary_model = None
+        self.surrogate_model = None
         # Status
         self.loaded = False
         self.meta = {"status": "not_loaded"}
@@ -36,8 +39,8 @@ class ModelBundle:
     def load_all(self, artifacts_dir: str = ARTIFACTS_DIR):
         logger.info(f"Loading ML artifacts from {artifacts_dir}...")
         try:
-            # --- 1. Load Binary Model ---
-            xgb_bin_path = os.path.join(artifacts_dir, "binary_xgboost.json")
+            # --- 1. Load Robust Binary Model ---
+            xgb_bin_path = os.path.join(artifacts_dir, "robust_binary_xgboost.json")
             if os.path.exists(xgb_bin_path):
                 logger.info("Loading Binary model as native XGBoost...")
                 self.binary_preprocessor = joblib.load(os.path.join(artifacts_dir, "binary_preprocessor.pkl"))
@@ -57,7 +60,7 @@ class ModelBundle:
                 if self.binary_preprocessor:
                     actual_model = self.binary_model
                 else:
-                    actual_model = self.binary_model.named_steps['model']
+                    actual_model = self.binary_model.named_steps["model"]
                 self.binary_explainer = shap.TreeExplainer(actual_model)
             except Exception as e:
                 logger.warning(f"[ERROR]: Could not initialize SHAP explainer: {e}")
@@ -87,6 +90,20 @@ class ModelBundle:
             )
             with open(os.path.join(artifacts_dir, "ae_threshold.txt"), "r") as f:
                 self.ae_threshold = float(f.read().strip())
+
+            # --- 4. Load Adversarial Demo Models ---
+            # Load the original, VULNERABLE model for the demo
+            xgb_vulnerable_path = os.path.join(artifacts_dir, "binary_xgboost.json")
+            if os.path.exists(xgb_vulnerable_path):
+                self.vulnerable_binary_model = XGBClassifier()
+                self.vulnerable_binary_model.load_model(xgb_vulnerable_path)
+                logger.info("Loaded VULNERABLE XGBoost model for demo.")
+
+            # Load the Keras surrogate model
+            surrogate_path = os.path.join(artifacts_dir, "surrogate_model.keras")
+            if os.path.exists(surrogate_path):
+                self.surrogate_model = tf.keras.models.load_model(surrogate_path)
+                logger.info("Loaded SURROGATE (Keras) model for demo.")
 
             self.loaded = True
             self.meta = {

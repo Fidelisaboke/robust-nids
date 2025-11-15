@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain,
@@ -11,10 +11,19 @@ import {
   FileJson,
   Play,
   RotateCcw,
+  Shield,
+  Zap,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { ThreatSummaryCard } from "./components/ThreatSummaryCard";
 import { ShapExplanationChart } from "./components/ShapExplanationChart";
-import { useNidsAnalysis, type NetworkFlowFeatures } from "@/hooks/useNids";
+import {
+  useNidsAnalysis,
+  useRobustnessDemo,
+  type NetworkFlowFeatures,
+  type RobustnessResult,
+} from "@/hooks/useNids";
 import { Button } from "@/components/ui/button";
 
 const EXAMPLE_FLOW = {
@@ -102,6 +111,37 @@ const EXAMPLE_FLOW = {
   subflow_bwd_byts: 600,
 };
 
+const ADVERSARIAL_EXAMPLE = {
+  src_ip: "127.0.0.1",
+  dst_ip: "127.0.0.1",
+  src_port: 57441,
+  dst_port: 22,
+  protocol: 2048,
+  timestamp: "2025-11-11 00:41:01",
+  flow_duration: 1e-6,
+  flow_byts_s: 188000000.0,
+  flow_pkts_s: 3000000.0,
+  fwd_pkts_s: 2000000.0,
+  bwd_pkts_s: 1000000.0,
+  tot_fwd_pkts: 2,
+  tot_bwd_pkts: 1,
+  totlen_fwd_pkts: 128,
+  totlen_bwd_pkts: 60,
+  fwd_pkt_len_max: 64,
+  fwd_pkt_len_min: 64,
+  fwd_pkt_len_mean: 64.0,
+  fwd_pkt_len_std: 0.0,
+  bwd_pkt_len_max: 60,
+  bwd_pkt_len_min: 60,
+  bwd_pkt_len_mean: 60.0,
+  bwd_pkt_len_std: 0.0,
+  syn_flag_cnt: 2,
+  rst_flag_cnt: 1,
+  ack_flag_cnt: 1,
+  init_fwd_win_byts: 1024,
+  init_bwd_win_byts: 0,
+};
+
 export default function ThreatIntelligencePage() {
   const [jsonInput, setJsonInput] = useState(
     JSON.stringify(EXAMPLE_FLOW, null, 2),
@@ -110,6 +150,12 @@ export default function ThreatIntelligencePage() {
     useState<NetworkFlowFeatures | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
+
+  // Robustness demo state
+  const [robustnessInput, setRobustnessInput] = useState(
+    JSON.stringify(ADVERSARIAL_EXAMPLE, null, 2),
+  );
+  const [robustnessError, setRobustnessError] = useState<string | null>(null);
 
   const {
     analyzeThreat,
@@ -123,6 +169,17 @@ export default function ThreatIntelligencePage() {
     resetPrediction,
     resetExplanation,
   } = useNidsAnalysis();
+
+  const robustnessDemo = useRobustnessDemo();
+
+  // Get threat intelligence features from sessionStorage
+  useEffect(() => {
+    const storedFlow = sessionStorage.getItem("threat-intelligence-flow");
+    if (storedFlow) {
+      setJsonInput(storedFlow);
+      sessionStorage.removeItem("threat-intelligence-flow");
+    }
+  }, []);
 
   const handleAnalyze = async () => {
     setJsonError(null);
@@ -161,13 +218,71 @@ export default function ThreatIntelligencePage() {
     setCurrentFeatures(null);
     setShowExplanation(false);
     setJsonError(null);
+    setRobustnessInput(JSON.stringify(ADVERSARIAL_EXAMPLE, null, 2));
+    setRobustnessError(null);
     resetPrediction();
     resetExplanation();
+    robustnessDemo.reset();
   };
 
   const handleLoadExample = () => {
     setJsonInput(JSON.stringify(EXAMPLE_FLOW, null, 2));
     setJsonError(null);
+  };
+
+  const handleRunRobustnessDemo = async () => {
+    setRobustnessError(null);
+
+    try {
+      const features = JSON.parse(robustnessInput);
+      await robustnessDemo.mutateAsync(features);
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        setRobustnessError("Invalid JSON format. Please check your input.");
+      } else {
+        setRobustnessError(
+          error instanceof Error ? error.message : "Demo failed",
+        );
+      }
+    }
+  };
+
+  const getResultIcon = (result: RobustnessResult) => {
+    if (result.input_type === "Normal Flow") {
+      return <CheckCircle className="w-5 h-5 text-green-400" />;
+    }
+    if (
+      result.model_name.includes("Vulnerable") &&
+      result.predicted_label === "Benign"
+    ) {
+      return <XCircle className="w-5 h-5 text-red-400" />;
+    }
+    if (
+      result.model_name.includes("Robust") &&
+      result.predicted_label === "Malicious"
+    ) {
+      return <Shield className="w-5 h-5 text-green-400" />;
+    }
+    return <AlertCircle className="w-5 h-5 text-yellow-400" />;
+  };
+
+  const getResultBadge = (result: RobustnessResult) => {
+    if (result.input_type === "Normal Flow") {
+      return "bg-green-500/10 border-green-500/20 text-green-400";
+    }
+    if (
+      result.model_name.includes("Vulnerable") &&
+      result.predicted_label === "Benign"
+    ) {
+      return "bg-red-500/10 border-red-500/20 text-red-400";
+    }
+    if (
+      result.model_name.includes("Robust") &&
+      result.predicted_label === "Malicious"
+    ) {
+      return "bg-green-500/10 border-green-500/20 text-green-400";
+    }
+    return "bg-yellow-500/10 border-yellow-500/20 text-yellow-400";
   };
 
   return (
@@ -179,7 +294,7 @@ export default function ThreatIntelligencePage() {
             Threat Intelligence
           </h1>
           <p className="text-gray-400">
-            Manual threat analysis and SHAP-based explainability
+            Manual threat analysis and explainability workbench
           </p>
         </div>
         <div className="flex items-center space-x-2 px-4 py-2 bg-slate-800/50 rounded-lg border border-slate-700">
@@ -232,7 +347,7 @@ export default function ThreatIntelligencePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-start space-x-2 p-3 bg-red-500/10 border border-red-500/50 rounded-lg"
                 >
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-400">{jsonError}</p>
                 </motion.div>
               )}
@@ -339,7 +454,7 @@ export default function ThreatIntelligencePage() {
               className="bg-red-500/10 border border-red-500/50 rounded-xl p-4"
             >
               <div className="flex items-start space-x-2">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                 <div>
                   <h3 className="text-sm font-semibold text-red-400 mb-1">
                     Analysis Failed
@@ -375,7 +490,7 @@ export default function ThreatIntelligencePage() {
           className="bg-orange-500/10 border border-orange-500/50 rounded-xl p-4"
         >
           <div className="flex items-start space-x-2">
-            <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-semibold text-orange-400 mb-1">
                 Explanation Failed
@@ -387,6 +502,281 @@ export default function ThreatIntelligencePage() {
           </div>
         </motion.div>
       )}
+
+      {/* Adversarial Robustness Demo Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-linear-to-br from-purple-500/5 to-blue-500/5 border border-purple-500/20 rounded-xl p-6"
+      >
+        <div className="flex items-center space-x-3 mb-2">
+          <Shield className="w-6 h-6 text-purple-400" />
+          <h2 className="text-2xl font-bold text-white">
+            Adversarial Robustness Demo
+          </h2>
+        </div>
+        <p className="text-gray-400 text-sm mb-6">
+          See how our adversarially-trained model defends against evasion
+          attacks (FGSM)
+        </p>
+
+        {/* Input Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-400">
+                  Malicious Network Flow (for attack)
+                </label>
+                <Button
+                  onClick={() =>
+                    setRobustnessInput(
+                      JSON.stringify(ADVERSARIAL_EXAMPLE, null, 2),
+                    )
+                  }
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-purple-400 hover:text-purple-300"
+                >
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  Load Example
+                </Button>
+              </div>
+              <textarea
+                value={robustnessInput}
+                onChange={(e) => setRobustnessInput(e.target.value)}
+                className={`w-full h-[300px] px-4 py-3 bg-slate-900/50 border ${
+                  robustnessError ? "border-red-500" : "border-slate-700"
+                } rounded-lg text-gray-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none`}
+                placeholder="Paste malicious flow JSON here..."
+                spellCheck={false}
+              />
+            </div>
+
+            {robustnessError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start space-x-2 p-3 bg-red-500/10 border border-red-500/50 rounded-lg"
+              >
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-400">{robustnessError}</p>
+              </motion.div>
+            )}
+
+            <Button
+              onClick={handleRunRobustnessDemo}
+              disabled={robustnessDemo.isPending || !robustnessInput.trim()}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {robustnessDemo.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Running Demo...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Run Robustness Demo
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Info Panel */}
+          <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              How It Works
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-green-400">1</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white mb-1">
+                    Control Test
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Baseline model analyzes original malicious flow
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-red-400">2</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white mb-1">
+                    FGSM Attack
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Apply adversarial perturbations to evade detection
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-purple-400">3</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white mb-1">
+                    Robust Defense
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Adversarially-trained model defeats the attack
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <p className="text-xs text-purple-300">
+                <strong>Note:</strong> Use a known malicious network flow for
+                best demonstration results. The demo will show how baseline
+                models can be fooled but robust models remain resilient.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Table */}
+        <AnimatePresence mode="wait">
+          {robustnessDemo.data ? (
+            <motion.div
+              key="demo-results"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-4"
+            >
+              {/* Results Cards */}
+              <div className="space-y-3">
+                {robustnessDemo.data.results.map((result, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`bg-slate-800/50 border ${getResultBadge(result)} rounded-lg p-4`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1">
+                        {getResultIcon(result)}
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-1">
+                            <span className="text-sm font-semibold text-white">
+                              Step {index + 1}:
+                            </span>
+                            <span className="text-xs px-2 py-1 bg-slate-700 rounded text-gray-300">
+                              {result.model_name}
+                            </span>
+                            <span className="text-xs px-2 py-1 bg-slate-700 rounded text-gray-300">
+                              {result.input_type}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            {index === 0 &&
+                              "Control: Baseline correctly identifies original malicious flow"}
+                            {index === 1 &&
+                              "Attack: Baseline is fooled by adversarial perturbation (FGSM)"}
+                            {index === 2 &&
+                              "Defense: Robust model sees through the attack"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`text-lg font-bold ${
+                            result.predicted_label === "Malicious"
+                              ? "text-red-400"
+                              : "text-green-400"
+                          }`}
+                        >
+                          {result.predicted_label}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(result.confidence * 100).toFixed(2)}% confidence
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Technical Details */}
+              {robustnessDemo.data.adversarial_sample_preview && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-slate-900/50 border border-slate-700 rounded-lg p-4"
+                >
+                  <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center">
+                    <FileJson className="w-4 h-4 mr-2" />
+                    Adversarial Sample Preview
+                  </h3>
+                  <code className="text-xs text-gray-500 font-mono">
+                    {robustnessDemo.data.adversarial_sample_preview}
+                  </code>
+                </motion.div>
+              )}
+
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-700">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-400">✓</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Baseline (Control)
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-400">✗</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Baseline (Attacked)
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-400">✓</p>
+                  <p className="text-xs text-gray-400 mt-1">Robust Model</p>
+                </div>
+              </div>
+            </motion.div>
+          ) : robustnessDemo.error ? (
+            <motion.div
+              key="demo-error"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 text-center"
+            >
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-red-400 mb-2">
+                Demo Failed
+              </h3>
+              <p className="text-sm text-red-400/80">
+                {robustnessDemo.error.message}
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="demo-placeholder"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-slate-800/30 border border-slate-700 rounded-lg p-12 text-center"
+            >
+              <Shield className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-400 mb-2">
+                Robustness Test Ready
+              </h3>
+              <p className="text-sm text-gray-500">
+                Click &quot;Run Demo&quot; to see how our model defends against
+                adversarial attacks
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

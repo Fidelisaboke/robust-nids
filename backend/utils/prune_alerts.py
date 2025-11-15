@@ -13,7 +13,6 @@ sys.path.append(PROJECT_ROOT)
 # ------------------
 
 try:
-    from core.config import settings
     from database.db import db
     from database.models import Alert
 except ImportError as e:
@@ -44,15 +43,6 @@ def prune_old_alerts(days_to_keep: int, dry_run: bool = False):
     """
     Connects to the database and deletes alerts older than the specified cutoff.
     """
-    print("Initializing database connection...")
-
-    # Initialize the database connection using settings from core.config
-    try:
-        db.init_database(settings.DATABASE_URL)
-    except Exception as e:
-        print(f"Error connecting to database: {e}")
-        return
-
     # 1. Calculate the cutoff date
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
     print(f"Target: Deleting alerts with a 'flow_timestamp' before {cutoff_date.isoformat()}")

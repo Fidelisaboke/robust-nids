@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from schemas.users import UserOut
 from utils.enums import AlertSeverity, AlertStatus
@@ -10,8 +10,20 @@ from utils.enums import AlertSeverity, AlertStatus
 class PredictRequest(BaseModel):
     """Accepts a dictionary of features (key=column name, value=value)."""
 
-    features: Dict[str, Union[float, int, str]] = Field(
-        ..., example={"Flow Duration": 156, "Total Fwd Packets": 2, "Protocol": 6}
+    features: Dict[str, Union[float, int, str]] = Field(...)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "features": {
+                        "Flow Duration": 156,
+                        "Total Fwd Packets": 2,
+                        "Protocol": 6,
+                    }
+                }
+            ]
+        }
     )
 
 
@@ -34,7 +46,7 @@ class AnomalyResult(BaseModel):
 
 
 class UnifiedPredictionResponse(BaseModel):
-    id: int | None = None # The Alert ID (new or existing)
+    id: int | None = None  # The Alert ID (new or existing)
     src_ip: str | None = None
     dst_ip: str | None = None
     status: str = "success"
@@ -75,8 +87,16 @@ class AlertBase(BaseModel):
 # --- Schema for Creating Alerts ---
 # This is used when the NIDS creates a new alert
 class AlertCreate(AlertBase):
+    title: str
+    severity: AlertSeverity
+    category: str | None = None
+    src_ip: str | None = None
+    dst_ip: str | None = None
+    dst_port: int | None = None
+    flow_timestamp: datetime
     description: str | None = None
     model_output: dict | None = None
+    flow_data: dict | None = None
     status: AlertStatus = AlertStatus.ACTIVE
 
 
@@ -102,13 +122,13 @@ class AlertOut(AlertBase):
     status: AlertStatus
     description: str | None = None
     model_output: dict | None = None
+    flow_data: dict | None = None
     assigned_to_id: int | None = None
     assigned_user: UserOut | None = None
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignAlertRequest(BaseModel):
@@ -118,15 +138,49 @@ class AssignAlertRequest(BaseModel):
 class ResolveAlertRequest(BaseModel):
     notes: str = Field(..., min_length=10, description="Analyst notes on how the alert was resolved.")
 
+
 class AlertTimeSeriesPoint(BaseModel):
     """A single data point for a time-series chart."""
+
     timestamp: datetime
     count: int
 
-class   AlertsSummaryResponse(BaseModel):
+
+class AlertsSummaryResponse(BaseModel):
     """Aggregated statistics for the alerts dashboard."""
+
     total_alerts: int
     by_status: Dict[AlertStatus, int]
     by_severity: Dict[AlertSeverity, int]
-    by_category: list[Dict[str, Union[str, int]]] # e.g., [{"category": "Bruteforce", "count": 10}]
-    time_series: list[AlertTimeSeriesPoint] # For a "alerts over time" chart
+    by_category: list[Dict[str, Union[str, int]]]  # e.g., [{"category": "Bruteforce", "count": 10}]
+    time_series: list[AlertTimeSeriesPoint]  # For a "alerts over time" chart
+
+
+class RobustnessDemoResult(BaseModel):
+    model_name: str  # e.g., "Baseline (Vulnerable)"
+    input_type: str  # e.g., "Adversarial"
+    predicted_label: str  # "Malicious" or "Benign"
+    confidence: float
+
+
+class RobustnessDemoResponse(BaseModel):
+    status: str = "success"
+    results: list[RobustnessDemoResult]
+    adversarial_sample_preview: str  # A preview of the perturbed vector
+
+
+class AdversarialMetric(BaseModel):
+    """Holds the accuracy metrics for baseline and robust models."""
+
+    model: str
+    accuracy: float
+
+
+class AdversarialExperimentResults(BaseModel):
+    """Holds the results of the adversarial robustness experiment."""
+
+    baseline_model_accuracy_normal: float
+    baseline_model_accuracy_adversarial: float
+    robust_model_accuracy_normal: float
+    robust_model_accuracy_adversarial: float
+    metrics: list[AdversarialMetric]

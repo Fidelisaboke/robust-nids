@@ -11,8 +11,11 @@ from api.dependencies import get_current_active_user, require_permissions
 from core.cache import redis_client
 from database.models import User
 from ml.models.explain import explain_binary
-from ml.models.predict import predict_full_report
+from ml.models.loader import MODEL_BUNDLE
+from ml.models.predict import predict_full_report, run_robustness_demo_experiment
 from schemas.nids import (
+    AdversarialExperimentResults,
+    AdversarialMetric,
     AlertCreate,
     AlertOut,
     AlertsSummaryResponse,
@@ -20,6 +23,7 @@ from schemas.nids import (
     ExplanationResponse,
     PredictRequest,
     ResolveAlertRequest,
+    RobustnessDemoResponse,
     UnifiedPredictionResponse,
 )
 from services.alert_service import AlertService, get_alert_service
@@ -62,6 +66,7 @@ async def _create_alert_from_report(
         dst_port=int(request.features.get("dst_port", 0)),
         flow_timestamp=datetime.fromisoformat(report["timestamp"]),
         model_output=report,  # Store the full JSON report
+        flow_data=request.features,  # Store the original flow features
     )
 
     # 2. Save to DB (and send email)
@@ -357,3 +362,89 @@ def explain_traffic_binary(request: PredictRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Explanation failed: {str(e)}")
+
+
+@router.post(
+    "/run-robustness-demo",
+    response_model=RobustnessDemoResponse,
+    status_code=status.HTTP_200_OK,
+)
+def run_robustness_demo(
+    request: PredictRequest,
+):
+    """
+    Runs a live A/B/C test on a single flow to demonstrate model robustness.
+    """
+    bundle = MODEL_BUNDLE
+    if not (bundle.vulnerable_binary_model and bundle.surrogate_model and bundle.binary_preprocessor):
+        app_logger.error("Adversarial demo models are not loaded. Check server logs.")
+        raise HTTPException(
+            status_code=503,
+            detail="Adversarial demo models are not loaded. Check server logs.",
+        )
+
+    try:
+        response_data = run_robustness_demo_experiment(request.features)
+        return response_data
+    except RuntimeError as e:
+        # Catch specific errors from the service
+        app_logger.error(f"Robustness demo runtime error: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        app_logger.error(f"Robustness demo failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Demo failed: {str(e)}")
+
+
+@router.get(
+    "/robustness-report",
+    response_model=AdversarialExperimentResults,  # This is the response schema
+    dependencies=[Depends(require_permissions(SystemPermissions.VIEW_ALERTS))],
+    status_code=status.HTTP_200_OK,
+)
+def get_robustness_report():
+    """
+    Fetches the pre-calculated results from the adversarial training experiment notebook.
+    """
+    try:
+        from database.db import db
+        from database.models import RobustnessReport
+
+        with db.get_session() as session:
+            reports = session.query(RobustnessReport).all()
+            if not reports:
+                app_logger.error("No robustness reports found in database.")
+                raise HTTPException(
+                    status_code=404,
+                    detail="No robustness report data found in database.",
+                )
+
+            # Transform DB rows to AdversarialMetric list
+            metrics_list = [
+                AdversarialMetric(model=report.model, accuracy=report.accuracy) for report in reports
+            ]
+
+            # Use first three for summary fields (customize as needed)
+            baseline_normal = next(
+                (m.accuracy for m in metrics_list if "Baseline" in m.model and "Normal" in m.model), None
+            )
+            baseline_adv = next(
+                (m.accuracy for m in metrics_list if "Baseline" in m.model and "FGSM" in m.model), None
+            )
+            robust_normal = next(
+                (m.accuracy for m in metrics_list if "Robust" in m.model and "Normal" in m.model), None
+            )
+            robust_adv = next(
+                (m.accuracy for m in metrics_list if "Robust" in m.model and "FGSM" in m.model), None
+            )
+
+            return AdversarialExperimentResults(
+                title="Adversarial Robustness (FGSM, Epsilon 0.1)",
+                baseline_model_accuracy_normal=baseline_normal,
+                baseline_model_accuracy_adversarial=baseline_adv,
+                robust_model_accuracy_normal=robust_normal,
+                robust_model_accuracy_adversarial=robust_adv,
+                metrics=metrics_list,
+            )
+    except Exception as e:
+        app_logger.error(f"Failed to read robustness report from DB: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

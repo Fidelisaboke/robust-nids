@@ -3,7 +3,20 @@ SQLAlchemy models for the application.
 Each model represents a database table.
 """
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Table, Text, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, relationship
 
@@ -161,6 +174,9 @@ class Alert(Base):
     # Full API JSON
     model_output = Column(JSON, nullable=True)
 
+    # Raw flow data
+    flow_data = Column(JSON, nullable=True)
+
     # Timestamp from thhe packet flow
     flow_timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -170,3 +186,11 @@ class Alert(Base):
 
     # Relationship
     assigned_user = relationship("User", back_populates="alerts")
+
+
+class RobustnessReport(Base):
+    __tablename__ = "robustness_reports"
+    id = Column(Integer, primary_key=True)
+    model = Column(String, nullable=False)
+    accuracy = Column(Float, nullable=False)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

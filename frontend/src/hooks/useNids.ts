@@ -46,6 +46,32 @@ export interface ExplanationResponse {
   contributions: FeatureContribution[];
 }
 
+export interface RobustnessResult {
+  model_name: string;
+  input_type: string;
+  predicted_label: string;
+  confidence: number;
+}
+
+export interface RobustnessDemoResponse {
+  status: string;
+  results: RobustnessResult[];
+  adversarial_sample_preview: string;
+}
+
+export interface AdversarialMetric {
+  model: string;
+  accuracy: number;
+}
+
+export interface AdversarialExperimentResults {
+  baseline_model_accuracy_normal: number;
+  baseline_model_accuracy_adversarial: number;
+  robust_model_accuracy_normal: number;
+  robust_model_accuracy_adversarial: number;
+  metrics: AdversarialMetric[];
+}
+
 const NIDS_BASE = "/api/v1/nids/";
 
 /**
@@ -91,6 +117,39 @@ export const useLiveThreats = () => {
       return res.data;
     },
     refetchInterval: 2000, // Poll every 2 seconds
+  });
+};
+
+/**
+ * Hook for demonstrating adversarial robustness
+ */
+export const useRobustnessDemo = () => {
+  return useMutation<RobustnessDemoResponse, Error, NetworkFlowFeatures>({
+    mutationFn: async (features: NetworkFlowFeatures) => {
+      const response = await apiClient.post<RobustnessDemoResponse>(
+        `${NIDS_BASE}run-robustness-demo`,
+        { features },
+      );
+      return response.data;
+    },
+  });
+};
+
+/**
+ * Hook to fetch the static adversarial experiment report
+ */
+export const useAdversarialReport = () => {
+  return useQuery<AdversarialExperimentResults, Error>({
+    queryKey: ["adversarialReport"],
+    queryFn: async () => {
+      const response = await apiClient.get<AdversarialExperimentResults>(
+        `${NIDS_BASE}robustness-report`,
+      );
+      return response.data;
+    },
+    // This data is static, so no need to refetch often
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
   });
 };
 

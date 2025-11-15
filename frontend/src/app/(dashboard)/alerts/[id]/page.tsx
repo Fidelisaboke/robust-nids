@@ -11,16 +11,22 @@ import {
   Shield,
   TrendingUp,
   Loader2,
+  Copy,
+  Check,
+  FileJson,
+  ExternalLink,
 } from "lucide-react";
 import { useAlert } from "@/hooks/useAlertManagement";
 import { AlertActionsDialog } from "@/components/dialogs/AlertActionsDialog";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function AlertDetailPage() {
   const params = useParams();
   const router = useRouter();
   const alertId = parseInt(params.id as string);
   const [showActions, setShowActions] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { data: alert, isLoading, error } = useAlert(alertId);
 
@@ -62,6 +68,31 @@ export default function AlertDetailPage() {
           badge: "bg-gray-500/20 text-gray-400",
         };
     }
+  };
+
+  const handleCopyFlowData = async () => {
+    if (!alert?.flow_data) return;
+
+    try {
+      const jsonString = JSON.stringify(alert.flow_data, null, 2);
+      await navigator.clipboard.writeText(jsonString);
+      setCopied(true);
+      toast.success("Flow data copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  const handleAnalyzeInWorkbench = () => {
+    if (!alert?.flow_data) return;
+
+    // Store flow data in sessionStorage for the workbench to pick up
+    sessionStorage.setItem(
+      "threat-intelligence-flow",
+      JSON.stringify(alert.flow_data, null, 2),
+    );
+    router.push("/threat-intelligence");
   };
 
   if (isLoading) {
@@ -175,6 +206,65 @@ export default function AlertDetailPage() {
             )}
           </motion.div>
 
+          {/* Network Flow Data */}
+          {alert.flow_data && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <FileJson className="w-5 h-5 text-blue-400" />
+                  <h2 className="text-xl font-bold text-white">
+                    Network Flow Data
+                  </h2>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleAnalyzeInWorkbench}
+                    className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>Analyze in Workbench</span>
+                  </button>
+                  <button
+                    onClick={handleCopyFlowData}
+                    className="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Copy JSON</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                <pre className="bg-slate-900/50 border border-slate-700 rounded-lg p-4 overflow-x-auto max-h-96 text-xs text-gray-300 font-mono">
+                  {JSON.stringify(alert.flow_data, null, 2)}
+                </pre>
+              </div>
+
+              <div className="mt-3 flex items-start space-x-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <FileJson className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-300">
+                  This is the original network flow data captured by
+                  CICFlowMeter. You can copy it to analyze in the Threat
+                  Intelligence workbench or use it for further investigation.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Model Analysis */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -245,7 +335,7 @@ export default function AlertDetailPage() {
                         </div>
                         <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                            className="h-full bg-linear-to-r from-purple-500 to-pink-500"
                             style={{ width: `${prob * 100}%` }}
                           />
                         </div>

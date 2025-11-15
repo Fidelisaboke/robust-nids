@@ -122,7 +122,7 @@ export const ThreatSummaryCard: React.FC<ThreatSummaryCardProps> = ({
       </div>
 
       {/* Three Engine Votes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
         {/* Binary Classifier */}
         <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
           <div className="flex items-center space-x-2 mb-3">
@@ -170,7 +170,7 @@ export const ThreatSummaryCard: React.FC<ThreatSummaryCardProps> = ({
             </span>
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between space-x-2">
               <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50 text-sm font-semibold">
                 {prediction.multiclass.label}
               </Badge>
