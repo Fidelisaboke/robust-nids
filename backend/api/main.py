@@ -8,7 +8,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 
 from api.exception_handlers import exc_handlers
 from api.middleware import AuditMiddleware, RequestBodyBufferMiddleware, ServiceExceptionHandlerMiddleware
-from api.routers import auth, mfa, nids, roles, users
+from api.routers import auth, mfa, nids, reports, roles, users
 from core.auth_backend import JWTAuthBackend
 from core.config import settings
 from core.logging import setup_logging
@@ -55,6 +55,7 @@ app.include_router(mfa.router)
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(nids.router)
+app.include_router(reports.router)
 
 
 # Global exception handler
