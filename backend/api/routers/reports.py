@@ -78,7 +78,7 @@ def list_reports(
 @router.get(
     "/{report_id}/download", dependencies=[Depends(require_permissions(SystemPermissions.VIEW_ALERTS))]
 )
-def download_report(
+async def download_report(
     report_id: int,
     current_user: User = Depends(get_current_active_user),
     report_service: ReportService = Depends(get_report_service),
@@ -91,12 +91,12 @@ def download_report(
     """
     report = report_service.get_report(report_id)
 
-    # Security check: User can only download their own reports
-    if report.owner_id != current_user.id:
+    # Security check: User can only download their own reports, unless they are admin
+    if not current_user.is_admin and report.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your report")
 
     if report.status != ReportStatus.READY:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report is not ready or has failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Report is not ready or has failed")
 
     if not report.file_path or not os.path.exists(report.file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report file not found")
