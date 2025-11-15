@@ -5,13 +5,15 @@ import {
   Activity,
   TrendingUp,
   TrendingDown,
-  Shield,
   Loader2,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { useAlertsSummary } from "@/hooks/useAlertManagement";
+import { useAdversarialReport } from "@/hooks/useNids";
 import { useMemo } from "react";
 import { AlertsTimeChart } from "./components/AlertsTimeChart";
+import { AdversarialReportChart } from "./components/AdversarialReportChart";
 
 // Types for metrics and summary
 interface Metric {
@@ -35,16 +37,17 @@ interface CategoryData {
 
 export default function MetricsPage() {
   const { data: summary, isLoading } = useAlertsSummary();
+  const { data: adReport, isLoading: isReportLoading } = useAdversarialReport();
 
   // Calculate metrics from summary
   const metrics: Metric[] = useMemo(() => {
     if (!summary) return [];
 
-    const totalAlerts = summary.total_alerts;
+    const totalAlerts = summary.total_alerts || 0;
     const activeAlerts =
-      summary.by_status.active + summary.by_status.investigating;
-    const resolvedAlerts = summary.by_status.resolved;
-    const criticalAlerts = summary.by_severity.critical;
+      summary.by_status.active + summary.by_status.investigating || 0;
+    const resolvedAlerts = summary.by_status.resolved || 0;
+    const criticalAlerts = summary.by_severity.critical || 0;
 
     return [
       {
@@ -61,7 +64,7 @@ export default function MetricsPage() {
         change:
           criticalAlerts > 0 ? `${criticalAlerts} critical` : "No critical",
         trend: criticalAlerts > 0 ? "up" : "down",
-        icon: Shield,
+        icon: ShieldCheck,
         description: "Requires attention",
       },
       {
@@ -293,7 +296,7 @@ export default function MetricsPage() {
                             duration: 0.5,
                             delay: 0.6 + index * 0.1,
                           }}
-                          className={`h-full bg-gradient-to-r ${color.gradient}`}
+                          className={`h-full bg-linear-to-r ${color.gradient}`}
                         />
                       </div>
                     </motion.div>
@@ -304,6 +307,35 @@ export default function MetricsPage() {
           )}
         </motion.div>
       </div>
+
+      {/* --- NEW: Adversarial Robustness Report --- */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+      >
+        <div className="flex items-center space-x-3 mb-6">
+          <ShieldCheck className="w-6 h-6 text-green-400" />
+          <h2 className="text-xl font-bold text-white">
+            Adversarial Robustness (FGSM Attack)
+          </h2>
+        </div>
+
+        {isReportLoading ? (
+          <div className="h-80 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          </div>
+        ) : adReport ? (
+          <div className="h-80 w-full">
+            <AdversarialReportChart chartData={adReport.metrics} />
+          </div>
+        ) : (
+          <div className="h-80 flex items-center justify-center text-center text-gray-500">
+            <p>Adversarial report data could not be loaded.</p>
+          </div>
+        )}
+      </motion.div>
 
       {/* Status Distribution Pie Chart Visual */}
       <motion.div
@@ -393,7 +425,7 @@ export default function MetricsPage() {
                           strokeWidth="8"
                           fill="transparent"
                           strokeDasharray={`${percentage * 2.51} 251`}
-                          className={`bg-gradient-to-r ${status.color}`}
+                          className={`bg-linear-to-r ${status.color}`}
                           style={{ stroke: `url(#gradient-${index})` }}
                         />
                         <defs>

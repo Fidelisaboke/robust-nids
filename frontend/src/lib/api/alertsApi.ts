@@ -1,3 +1,4 @@
+import { NetworkFlowFeatures } from "@/hooks/useNids";
 import { apiClient } from "./apiClient";
 
 export interface Alert {
@@ -33,6 +34,7 @@ export interface Alert {
     threat_level: string;
     id: null;
   };
+  flow_data: NetworkFlowFeatures | null;
   assigned_to_id: number | null;
   assigned_user: {
     id: number;
