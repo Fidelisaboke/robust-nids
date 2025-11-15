@@ -212,3 +212,6 @@ ml/models/artifacts/*.txt
 *.h5
 *.keras
 *.joblib
+
+# Generated reports
+media/reports

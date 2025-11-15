@@ -20,7 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, relationship
 
-from utils.enums import AlertSeverity, AlertStatus
+from utils.enums import AlertSeverity, AlertStatus, ReportStatus, SystemRoles
 
 
 class Base(DeclarativeBase):
@@ -86,6 +86,12 @@ class User(Base):
     roles = relationship("Role", secondary="user_roles", back_populates="users")
     sessions = relationship("UserSession", back_populates="user")
     alerts = relationship("Alert", back_populates="assigned_user")
+    reports = relationship("Report", back_populates="owner")
+
+    @property
+    def is_admin(self) -> bool:
+        """Check if the user has admin role."""
+        return any(role.name == SystemRoles.ADMIN for role in self.roles)
 
 
 class UserSession(Base):
@@ -188,7 +194,33 @@ class Alert(Base):
     assigned_user = relationship("User", back_populates="alerts")
 
 
+class Report(Base):
+    """Model for storing report generation requests and metadata."""
+
+    __tablename__ = "reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Who requested this report?
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    status = Column(Enum(ReportStatus), nullable=False, default=ReportStatus.PENDING)
+
+    # Stores the filters used to generate this report
+    parameters = Column(JSON, nullable=True)
+
+    # Where the file is stored, e.g., "reports/my_report.csv"
+    file_path = Column(String(512), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationship
+    owner = relationship("User", back_populates="reports")
+
+
 class RobustnessReport(Base):
+    """Model for storing robustness metrics from adversarial training and evaluation."""
+
     __tablename__ = "robustness_reports"
     id = Column(Integer, primary_key=True)
     model = Column(String, nullable=False)

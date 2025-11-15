@@ -50,7 +50,6 @@ def create_mfa_challenge_token(user_id: int) -> str:
     return _create_token(user_id, settings.MFA_CHALLENGE_TOKEN_EXPIRE_MINUTES, "mfa_challenge")
 
 
-
 def decode_token(token: str):
     """Decode a JWT token."""
     try:

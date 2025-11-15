@@ -127,7 +127,7 @@ export default function DashboardLayout({
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
                   {user?.first_name?.[0]}
                   {user?.last_name?.[0]}
                 </div>

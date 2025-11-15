@@ -64,3 +64,10 @@ class AlertStatus(StrEnum):
     INVESTIGATING = "investigating"
     RESOLVED = "resolved"
     ACKNOWLEDGED = "acknowledged"
+
+class ReportStatus(StrEnum):
+    """Report generation statuses."""
+    PENDING = "pending"
+    RUNNING = "running"
+    READY = "ready"
+    FAILED = "failed"
