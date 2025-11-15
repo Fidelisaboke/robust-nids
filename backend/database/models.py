@@ -161,6 +161,9 @@ class Alert(Base):
     # Full API JSON
     model_output = Column(JSON, nullable=True)
 
+    # Raw flow data
+    flow_data = Column(JSON, nullable=True)
+
     # Timestamp from thhe packet flow
     flow_timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
