@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRITICAL NIDS ALERT</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">Critical Alert Notification</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #b91c1c; margin-bottom: 20px;">
+                🚨 CRITICAL THREAT DETECTED
+            </h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                The Network Intrusion Detection System (NIDS) has detected a high-confidence threat event that requires
+                immediate investigation.
+            </p>
+
+            <!-- Alert Details Card -->
+            <div
+                style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #dc2626; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    Threat Details
+                </h3>
+                <table style="width: 100%; color: #7f1d1d; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600; width: 120px;">Severity:</td>
+                        <td style="padding: 8px 0;">
+                            <span
+                                style="background: #dc2626; color: #ffffff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                {{ alert_severity }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Category:</td>
+                        <td style="padding: 8px 0; font-weight: 700;">{{ alert_category }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Confidence:</td>
+                        <td style="padding: 8px 0;">{{ confidence }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Flow Time:</td>
+                        <td style="padding: 8px 0;">{{ flow_timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Source IP:</td>
+                        <td style="padding: 8px 0;">{{ src_ip }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: 600;">Destination:</td>
+                        <td style="padding: 8px 0;">{{ dst_ip }}:{{ dst_port }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Action Required -->
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{ alert_url }}"
+                    style="color: white; display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); margin: 0 10px;">
+                    Investigate Alert
+                </a>
+            </div>
+
+            <!-- Quick Info -->
+            <div
+                style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #475569; font-weight: 600; margin-bottom: 12px; font-size: 14px;">
+                    Next Steps
+                </h4>
+                <ol style="color: #475569; margin: 0; padding-left: 20px; font-size: 13px;">
+                    <li style="margin-bottom: 6px;">Click the button above to view the full alert details.</li>
+                    <li style="margin-bottom: 6px;">Analyze the flow data and SHAP explanation.</li>
+                    <li style="margin-bottom: 6px;">Acknowledge the alert to begin your investigation.</li>
+                    <li>Resolve the alert and add notes once remediation is complete.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 16px;">
+                This is an automated notification from the NIDS.
+                If you believe this alert was a false positive, please resolve it
+                and add notes in the dashboard.
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px; text-align: center;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

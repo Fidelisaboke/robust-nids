@@ -1,0 +1,77 @@
+# Root-level ignores
+.DS_Store
+*.env
+*.env.local
+*.env.*.local
+
+# Environment directories
+venv/
+.env/
+.venv/
+env/
+env.bak/
+venv.bak/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Node modules
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Python
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Test and coverage reports
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Datasets and model weights
+data/
+*.pkl
+*.h5
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.tflite
+*.pb
+*.keras
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Databases
+*.sqlite3
+*.db
+*.db-journal
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

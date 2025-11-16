@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Activated - NIDS</title>
+</head>
+
+<body
+    style="margin: 0; padding: 20px; font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; background-color: #f8fafc;">
+    <!-- Email Container -->
+    <div
+        style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); overflow: hidden;">
+
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; color: white;">
+            <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;">NIDS</div>
+            <div style="opacity: 0.9; font-size: 16px; font-weight: 400;">Network Intrusion Detection System</div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h1 style="font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 20px;">Welcome Aboard, {{ user_name }}!</h1>
+
+            <p style="color: #4a5568; margin-bottom: 30px; font-size: 16px;">
+                Great news! Your NIDS account has been approved and activated by our admin team.
+                You now have full access to our network security monitoring platform.
+            </p>
+
+            <!-- Success Icon -->
+            <div style="text-align: center; margin: 40px 0;">
+                <div style="display: inline-block; width: 80px; height: 80px; background: #f0fdf4; border: 2px solid #10b981; border-radius: 50%; margin-bottom: 20px; text-align: center; line-height: 80px;">
+                    <span style="font-size: 36px; color: #10b981;">✓</span>
+                </div>
+                <h2 style="font-size: 24px; font-weight: 600; color: #2d3748; margin-bottom: 10px;">
+                    Account Activated
+                </h2>
+                <p style="color: #718096; font-size: 16px;">
+                    Your account is now ready for use
+                </p>
+            </div>
+
+            <!-- Next Steps -->
+            <div
+                style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #166534; font-weight: 600; margin-bottom: 16px; font-size: 16px;">
+                    🚀 Ready to Get Started?
+                </h3>
+                <ul style="color: #1c4532; margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li style="margin-bottom: 8px;">Monitor network traffic in real-time</li>
+                    <li style="margin-bottom: 8px;">Set up custom security alerts and notifications</li>
+                    <li style="margin-bottom: 8px;">Analyze potential security threats</li>
+                    <li>Generate comprehensive security reports</li>
+                </ul>
+            </div>
+
+            <!-- Login CTA -->
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{ login_url }}"
+                    style="color: white; display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                    Access Your Dashboard
+                </a>
+            </div>
+
+            <!-- Security Reminder -->
+            <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #92400e; font-weight: 600; margin-bottom: 12px; font-size: 14px;">
+                    🔒 Security First
+                </h4>
+                <p style="color: #78350f; font-size: 14px; margin: 0;">
+                    For enhanced security, we recommend setting up Multi-Factor Authentication (MFA)
+                    in your account settings after logging in.
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f7fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <div style="color: #718096; font-size: 14px; margin-bottom: 16px;">
+                If you have any questions or need assistance, contact our support team at
+                <a href="mailto:{{ support_email }}" style="color: #10b981; font-weight: 600; text-decoration: none;">
+                    {{ support_email }}
+                </a>
+            </div>
+
+            <div style="color: #a0aec0; font-size: 12px; margin-top: 20px; text-align: center;">
+                &copy; {{ current_year }} NIDS - Network Intrusion Detection System. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

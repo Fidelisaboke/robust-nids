@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+wheels/
+.env
+.env.*
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Tests, notebooks, data
+tests/
+notebooks/
+ml/data/
+data/
+*.csv
+
+# Logs and coverage
+*.log
+logs/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker / compose files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
