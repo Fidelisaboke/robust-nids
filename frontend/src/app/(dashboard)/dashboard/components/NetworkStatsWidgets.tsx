@@ -227,14 +227,7 @@ export const NetworkActivityWidget: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-400">Avg Confidence</span>
             <span className="text-sm text-white font-medium">
-              {threats && threats.length > 0
-                ? (
-                    (threats.reduce((sum, t) => sum + t.binary.confidence, 0) /
-                      threats.length) *
-                    100
-                  ).toFixed(1)
-                : "0"}
-              %
+              {avgConfidence.toFixed(1)}%
             </span>
           </div>
           <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden">
