@@ -178,10 +178,11 @@ make help
    cp .env.local.example .env.local
    ```
 
-3. **Run the development server:**
+3. **Run the lcoal server:**
 
    ```bash
-   npm run dev
+   npm run build
+   npm run start
    ```
 
    Visit the dashboard at: [http://localhost:3000](http://localhost:3000)
