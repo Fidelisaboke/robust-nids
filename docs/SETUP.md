@@ -9,7 +9,7 @@ This guide walks through the local  setup of the **Robust NIDS** full-stack syst
 - [2. Backend Setup (FastAPI)](#2-backend-setup-fastapi)
 - [3. Frontend Setup (Nextjs--React)](#3-frontend-setup-nextjs--react)
 - [4. Environment Variables](#4-environment-variables)
-- [5. PostgreSQL Setup](#5-postgresql-setup)
+- [5. Database Setup](#5-database-setup)
 - [6. Dataset Setup (TII-SSRC-23)](#6-dataset-setup-tii-ssrc-23)
 - [7. Developer Tooling (Code Quality & Security)](#7-developer-tooling-code-quality--security)
 - [Next Steps](#next-steps)
@@ -171,10 +171,9 @@ JWT_REFRESH_SECRET_KEY=your_refresh_secret
 ```
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
+## Database Setup
 
-## 5. PostgreSQL Setup
-
-### Installation
+### 5.1 PostgreSQL
 
 **Ubuntu:**
 
@@ -206,6 +205,46 @@ Test:
 ```bash
 psql -h localhost -U nids_user -d nids_db -c "SELECT version();"
 ```
+
+### 5.1 Redis Setup
+
+**Ubuntu:**
+
+```bash
+sudo apt update
+sudo apt install redis-server
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+```
+
+**macOS:**
+
+```bash
+brew install redis
+brew services start redis
+```
+
+**Windows:**
+→ [Download Redis for Windows](https://github.com/microsoftarchive/redis/releases)
+
+### Configuration
+
+Default configuration is sufficient for development. For custom settings, edit `/etc/redis/redis.conf` (Ubuntu) or use the Redis Desktop Manager.
+
+### Test Redis Connection
+
+```bash
+redis-cli ping
+# Should return: PONG
+```
+
+### Environment Variable Example (backend/.env)
+
+```
+REDIS_URL=redis://localhost:6379/0
+```
+
+---
 
 ## 6. Dataset Setup (TII-SSRC-23)
 
