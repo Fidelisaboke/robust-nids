@@ -43,7 +43,6 @@ For more information, see [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md)
 * **SQLAlchemy + Alembic:** ORM and migrations
 * **PostgreSQL:** Relational database
 * **TensorFlow, XGBoost, Scikit-learn:** Model training & inference
-* **Adversarial Robustness Toolbox (ART):** Adversarial sample generation
 * **Redis:** In-memory database for caching
 * **Docker:** Containerized deployment
 
