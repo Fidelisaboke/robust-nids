@@ -14,14 +14,14 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 
 **Key Features:**
 
-* **Adversarial Training:** Models are hardened against evasion attempts using state-of-the-art attacks from the
-  Adversarial Robustness Toolbox (ART).
+* **Adversarial Training:** Models are hardened against adversarial evasion attempts.
 * **Dual Detection Strategy:** Combines a powerful XGBoost classifier for known attacks with an Autoencoder for
 * detecting novel anomalies.
-* **Analyst-in-the-Loop:** Includes a feedback mechanism for cybersecurity operators to label false
-* positives/negatives, enabling iterative model refinement.
-* **Explainable AI:** Integrates LIME to provide explanations for model predictions, building trust and understanding.
+* **Analyst-in-the-Loop:** Includes a mechanism for cybersecurity operators to conduct alert triage.
+* **Explainable AI:** Integrates SHAP to provide explanations for model predictions, building trust and understanding.
 * **Live Monitoring Dashboard:** A modern, Next.js dashboard for real-time traffic analysis and alert visualization.
+
+For more information, see [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md)
 
 ## Table of Contents
 
@@ -44,14 +44,15 @@ inference and adversarial training with a Next.js dashboard for visualization, a
 * **PostgreSQL:** Relational database
 * **TensorFlow, XGBoost, Scikit-learn:** Model training & inference
 * **Adversarial Robustness Toolbox (ART):** Adversarial sample generation
+* **Redis:** In-memory database for caching
 * **Docker:** Containerized deployment
 
 ### Frontend (Dashboard)
 
 * **Next.js 15 (TypeScript)**: Modern React framework with App Router
 * **Tailwind CSS:** Utility-first CSS framework
-* **Recharts:** Charting library for data visualization
-* **React Query:** Data fetching and state management
+* **Chart.js:** Charting library for data visualization
+* **TanStack Query:** Data fetching and state management
 * **Axios:** HTTP client for API requests
 * **React Hook Form + Zod:** Form handling and validation
 * **Shadcn UI:** Pre-built accessible UI components
@@ -194,19 +195,15 @@ make help
    The dashboard provides:
 
     * **Real-time alerts** (via `/nids/alerts`)
-    * **System logs** (via `/nids/logs`)
     * **Network metrics** and **visual analytics**
 
 3. **Run Predictions:**
-   Submit samples to `/nids/predict` to detect malicious activity.
+   Submit samples to `/nids/predict/full` to detect malicious activity.
 
-4. **Trigger Adversarial Training:**
-   Train models against evasion attacks using `/nids/train`.
+4. **Review Alerts:**
+   Analysts can acknowledge and handle alerts.
 
-5. **Review & Label:**
-   Analysts can flag false positives/negatives, improving model feedback loops.
-
-6. **Testing:**
+5. **Testing:**
 
    ```bash
    pytest -v
@@ -278,9 +275,9 @@ pre-commit run --all-files
 
 ## Acknowledgments
 
-Built as part of Bsc. Informatics and Computer Science final-year research project on
-Enhancing Robustness of ML-based NIDS Against Adversarial Evasion Attacks using adversarial training
-and explainable AI.
+Built as part of Bsc. Informatics and Computer Science final-year research project, titled:
+
+> **Robust Network Intrusion Detection: Defending Against Evasion Attacks using Adversarial Machine Learning**
 
 ## License
 
