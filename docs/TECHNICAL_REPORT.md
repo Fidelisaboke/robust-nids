@@ -79,8 +79,18 @@ Model selection is based on validation F1-score and ROC-AUC (`04_baseline_model_
 
 - A differentiable surrogate model (Keras MLP) is trained to generate adversarial samples.
 - Targeted FGSM and PGD attacks are implemented:
-  - **FGSM:** \( x_{adv} = x - \epsilon \cdot \text{sign}(\nabla_x J(\theta, x, y)) \)
-  - **PGD:** \( x_{adv}^{t+1} = \text{clip}_{x, \epsilon}(x_{adv}^t - \alpha \cdot \text{sign}(\nabla_x J(\theta, x_{adv}^t, y))) \)
+    - **FGSM:**
+    ```math
+    x_{adv} = x - \epsilon \cdot \text{sign}(\nabla_x J(\theta, x, y))
+    ```
+
+
+    - **PGD:**
+    ```math
+    x_{adv}^{t+1} = \text{clip}_{x, \epsilon}\left( 
+    x_{adv}^t - \alpha \cdot \text{sign}(\nabla_x J(\theta, x_{adv}^t, y)) 
+    \right)
+    ```
 - Adversarial samples (malicious flows perturbed to evade detection) are generated for multiple epsilon values.
 - Robust models are trained by augmenting the training set with adversarial samples (`05_adversarial_model_training.ipynb`).
 
