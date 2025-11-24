@@ -4,13 +4,12 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![ShadCN UI](https://img.shields.io/badge/UI-ShadCN-%23ffb4ed?logo=react)](https://ui.shadcn.com/)
 [![TanStack Query](https://img.shields.io/badge/Data-TanStack%20Query-%23F18F01?logo=reactquery)](https://tanstack.com/query/latest)
+[![Chart.js](https://img.shields.io/badge/chart.js-4.1.1-red?style=round-square)](https://www.chartjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-> Frontend for **Robust NIDS** — a research-driven, adversarially robust Network Intrusion Detection System built using FastAPI (backend) and Next.js (frontend).
 
 ## Project Overview
 
-The **Robust NIDS frontend** provides an interactive web interface for monitoring, analyzing, and visualizing network intrusion data.
+The **Robust NIDS frontend** provides an interactive Next.js web interface for monitoring, analyzing, and visualizing network intrusion data.
 It connects to a FastAPI backend to display:
 
 - Real-time intrusion alerts
@@ -26,6 +25,7 @@ It connects to a FastAPI backend to display:
 | Language         | [TypeScript](https://www.typescriptlang.org/)                                  |
 | Styling          | [Tailwind CSS](https://tailwindcss.com/) + [ShadCN/UI](https://ui.shadcn.com/) |
 | Data Fetching    | [TanStack Query](https://tanstack.com/query/latest)                            |
+| Charting Library | [Chart.js](https://www.chartjs.org/)                                           |
 | State Management | React hooks + Query caching                                                    |
 | Icons            | [Lucide React](https://lucide.dev/)                                            |
 | API Integration  | FastAPI backend (`/api/v1/...`)                                                |
@@ -241,4 +241,5 @@ This project is licensed under the **MIT License** — see the [LICENSE](../LICE
 - [ShadCN/UI](https://ui.shadcn.com)
 - [TanStack Query](https://tanstack.com/query/latest)
 - [Lucide Icons](https://lucide.dev)
+- [Chart.js](https://www.chartjs.org/)
 - [FastAPI](https://fastapi.tiangolo.com)

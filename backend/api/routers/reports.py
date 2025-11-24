@@ -31,7 +31,31 @@ async def request_new_report(
     Accepts a request to generate a new report.
     Creates the job and returns immediately.
     """
-    # 1. Create the 'PENDING' job
+
+    # Vheck if start and end dates are valid
+    if report_data.end_date <= report_data.start_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="End date must be after start date",
+        )
+
+    # Check if date range is not too large
+    max_range_days = 30
+    if (report_data.end_date - report_data.start_date).days > max_range_days:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Date range cannot exceed {max_range_days} days",
+        )
+
+    # Check that dates are not in the future
+    now = datetime.now(timezone.utc)
+    if report_data.start_date > now or report_data.end_date > now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Dates cannot be in the future",
+        )
+
+    # Create the 'PENDING' job
     pending_report = ReportOut(
         id=-1,  # Placeholder ID
         title=report_data.title,
@@ -43,10 +67,10 @@ async def request_new_report(
         updated_at=datetime.now(timezone.utc),
     )
 
-    # 2. Add the heavy-lifting task to run in the background
+    # Add the heavy-lifting task to run in the background
     background_tasks.add_task(report_service.generate_report_file, report_data, current_user.id)
 
-    # 3. Return the pending job object
+    # Return the pending job object
     return pending_report
 
 

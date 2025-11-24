@@ -2,6 +2,9 @@
 BENIGN_LABELS = ["Audio", "Video", "Browsing", "Background", "Text"]
 MALICIOUS_LABELS = ["Bruteforce", "Mirai", "DoS", "Information Gathering"]
 
+# Volumetric attacks
+VOLUMETRIC_ATTACKS = ["DoS", "Mirai"]
+
 # --- Feature Name Mapping ---
 CICFLOWMETER_TO_TII_MAPPING = {
     "src_port": "Src Port",

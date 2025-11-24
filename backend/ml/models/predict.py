@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
@@ -106,24 +106,33 @@ def predict_full_report(features: dict) -> dict:
     }
 
     # --- 4. Synthesize Threat Level ---
+    is_mal = bin_res["is_malicious"]
+    is_anom = anom_res["is_anomaly"]
+    multi_label = multi_res["label"]
+
+    # Default to Low
     threat_level = "Low"
-    if bin_res["is_malicious"]:
-        # CASE A: Binary model flagged it. Mark as medium-level threat.
+
+    # Determine threat level based on combined model outputs
+    if is_mal:
+        # CASE A: Binary = Malicious
         threat_level = "Medium"
-        if multi_res["label"] in MALICIOUS_LABELS:
-            # If Multiclass also detects a critical attack type, elevate to Critical.
+
+        if multi_label in MALICIOUS_LABELS:
             threat_level = "Critical"
-        elif anom_res["is_anomaly"]:
-            # If Autoencoder also flags it, elevate to High.
+        elif is_anom:
             threat_level = "High"
-    elif anom_res["is_anomaly"]:
-        # CASE B: Binary missed it, but Autoencoder flagged it.
-        # Check if Multiclass also detects something suspicious.
-        if multi_res["label"] in MALICIOUS_LABELS:
-            # Two out of three models agree it looks bad -> ELEVATE to High.
-            threat_level = "High"
-        else:
-            # Only AE flagged it -> Keep as Medium (Suspicious)
+
+    else:
+        # CASE B: Binary = Benign
+        if multi_label in MALICIOUS_LABELS:
+            # Multiclass indicates a known malicious attack type
+            threat_level = "Medium"
+
+            if is_anom:
+                threat_level = "High"
+        elif is_anom:
+            # Anomaly only suggests something suspicious
             threat_level = "Medium"
 
     # Get source and destination IPs for reporting
@@ -131,7 +140,7 @@ def predict_full_report(features: dict) -> dict:
     dst_ip = features.get("dst_ip") or features.get("Dst IP") or "unknown"
 
     return {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "src_ip": src_ip,
         "dst_ip": dst_ip,
         "binary": bin_res,
@@ -150,19 +159,18 @@ def run_robustness_demo_experiment(features: dict) -> RobustnessDemoResponse:
         raise RuntimeError("Adversarial demo models are not loaded. Check server logs.")
 
     try:
-        # --- 1. Prepare Data ---
+        # Prepare Data
         df_raw = _prepare_dataframe(features)
         X_scaled = bundle.binary_preprocessor.transform(df_raw)
 
-        # --- 2. Generate Adversarial Sample ---
-        # We are attacking a Malicious sample (1) to make it look Benign (0)
-        y_target = np.zeros(1)  # Target is class 0
-        epsilon = 0.1  # Standard epsilon for demo
+        # Generate Adversarial Sample
+        y_target = np.zeros(1)
+        epsilon = 0.1
 
         X_adv_tensor = generate_fgsm_samples(bundle.surrogate_model, X_scaled, y_target, epsilon=epsilon)
         X_adv_numpy = X_adv_tensor.numpy()
 
-        # --- 3. Run Predictions ---
+        # Run Predictions
         results = []
 
         # Test 1: Vulnerable Model vs. Normal Flow
@@ -190,7 +198,6 @@ def run_robustness_demo_experiment(features: dict) -> RobustnessDemoResponse:
         )
 
         # Test 3: Robust Model vs. Adversarial Flow
-        # Check how the robust model was loaded (pipeline or native)
         if bundle.binary_preprocessor:
             pred_robust_adv = bundle.binary_model.predict(X_adv_numpy)[0]
             proba_robust_adv = bundle.binary_model.predict_proba(X_adv_numpy)[0]

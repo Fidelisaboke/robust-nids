@@ -30,7 +30,7 @@ from services.alert_service import AlertService, get_alert_service
 from services.email_service import EmailService, get_email_service
 from services.exceptions.alert import AlertNotFoundError
 from services.exceptions.user import UserNotFoundError
-from utils.constants import BENIGN_LABELS
+from utils.constants import BENIGN_LABELS, VOLUMETRIC_ATTACKS
 from utils.enums import AlertSeverity, AlertStatus, SystemPermissions
 
 router = APIRouter(prefix="/api/v1/nids", tags=["NIDS"])
@@ -39,10 +39,16 @@ router = APIRouter(prefix="/api/v1/nids", tags=["NIDS"])
 RECENT_ALERTS = deque(maxlen=50)
 
 # Active incidents for aggregation
-AGGREGATION_WINDOW = timedelta(seconds=300)  # Group events happening within 300s
+AGGREGATION_WINDOW = timedelta(seconds=300)
 
 # Ignore benign traffic labels
 IGNORED_LABELS = BENIGN_LABELS
+
+# Rate limiting for prediction requests
+RATE_LIMIT_WINDOW = timedelta(seconds=10)
+
+# Limit predict requests in burst to avoid alert flooding
+RATE_LIMIT_THRESHOLD = 30
 
 app_logger = logging.getLogger("uvicorn.error")
 
@@ -56,7 +62,7 @@ async def _create_alert_from_report(
 ) -> AlertOut | None:
     """Helper to convert a prediction report into a database alert."""
 
-    # 1. Create the AlertCreate schema
+    # Create the AlertCreate schema
     alert_data = AlertCreate(
         title=f"{report['multiclass']['label']} detected from {report['src_ip']}",
         severity=AlertSeverity(report["threat_level"].lower()),
@@ -69,7 +75,7 @@ async def _create_alert_from_report(
         flow_data=request.features,  # Store the original flow features
     )
 
-    # 2. Save to DB (and send email)
+    # Save to DB (and send email)
     # This runs in the current session, managed by the dependency.
     try:
         new_alert = alert_service.create_alert(alert_data)
@@ -85,9 +91,28 @@ async def _create_alert_from_report(
 async def handle_redis_incident(result, request, alert_service, email_service, background_tasks):
     """Handles Redis incident aggregation and alert creation."""
     src_ip = result.get("src_ip", "unknown")
+    dst_ip = result.get("dst_ip", "unknown")
     attack_type = result["multiclass"]["label"]
     now = datetime.now(timezone.utc)
-    incident_key_str = f"incident:{src_ip}:{attack_type}"
+    incident_key_str = f"incident:{attack_type}:{src_ip}"
+    is_volumetric = attack_type in VOLUMETRIC_ATTACKS
+
+    # Rate limit burst handling
+    burst_key = "burst:counter"
+    burst_count = redis_client.incr(burst_key)
+    redis_client.expire(burst_key, int(RATE_LIMIT_WINDOW.total_seconds()))
+
+    if is_volumetric or burst_count > RATE_LIMIT_THRESHOLD:
+        # Collapse all alerts into a single key
+        incident_key_str = (
+            f"incident:dest:{dst_ip}:{attack_type if is_volumetric else 'SuspiciousTrafficBurst'}"
+        )
+        attack_type = attack_type if is_volumetric else "SuspiciousTrafficBurst"
+    else:
+        # Normal non-volumetric aggregation per attacker
+        incident_key_str = f"incident:src:{src_ip}:{attack_type}"
+
+    # Check Redis for existing incident
     incident_data = redis_client.get(incident_key_str)
     if incident_data:
         incident = json.loads(incident_data)
@@ -239,6 +264,18 @@ def get_alerts_summary(
         end_date = datetime.now(timezone.utc)
     if not start_date:
         start_date = end_date - timedelta(days=7)  # Default to last 7 days
+
+    # Check if start_date is before end_date
+    if start_date >= end_date:
+        raise HTTPException(status_code=400, detail="Start date must be before end date")
+
+    # Check that the range is not more than 1 year
+    if (end_date - start_date).days > 365:
+        raise HTTPException(status_code=400, detail="Date range cannot exceed 1 year")
+
+    # Check if end_date is not in the future
+    if end_date > datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="End date cannot be in the future")
 
     return alert_service.get_alert_summary(
         start_date=start_date, end_date=end_date, group_by_time=group_by_time
@@ -423,7 +460,7 @@ def get_robustness_report():
                 AdversarialMetric(model=report.model, accuracy=report.accuracy) for report in reports
             ]
 
-            # Use first three for summary fields (customize as needed)
+            # First three for summary fields
             baseline_normal = next(
                 (m.accuracy for m in metrics_list if "Baseline" in m.model and "Normal" in m.model), None
             )
