@@ -75,3 +75,6 @@ logs/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Media files
+media/
