@@ -12,12 +12,13 @@ Robust-NIDS is a modular network intrusion detection system (NIDS) leveraging ma
 
 ### 2.1 Data Exploration & Sampling
 
-- **Exploratory Data Analysis (EDA):**
-  - Initial EDA is performed to understand the distribution of features, attack types, and class imbalance using visualizations and summary statistics (`01_eda.ipynb`).
-  - Outliers and missing values are identified and documented.
+- **Dataset**: TII-SSRC-23 (Herzalla et. al, 2023)
+    - Two classes (Benign, Malicious), 8 traffic types, and 32 subtypes
+    - Approx. 8.6 million records
+
 - **Stratified Sampling:**
-  - The dataset is split to ensure balanced representation of benign and malicious flows, mitigating severe class imbalance (`02_sampling.ipynb`).
   - Stratified sampling is applied for binary and multiclass targets, preserving the proportion of each class in train, validation, and test sets.
+  - 200,000 traffic flows picked.
   - For anomaly detection, benign and malicious samples are separated, with benign data used for unsupervised model training and mixed sets for evaluation.
 
 ### 2.2 Preprocessing
