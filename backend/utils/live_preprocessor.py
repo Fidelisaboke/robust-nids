@@ -139,9 +139,9 @@ def process_flow_row(row, is_first_alert):
 
                 # Determine icon based on severity
                 if threat in ["High", "Critical"]:
-                    icon = "🚨 ALERT"
+                    icon = "ALERT"
                 else:
-                    icon = "🔍 DEBUG"  # For "Medium" or "Low-on-demo-port"
+                    icon = "DEBUG"  # For "Medium" or "Low-on-demo-port"
 
                 print(f"   {icon}: {src} -> {dst} | {atk_type} [{threat}] (Conf: {conf:.2f})")
 

@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from schemas.users import UserOut
 from utils.enums import AlertSeverity, AlertStatus, ReportStatus
@@ -28,6 +28,12 @@ class ReportCreate(BaseModel):
             ]
         }
     )
+
+    @field_validator("start_date", "end_date", mode="after")
+    def ensure_utc(cls, v: datetime) -> datetime:
+        if v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
 
 class ReportOut(BaseModel):
     """Schema for returning a report object."""

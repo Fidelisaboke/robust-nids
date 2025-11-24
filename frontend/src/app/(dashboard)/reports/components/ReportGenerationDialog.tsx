@@ -31,11 +31,15 @@ export function ReportGenerationDialog({
       return;
     }
 
+    // Convert naive local datetime to UTC ISO string
+    const start_date_utc = new Date(formData.start_date).toISOString();
+    const end_date_utc = new Date(formData.end_date).toISOString();
+
     // Clean up form data - remove empty optional fields
     const cleanedData: ReportCreateRequest = {
       title: formData.title,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
+      start_date: start_date_utc,
+      end_date: end_date_utc,
     };
 
     if (formData.severity) cleanedData.severity = formData.severity;

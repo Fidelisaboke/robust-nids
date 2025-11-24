@@ -79,8 +79,18 @@ Model selection is based on validation F1-score and ROC-AUC (`04_baseline_model_
 
 - A differentiable surrogate model (Keras MLP) is trained to generate adversarial samples.
 - Targeted FGSM and PGD attacks are implemented:
-  - **FGSM:** \( x_{adv} = x - \epsilon \cdot \text{sign}(\nabla_x J(\theta, x, y)) \)
-  - **PGD:** \( x_{adv}^{t+1} = \text{clip}_{x, \epsilon}(x_{adv}^t - \alpha \cdot \text{sign}(\nabla_x J(\theta, x_{adv}^t, y))) \)
+    - **FGSM:**
+    ```math
+    x_{adv} = x - \epsilon \cdot \text{sign}(\nabla_x J(\theta, x, y))
+    ```
+
+
+    - **PGD:**
+    ```math
+    x_{adv}^{t+1} = \text{clip}_{x, \epsilon}\left( 
+    x_{adv}^t - \alpha \cdot \text{sign}(\nabla_x J(\theta, x_{adv}^t, y)) 
+    \right)
+    ```
 - Adversarial samples (malicious flows perturbed to evade detection) are generated for multiple epsilon values.
 - Robust models are trained by augmenting the training set with adversarial samples (`05_adversarial_model_training.ipynb`).
 
@@ -97,16 +107,16 @@ Model selection is based on validation F1-score and ROC-AUC (`04_baseline_model_
 
 | Model               | F1 (Malicious) | Precision (Malicious) | Recall (Malicious) | ROC-AUC   |
 |---------------------|----------------|-----------------------|--------------------|-----------|
-| Logistic Regression | 0.9887         | 0.9958                | 0.9817             | 0.9922    |
-| Random Forest       | 0.9993         | 0.9992                | 0.9993             | 0.9998    |
-| XGBoost             | 0.9993         | 0.9997                | 0.9989             | 0.99997   |
+| Logistic Regression | 0.988739       | 0.9958                | 0.9817             | 0.9922    |
+| Random Forest       | 0.999261       | 0.9992                | 0.9993             | 0.9998    |
+| XGBoost             | 0.999276       | 0.9997                | 0.9989             | 0.99997   |
 
 #### 3.1.2 Multiclass Classification (Validation)
 
 | Model         | Accuracy  | Precision | Recall   | F1-score |
 |---------------|-----------|-----------|----------|----------|
-| XGBoost       | 0.9956    | 0.9302    | 0.9251   | 0.9278   |
-| Random Forest | 0.9941    | 0.9217    | 0.9173   | 0.9195   |
+| XGBoost       | 0.9958    | 0.9500    | 0.8494   | 0.8858   |
+| Random Forest | 0.9956    | 0.9545    | 0.9106   | 0.9278   |
 
 #### 3.1.3 Unsupervised / Anomaly Detection (Validation)
 
