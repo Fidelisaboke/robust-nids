@@ -116,7 +116,7 @@ Model selection is based on validation F1-score and ROC-AUC (`04_baseline_model_
 | Model         | Accuracy  | Precision | Recall   | F1-score |
 |---------------|-----------|-----------|----------|----------|
 | XGBoost       | 0.9958    | 0.9500    | 0.8494   | 0.8858   |
-| Random Forest | 0.9956    | 0.9545    | 0.9173   | 0.9278   |
+| Random Forest | 0.9956    | 0.9545    | 0.9106   | 0.9278   |
 
 #### 3.1.3 Unsupervised / Anomaly Detection (Validation)
 
