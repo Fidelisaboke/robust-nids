@@ -163,13 +163,13 @@ async def predict_traffic_full(
 ):
     """
     Runs a complete security assessment on a network flow.
-    High/Critical threats are aggregated and saved to the database.
+    Medium/High/Critical threats are aggregated and saved to the database.
     """
     try:
         result = predict_full_report(request.features)
         result["id"] = None
 
-        if result["threat_level"] in ["High", "Critical"]:
+        if result["threat_level"] in ["Medium", "High", "Critical"]:
             if not redis_client:
                 app_logger.warning("Redis client not available, skipping incident aggregation.")
             else:
