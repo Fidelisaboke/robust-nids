@@ -127,6 +127,17 @@ export const NetworkActivityWidget: React.FC = () => {
     };
   }, [threats]);
 
+  const avgConfidence = React.useMemo(() => {
+    if (!threats || threats.length === 0) return 0;
+
+    const total = threats.reduce(
+      (sum, t) => sum + (t?.binary?.confidence ?? 0),
+      0,
+    );
+
+    return (total / threats.length) * 100;
+  }, [threats]);
+
   const stats = [
     {
       label: "Unique Sources",
