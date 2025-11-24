@@ -178,7 +178,7 @@ make help
    cp .env.local.example .env.local
    ```
 
-3. **Run the lcoal server:**
+3. **Run the local server:**
 
    ```bash
    npm run build
