@@ -112,16 +112,6 @@ async def handle_redis_incident(result, request, alert_service, email_service, b
         # Normal non-volumetric aggregation per attacker
         incident_key_str = f"incident:src:{src_ip}:{attack_type}"
 
-    if is_volumetric or burst_count > RATE_LIMIT_THRESHOLD:
-        # Collapse all alerts into a single key
-        incident_key_str = (
-            f"incident:dest:{dst_ip}:{attack_type if is_volumetric else 'SuspiciousTrafficBurst'}"
-        )
-        attack_type = attack_type if is_volumetric else "SuspiciousTrafficBurst"
-    else:
-        # Normal non-volumetric aggregation per attacker
-        incident_key_str = f"incident:src:{src_ip}:{attack_type}"
-
     # Check Redis for existing incident
     incident_data = redis_client.get(incident_key_str)
     if incident_data:

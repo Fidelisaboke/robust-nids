@@ -3,13 +3,14 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-Framework-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=Redis&logoColor=white)](https://redis.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Tests](https://github.com/Fidelisaboke/robust-nids/actions/workflows/ci.yml/badge.svg)](https://github.com/Fidelisaboke/robust-nids/actions)
 
 ## Project Overview
 
 The **Robust NIDS Backend** is a FastAPI-powered API for a **Network Intrusion Detection System (NIDS)** designed to resist **adversarial evasion attacks**.
-It supports adversarial training, explainable ML models (e.g., LIME/SHAP), and REST endpoints for monitoring, dataset management, and system configuration.
+It supports adversarial training, explainable ML models using SHAP, and REST endpoints for monitoring, dataset management, and system configuration.
 
 The backend integrates with a **Next.js frontend** and a **PostgreSQL database**, forming a modular, full-stack architecture.
 
@@ -33,7 +34,7 @@ The backend integrates with a **Next.js frontend** and a **PostgreSQL database**
 | ORM | [SQLAlchemy](https://www.sqlalchemy.org/) |
 | Migrations | [Alembic](https://alembic.sqlalchemy.org/) |
 | Machine Learning | scikit-learn, TensorFlow, XGBoost, Adversarial Robustness Toolbox |
-| Database | PostgreSQL |
+| Database | PostgreSQL, Redis |
 | Testing | pytest, httpx |
 | Dependency Management | [uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | Environment | Pydantic Settings |
@@ -270,6 +271,7 @@ See the [LICENSE](../LICENSE) file for more details.
 
 * [FastAPI](https://fastapi.tiangolo.com/)
 * [PostgreSQL](https://www.postgresql.org/)
+* [Redis](https://redis.io/)
 * [scikit-learn](https://scikit-learn.org/)
 * [TensorFlow](https://www.tensorflow.org/)
 * [Adversarial Robustness Toolbox](https://github.com/Trusted-AI/adversarial-robustness-toolbox)
