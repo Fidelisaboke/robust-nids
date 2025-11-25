@@ -10,16 +10,15 @@
 A machine learning-based Network Intrusion Detection System designed to be resilient against adversarial evasion
 attacks.
 It integrates AI, cybersecurity analytics, and a modern full-stack architecture, combining a FastAPI backend for ML
-inference and adversarial training with a Next.js dashboard for visualization, alerts, and analyst features
+inference and adversarial training with a Next.js dashboard for visualisation, alerts, and analyst features
 
 **Key Features:**
 
 * **Adversarial Training:** Models are hardened against adversarial evasion attempts.
-* **Dual Detection Strategy:** Combines a powerful XGBoost classifier for known attacks with an Autoencoder for
-* detecting novel anomalies.
+* **Dual Detection Strategy:** Combines a powerful XGBoost and Random Forest classifiers for known attacks, with an Autoencoder for detecting novel anomalies.
 * **Analyst-in-the-Loop:** Includes a mechanism for cybersecurity operators to conduct alert triage.
 * **Explainable AI:** Integrates SHAP to provide explanations for model predictions, building trust and understanding.
-* **Live Monitoring Dashboard:** A modern, Next.js dashboard for real-time traffic analysis and alert visualization.
+* **Live Monitoring Dashboard:** A modern, Next.js dashboard for real-time traffic analysis and alert visualisation.
 
 For more information, see [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md)
 
@@ -50,7 +49,7 @@ For more information, see [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md)
 
 * **Next.js 15 (TypeScript)**: Modern React framework with App Router
 * **Tailwind CSS:** Utility-first CSS framework
-* **Chart.js:** Charting library for data visualization
+* **Chart.js:** Charting library for data visualisation
 * **TanStack Query:** Data fetching and state management
 * **Axios:** HTTP client for API requests
 * **React Hook Form + Zod:** Form handling and validation
@@ -273,9 +272,9 @@ To run all checks manually:
 pre-commit run --all-files
 ```
 
-## Acknowledgments
+## Acknowledgements
 
-Built as part of Bsc. Informatics and Computer Science final-year research project, titled:
+Built as part of a BSc. Informatics and Computer Science final-year research project, titled:
 
 > **Robust Network Intrusion Detection: Defending Against Evasion Attacks using Adversarial Machine Learning**
 
