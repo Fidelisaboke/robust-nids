@@ -20,19 +20,26 @@ inference and adversarial training with a Next.js dashboard for visualisation, a
 * **Explainable AI:** Integrates SHAP to provide explanations for model predictions, building trust and understanding.
 * **Live Monitoring Dashboard:** A modern, Next.js dashboard for real-time traffic analysis and alert visualisation.
 
+### Project Demo
+
+[![Project Demo Video](https://img.shields.io/badge/Demo-Watch%20Video-red?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1DnNM1S5rsN5DvzcCnfIQlFhbnGz_p85t/view?usp=sharing)
+
+*You can [watch the full project walkthrough and demonstration on Google Drive](https://drive.google.com/file/d/1DnNM1S5rsN5DvzcCnfIQlFhbnGz_p85t/view?usp=sharing).*
+
 For more information, see [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md)
 
 ## Table of Contents
 
-1. [Tech Stack](#tech-stack)
-2. [Getting Started](#getting-started)
+1. [Project Demo](#project-demo)
+2. [Tech Stack](#tech-stack)
+3. [Getting Started](#getting-started)
     * [Prerequisites](#prerequisites)
     * [Quick Install](#quick-install)
-3. [Basic Usage](#basic-usage)
-4. [Project Structure](#project-structure)
-5. [Development Workflow](#development-workflow)
-6. [Acknowledgements](#acknowledgements)
-7. [License](#license)
+4. [Basic Usage](#basic-usage)
+5. [Project Structure](#project-structure)
+6. [Development Workflow](#development-workflow)
+7. [Acknowledgements](#acknowledgements)
+8. [License](#license)
 
 ## Tech Stack
 
@@ -77,25 +84,26 @@ For more information, see [`docs/TECHNICAL_REPORT.md`](docs/TECHNICAL_REPORT.md)
 
 ### Quick Install
 
-- For detailed instructions, see [`docs/SETUP.md`](docs/SETUP.md).
-
+* For detailed instructions, see [`docs/SETUP.md`](docs/SETUP.md).
 
 #### Docker Setup
-- To quickly set up project's Docker containers, simply run (at project root):
+
+* To quickly set up project's Docker containers, simply run (at project root):
 
 ```bash
 ./scripts/build-dev.sh
 ```
 
-- Additionally, you can use the [`Makefile`](./Makefile) to manage the containers. View the commands by running
+* Additionally, you can use the [`Makefile`](./Makefile) to manage the containers. View the commands by running
 `make help`:
-```
+
+```bash
 make help
 ```
 
 #### Backend Setup (FastAPI)
 
-- Otherwise, follow the steps below for a local setup:
+* Otherwise, follow the steps below for a local setup:
 
 1. **Clone the repository:**
 
@@ -145,8 +153,7 @@ make help
    python database/seed.py
    ```
 
-8. **Set up the dataset:** Follow the detailed instructions in [
-   `docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
+8. **Set up the dataset:** Follow the detailed instructions in [`docs/SETUP.md`](docs/SETUP.md#data-setup-tii-ssrc-23-dataset).
 
 9. **Start the FastAPI server:**
 
@@ -157,7 +164,8 @@ make help
    Access the API docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 #### Frontend Setup (Next.js + TypeScript)
-- It's preferred to run backend and frontend on separate terminal instances.
+
+* It's preferred to run backend and frontend on separate terminal instances.
 
 1. **Navigate to the frontend directory:**
 
@@ -172,11 +180,12 @@ make help
    ```
 
 3. **Set up `.env`:**
+
    ```bash
    cp .env.local.example .env.local
    ```
 
-3. **Run the local server:**
+4. **Run the local server:**
 
    ```bash
    npm run build
@@ -210,7 +219,7 @@ make help
 
 ## Project Structure
 
-```
+```bash
 robust-nids/
 ├── backend/                       # FastAPI backend (ML + API)
 │   ├── api/                       # Routes, dependencies, middleware
@@ -258,16 +267,17 @@ robust-nids/
 
 ### Code Quality
 
-- Pre-commit hooks: Automatically lint and format Python, TypeScript, and check secrets before commit.
-
-- Pre-push hook: Runs backend pytest tests before allowing a push.
+* Pre-commit hooks: Automatically lint and format Python, TypeScript, and check secrets before commit.
+* Pre-push hook: Runs backend pytest tests before allowing a push.
 
 To install hooks:
+
 ```bash
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
 To run all checks manually:
+
 ```bash
 pre-commit run --all-files
 ```
